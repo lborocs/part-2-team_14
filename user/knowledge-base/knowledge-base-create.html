@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make-It-All - Create Post</title>
+    <link rel="stylesheet" href="../dashboard.css">
+    <link rel="stylesheet" href="knowledge-base.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body id="kb-create">
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="nav-top">
+                <div class="logo-container">
+                    <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon"> 
+                </div>
+                <ul class="nav-main">
+                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
+                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
+                    <li class="active-parent"><a href="knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+
+                </ul>
+            </div>
+            <div class="nav-footer">
+                <ul>
+                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="kb-header">
+                <p class="breadcrumbs"><a href="knowledge-base.html">Knowledge Base</a> > Create Post</p>
+                <h1>Create a New Post</h1>
+            </header>
+
+            <div class="kb-layout-wrapper">
+                <div class="kb-main-content">
+
+                    <form id="create-post-form" class="create-post-form">
+                        <div class="form-group">
+                            <label for="post-title">Title</label>
+                            <input type="text" id="post-title" placeholder="e.g., Printer not connecting to WiFi" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="post-topic">Topic</label>
+                            <select id="post-topic" required>
+                                <option value="">Select a topic...</option>
+                                <!-- JS fills all topics (main + added) -->
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="post-details">Details</label>
+                            <textarea id="post-details" rows="10" placeholder="Describe your issue or question in detail. Include any error messages or steps you've already tried." required></textarea>
+                        </div>
+
+                        <button type="submit" class="create-post-btn">Create Post</button>
+                    </form>
+
+                </div>
+
+                <aside class="kb-sidebar">
+                    <div class="kb-sidebar-widget">
+                        <h3>Best Practices</h3>
+                        <ul class="best-practices-list">
+                            <li><strong>Search before posting:</strong> Your question might already be answered!</li>
+                            <li><strong>Be descriptive:</strong> A good title helps others find your post.</li>
+                            <li><strong>Add detail in reports:</strong> Include error messages, software versions, and steps to reproduce the issue.</li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app.js"></script>
+</body>
+</html>

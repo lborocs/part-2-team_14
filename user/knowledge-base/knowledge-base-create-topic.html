@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make-It-All - Create New Topic</title>
+    <link rel="stylesheet" href="../dashboard.css">
+    <link rel="stylesheet" href="knowledge-base.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body id="kb-create-topic">
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="nav-top">
+                <div class="logo-container">
+                    <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon"> 
+                </div>
+                <ul class="nav-main">
+                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
+                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
+                    <li class="active-parent"><a href="knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+
+                </ul>
+            </div>
+            <div class="nav-footer">
+                <ul>
+                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="kb-header">
+                <p class="breadcrumbs">Knowledge Base > Create New Topic</p>
+                <h1>Create a New Topic</h1>
+            </header>
+
+            <div class="kb-layout-wrapper">
+                <div class="kb-main-content">
+
+                    <form id="create-topic-form" class="create-post-form">
+                        <div class="form-group">
+                            <label for="topic-name">Topic Name</label>
+                            <input type="text" id="topic-name" placeholder="e.g., HR & Payroll, Marketing Tools, Customer Support" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="topic-description">Description (Optional)</label>
+                            <textarea id="topic-description" rows="5" placeholder="Briefly describe what this topic will cover and when team members should use it."></textarea>
+                        </div>
+
+                        <button type="submit" class="create-post-btn">Create Topic</button>
+                    </form>
+
+                </div>
+
+                <aside class="kb-sidebar">
+                    <div class="kb-sidebar-widget">
+                        <h3>Topic Guidelines</h3>
+                        <ul class="best-practices-list">
+                            <li><strong>Be specific:</strong> Good topic names clearly indicate the subject area.</li>
+                            <li><strong>Check for duplicates:</strong> Make sure a similar topic doesn't already exist.</li>
+                            <li><strong>Think broad:</strong> Topics should be broad enough to encompass multiple posts.</li>
+                            <li><strong>Examples:</strong> "IT Support", "Office Facilities", "Travel & Expenses"</li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app.js"></script>
+</body>
+</html>

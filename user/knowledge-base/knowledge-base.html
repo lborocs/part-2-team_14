@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make-It-All - Knowledge Base</title>
+    <link rel="stylesheet" href="../dashboard.css">
+    <link rel="stylesheet" href="knowledge-base.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body id="kb-index">
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="nav-top">
+                <div class="logo-container">
+                    <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon"> 
+                </div>
+                <ul class="nav-main">
+                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+                    <li>
+                        <a href="../project/projects.html"><i data-feather="folder"></i>Projects</a>
+                    </li>
+                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
+                    <li class="active-parent"><a href="knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+                </ul>
+            </div>
+            <div class="nav-footer">
+                <ul>
+                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main-content">
+          <header class="kb-header">
+            <div id="kb-title-container">
+              <p class="breadcrumbs" style="display: none;"></p>
+              <h1>Knowledge Base</h1>
+            </div>
+
+            <!-- Create Post + Search grouped together -->
+            <div class="kb-header-actions">
+              <div class="search-bar">
+                <i data-feather="search"></i>
+                <input type="text" placeholder="Search posts...">
+              </div>
+                <a href="knowledge-base-create.html" class="create-post-btn" id="create-post-btn-topic">
+                <i data-feather="plus"></i> Create Post
+              </a>
+            </div>
+          </header>
+
+
+            <section id="kb-topics-section">
+                <div class="kb-topics">
+                    <h2>Topics</h2>
+                    <a href="all-topics.html" class="view-more" id="view-more-topics">
+                        View more topics <i data-feather="arrow-right"></i>
+                    </a>
+                </div>
+
+                <!-- JS renders main topics + "Add New Topic" here -->
+                <div class="topic-grid" id="topic-grid"></div>
+            </section>
+
+            <div class="kb-layout-wrapper">
+                <div class="kb-main-content">
+                    <section class="kb-posts">
+                        <h2 id="posts-list-title">Popular Posts</h2>
+                        <div class="post-tabs" id="post-tabs-container">
+                            <button class="active">Popular</button>
+                            <button>New Posts</button>
+                        </div>
+
+                        <div class="post-list" id="post-list-container"></div>
+                    </section>
+                </div>
+
+                <aside class="kb-sidebar" id="kb-sidebar-right">
+                    <div id="announcements-widget" class="announcements-box">
+                        <h3>Announcements</h3>
+                        <div class="announcement-content-placeholder">
+                            <p>No new announcements at this time.</p>
+                        </div>
+                    </div>
+
+                    <div id="topic-sidebar-widgets" style="display: none;">
+                        <div class="kb-sidebar-widget">
+                            <h3>Related Topics</h3>
+                            <div class="related-topics-list">
+                                <span class="topic-tag">Hardware</span>
+                                <span class="topic-tag">Security</span>
+                                <span class="topic-tag">Jasmine</span>
+                            </div>
+                        </div>
+
+                        <div class="kb-sidebar-widget">
+                            <h3>Best Practices</h3>
+                            <ul class="best-practices-list">
+                                <li><strong>Restart after updates:</strong> A quick restart helps apply changes.</li>
+                                <li><strong>Keep software updated:</strong> Regular updates improve stability.</li>
+                                <li><strong>Search before posting:</strong> Check for existing answers.</li>
+                                <li><strong>Engage with posts:</strong> React or comment to support others.</li>
+                                <li><strong>Add detail in reports:</strong> Include error messages or steps.</li>
+                            </ul>
+                        </div>
+
+                        <div class="kb-sidebar-widget kb-new-discussion">
+                            <p>Didn't find what you're looking for?</p>
+                            <a href="knowledge-base-create.html" id="start-discussion-link">Start a new discussion</a>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app.js"></script>
+</body>
+</html>
