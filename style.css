@@ -1,0 +1,349 @@
+/*
+* Font and Base Styles (Unchanged)
+*/
+body {
+    background: #FEFBF4;
+    font-family: 'Poppins', sans-serif;
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    height: 100vh; /* Ensure body fills height */
+}
+h1 {
+    font-weight: 700;
+    margin: 0;
+    color: #1E1E1E;
+}
+p, span.subtitle, label {
+    font-size: 14px;
+    align-self: center;
+    font-weight: 400;
+    line-height: 20px;
+    letter-spacing: 0.5px;
+    margin: 5px 0 0px;
+    color: #333;
+}
+label {
+    display: block;
+    text-align: left;
+    width: 100%;
+    margin: 0 0 5px 0;
+    font-size: 12px;
+    color: #8C8C8C;
+}
+
+img.logo {
+    width: 500px; /*Adjust as needed*/
+    height: auto;
+    margin-bottom: 10px;
+    padding-bottom: 50px;
+}
+/*
+* This placeholder style is just for the illustration now btw
+*/
+.illustration {
+    width: 500px; /*Adjust as needed*/
+    height: auto;
+    margin-bottom: 10px;
+}
+/*
+* Buttons (Unchanged)
+*/
+button {
+    border-radius: 25px;
+    border: none;
+    background-color: #1E1E1E; /*Black*/
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 12px 45px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: transform 80ms ease-in;
+    cursor: pointer;
+}
+button:active {
+    transform: scale(0.95);
+}
+button:focus {
+    outline: none;
+}
+button.ghost {
+    background-color: white; /*Yellow*/
+    color: #1E1E1E;
+}
+/*no-space
+* Inputs & Messages (Unchanged)
+*/
+form {
+    background-color: #FEFBF4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 50px;
+    height: 100%;
+    text-align: center;
+}
+.input-group {
+    width: 100%;
+    margin-bottom: 15px;
+    position: relative;
+}
+input {
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid #8C8C8C;
+    padding: 12px 0;
+    width: 100%;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+}
+input:focus {
+    outline: none;
+    border-bottom: 2px solid #1E1E1E;
+}
+small#password-error {
+    color: red;
+    visibility: hidden;
+    text-align: left;
+    display: block;
+    font-size: 12px;
+    margin-top: 5px;
+}
+small.visible {
+    visibility: visible;
+}
+/*no-space
+* Main Container & Layout (Base styles - Unchanged)
+*/
+.container {
+    background-color: #fff;
+    border-radius: 0; /* No rounded corners on fullscreen */
+    position: relative;
+    overflow: hidden;
+    width: 100vw; /* 100% of viewport width */
+    height: 100vh; /* 100% of viewport height */
+}
+.form-container {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    transition: all 0.6s ease-in-out;
+}
+.sign-in-container {
+    left: 0;
+    width: 50%;
+    z-index: 2;
+}
+.sign-up-container {
+    left: 0;
+    width: 50%;
+    opacity: 0;
+    z-index: 1;
+}
+/*
+* Overlay Panels (Base styles - Unchanged)
+*/
+.overlay-container {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+    transition: transform 0.6s ease-in-out;
+    z-index: 100;
+    color: #1E1E1E;
+}
+.overlay {
+    background: #FBC02D; /*Yellow*/
+    background: -webkit-linear-gradient(to right, #FFB000, #FBC02D);
+    background: linear-gradient(to right, #FFB000, #FBC02D);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: 0 0;
+    position: relative;
+    left: -100%;
+    height: 100%;
+    width: 200%;
+    transform: translateX(0);
+    transition: transform 0.6s ease-in-out;
+}
+/*
+* TEXT-CUT-OFF FIX HERE
+*/
+.overlay-panel {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 10px; 
+    text-align: center;
+    top: 0;
+    height: 100%;
+    width: 50%;
+    transform: translateX(0);
+    transition: transform 0.6s ease-in-out;
+}
+
+.overlay-left {
+    transform: translateX(-20%);
+}
+.overlay-right {
+    right: 0;
+    transform: translateX(0);
+}
+/*
+* Animation Logic (Unchanged)
+*/
+.form-section.form-section-move .sign-in-container {
+    transform: translateX(100%);
+}
+.slider.moveslider {
+    transform: translateX(-100%);
+}
+.form-section.form-section-move .sign-up-container {
+    transform: translateX(100%);
+    opacity: 1;
+    z-index: 5;
+    animation: show 0.6s;
+}
+.slider.moveslider .overlay {
+    transform: translateX(50%);
+}
+.slider.moveslider .overlay-left {
+    transform: translateX(0);
+}
+.slider.moveslider .overlay-right {
+    transform: translateX(20%);
+}
+@keyframes show {
+    0%, 49.99% {
+        opacity: 0;
+        z-index: 1;
+    }
+    
+    50%, 100% {
+        opacity: 1;
+        z-index: 5;
+    }
+}
+
+/* Error message for login */
+small#login-error {
+    color: red;
+    visibility: hidden;
+    text-align: left;
+    display: block;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/*
+* =========================================
+* Mobile Responsive "Stack" Animation
+* =========================================
+*/
+@media (max-width: 768px) {
+
+    /* Make container fill height and be scrollable if needed */
+    .container {
+        width: 100vw;
+        min-height: 100vh;
+        height: auto; 
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    /* Stack the form containers vertically */
+    .form-container {
+        width: 100%;
+        height: 50%;
+        padding: 0 40px; /* Add horizontal padding */
+        position: absolute; /* Re-enable absolute for stacking */
+    }
+    
+    .sign-in-container {
+        top: 0;
+        z-index: 2;
+    }
+
+    .sign-up-container {
+        top: 0;
+        z-index: 1;
+        opacity: 0;
+    }
+
+    /* Stack the overlay at the bottom */
+    .overlay-container {
+        width: 100%;
+        height: 50%;
+        left: 0;
+        top: 50%; /* Position at the bottom half */
+        overflow: hidden;
+    }
+
+    .overlay {
+        width: 100%;
+        height: 200%; /* 2x height for vertical slide */
+        left: 0;
+        top: -100%; /* Start with overlay-left (top part) in view */
+        transform: translateY(0);
+    }
+
+    .overlay-panel {
+        width: 100%;
+        height: 50%; /* Each panel is 50% of overlay */
+        padding: 0 20px;
+        transform: translateY(0);
+    }
+
+    .overlay-left {
+        top: 0; /* Top panel */
+        transform: translateY(0); 
+    }
+
+    .overlay-right {
+        top: 50%; /* Bottom panel */
+        transform: translateY(0);
+    }
+
+    /* --- Animation Overrides (from horizontal to vertical) --- */
+
+    /* 1. Move sign-in form DOWN */
+    .form-section.form-section-move .sign-in-container {
+        transform: translateY(100%);
+    }
+
+    /* 2. Move overlay UP */
+    .slider.moveslider {
+        transform: translateY(-100%);
+    }
+
+    /* 3. Bring sign-up form UP from below */
+    .form-section.form-section-move .sign-up-container {
+        transform: translateY(100%);
+        opacity: 1;
+        z-index: 5;
+    }
+
+    /* 4. Slide the overlay panel content */
+    .slider.moveslider .overlay {
+        transform: translateY(50%);
+    }
+
+    /* 5. Reset horizontal text transforms from desktop */
+    .overlay-left {
+        transform: translateY(0);
+    }
+    .overlay-right {
+        transform: translateY(0);
+    }
+    .slider.moveslider .overlay-left {
+        transform: translateY(0);
+    }
+    .slider.moveslider .overlay-right {
+        transform: translateY(0);
+    }
+}
