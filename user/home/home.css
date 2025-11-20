@@ -1,0 +1,595 @@
+/*
+* Homepage Styles
+*/
+
+#home-page .main-content {
+    padding: 30px 40px;
+    /* overflow-y removed - main-content handles scrolling */
+}
+
+.home-header {
+    margin-bottom: 30px;
+}
+
+.page-label {
+    font-size: 14px;
+    color: #8C8C8C;
+    margin: 0;
+}
+
+.home-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+/* === TOTAL TASKS CARD === */
+.total-tasks-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.total-tasks-card h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 25px 0;
+}
+
+/* UPDATED: Make chart container flexible for both donut and bar charts */
+.donut-chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 900px; /* Max width for bar chart */
+    height: 400px; /* INCREASED from 280px to 400px for larger charts */
+    margin: 0 auto 25px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Canvas wrapper - bar charts fill container, donuts stay centered */
+.donut-chart-container canvas {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Specific styling for donut chart (when center text is present) */
+.donut-chart-container:has(.donut-center) canvas {
+    max-width: 400px; /* INCREASED from 280px to 400px */
+    max-height: 400px; /* INCREASED from 280px to 400px */
+}
+
+.donut-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none; /* Allow clicks to pass through to canvas */
+}
+
+.donut-center span {
+    font-size: 48px;
+    font-weight: 700;
+    color: #1E1E1E;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+/* === TO-DO LIST CARD === */
+.todo-list-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.todo-list-card h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 25px 0;
+}
+
+.todo-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 15px;
+}
+
+.project-filter {
+    position: relative;
+    flex: 1;
+    max-width: 200px;
+}
+
+.project-filter select {
+    width: 100%;
+    padding: 8px 35px 8px 12px;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #555;
+    background: #fff;
+    appearance: none;
+    cursor: pointer;
+}
+
+.project-filter i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #8C8C8C;
+    width: 18px;
+    height: 18px;
+}
+
+.sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sort-controls span {
+    font-size: 14px;
+    color: #555;
+    font-weight: 500;
+}
+
+.sort-btn {
+    padding: 6px 16px;
+    border: 1px solid #E0E0E0;
+    border-radius: 20px;
+    background: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sort-btn:hover {
+    border-color: #FBC02D;
+}
+
+.sort-btn.active {
+    background: #FBC02D;
+    border-color: #FBC02D;
+    color: #1E1E1E;
+}
+
+.todo-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    max-height: 500px; /* ADDED: Max height for overflow */
+    overflow-y: auto; /* ADDED: Enable scrolling */
+    padding-right: 5px; /* ADDED: Space for scrollbar */
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px;
+    background: #F8F9FA;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.todo-item:hover {
+    background: #F0F0F0;
+}
+
+.todo-item.completed {
+    opacity: 0.6;
+}
+
+.todo-checkbox {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #E0E0E0;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all 0.2s ease;
+}
+
+.todo-checkbox.checked {
+    background: #FBC02D;
+    border-color: #FBC02D;
+}
+
+.todo-checkbox.checked i {
+    color: #1E1E1E;
+    width: 16px;
+    height: 16px;
+}
+
+.todo-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.todo-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1E1E1E;
+    margin: 0 0 4px 0;
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+}
+
+.todo-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: #8C8C8C;
+}
+
+.todo-priority {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.priority-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.priority-dot.urgent { background: #D93025; }
+.priority-dot.high { background: #FF6B6B; }
+.priority-dot.medium { background: #E6A100; }
+.priority-dot.low { background: #34A853; }
+
+.todo-date {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.todo-project {
+    color: #555;
+    font-weight: 500;
+}
+
+.personal-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #E6F7FF;
+    color: #1890FF;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.new-task-btn {
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed #E0E0E0;
+    border-radius: 8px;
+    background: #F8F9FA;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #8C8C8C;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.new-task-btn:hover {
+    border-color: #FBC02D;
+    background: #FFFBE5;
+    color: #1E1E1E;
+}
+
+.new-task-btn i {
+    width: 20px;
+    height: 20px;
+}
+
+/* === TRENDING POSTS CARD === */
+.trending-posts-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.trending-posts-card h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+}
+
+.trending-posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.trending-post {
+    padding-bottom: 20px;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+.trending-post:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.post-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.post-avatar.avatar-1 { background: #FFAB91; color: #1E1E1E; }
+.post-avatar.avatar-2 { background: #81D4FA; color: #1E1E1E; }
+.post-avatar.avatar-4 { background: #CE93D8; color: #1E1E1E; }
+
+.post-author-info {
+    flex: 1;
+}
+
+.post-author-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1E1E1E;
+    margin: 0;
+}
+
+.post-date {
+    font-size: 12px;
+    color: #8C8C8C;
+}
+
+.post-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: #FFFBE5;
+    color: #F9A825;
+}
+
+.post-tag.software { background: #E6F7F0; color: #34A853; }
+
+.post-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1E1E1E;
+    margin: 0 0 6px 0;
+    line-height: 1.4;
+}
+
+.post-excerpt {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+    margin: 0 0 10px 0;
+}
+
+.post-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 13px;
+    color: #8C8C8C;
+}
+
+.post-stat {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.post-stat i {
+    width: 16px;
+    height: 16px;
+}
+
+/* === NOTIFICATIONS CARD === */
+.notifications-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.notifications-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.mark-read-btn {
+    background: #FBC02D;
+    color: #1E1E1E;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.mark-read-btn:hover {
+    background: #F9A825;
+}
+
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: #F8F9FA;
+    border-radius: 8px;
+    position: relative;
+}
+
+.notification-item.unread {
+    background: #FFFBE5;
+}
+
+.notification-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    font-size: 18px;
+}
+
+.notification-icon.completed {
+    background: #E6F7F0;
+    color: #34A853;
+}
+
+.notification-icon.post {
+    background: #E6F7F0;
+    color: #34A853;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1E1E1E;
+    margin: 0 0 4px 0;
+}
+
+.notification-text {
+    font-size: 13px;
+    color: #555;
+    margin: 0 0 4px 0;
+    line-height: 1.4;
+}
+
+.notification-time {
+    font-size: 11px;
+    color: #8C8C8C;
+}
+
+.notification-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #D93025;
+}
+
+/* === USER AVATARS === */
+.user-avatars {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+}
+
+.avatar-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 1200px) {
+    .home-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .user-avatars {
+        bottom: 20px;
+        right: 20px;
+    }
+}

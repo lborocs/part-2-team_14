@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make-It-All - Create Personal To-Do</title>
+    <link rel="stylesheet" href="../dashboard.css">
+    <link rel="stylesheet" href="../knowledge-base/knowledge-base.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    
+    <style>
+        .assignee-checklist {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dfe1e6;
+            border-radius: 5px;
+            padding: 10px;
+            background: #fafafa;
+        }
+        .assignee-checkbox-item {
+            display: block;
+            margin-bottom: 8px;
+        }
+        .assignee-checkbox-item label {
+            margin-left: 8px;
+            font-weight: 400;
+            color: #333;
+        }
+    </style>
+</head>
+<body id="create-project-page">
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="nav-top">
+                <div class="logo-container">
+                    <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon"> 
+                </div>
+                <ul class="nav-main">
+                    <li class="active-parent"><a href="home.html"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
+                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
+                    <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+                </ul>
+            </div>
+            <div class="nav-footer">
+                <ul>
+                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="kb-header">
+                <p class="breadcrumbs">Home > Create Project</p>
+                <h1>Create a New Project</h1>
+            </header>
+
+            <div class="kb-layout-wrapper">
+                <div class="kb-main-content">
+                    <form id="create-project-form" class="create-post-form">
+                        <div class="form-group">
+                            <label for="project-name">Project Name</label>
+                            <input type="text" id="project-name" placeholder="e.g., Q4 Marketing Campaign, Website Redesign" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="project-description">Description (Optional)</label>
+                            <textarea id="project-description" rows="5" placeholder="Briefly describe this project's goals."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="project-leader">Assign Team Leader</label>
+                            <select id="project-leader" required>
+                                <option value="">Select a leader...</option>
+                                </select>
+                        </div>
+
+                        <button type="submit" class="create-post-btn">Create Project</button>
+                    </form>
+                </div>
+
+                <aside class="kb-sidebar">
+                    <div class="kb-sidebar-widget">
+                        <h3>Project Tips</h3>
+                        <ul class="best-practices-list">
+                            <li><strong>Clear Names:</strong> Use a descriptive name that your team will recognize.</li>
+                            <li><strong>Define Goals:</strong> A brief description helps align everyone.</li>
+                            <li><strong>Assign People:</strong> Select a Team Leader and at least one member to get started.</li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <script src="../app.js"></script>
+</body>
+</html>
