@@ -1,0 +1,154 @@
+/* Layout for the manager progress page */
+.manager-progress-layout {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 30px;
+}
+
+.manager-progress-left {
+    grid-column: span 12;
+}
+
+.manager-progress-right {
+    grid-column: span 12;
+}
+
+/* Larger screens (tablets and desktops) */
+@media (min-width: 768px) {
+    .manager-progress-left {
+        grid-column: span 5;
+    }
+
+    .manager-progress-right {
+        grid-column: span 7;
+    }
+}
+
+/*
+* Project Resources Card
+*/
+.resource-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.resource-status-icon-bg {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.resource-status-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+/* Green - Sufficient */
+.resource-card.status-green .resource-status-icon-bg {
+    background: rgba(52, 168, 83, 0.1);
+}
+.resource-card.status-green .resource-status-icon {
+    background: #34A853;
+}
+.resource-card.status-green h2 {
+    color: #34A853;
+}
+
+/* Yellow - Tight */
+.resource-card.status-yellow .resource-status-icon-bg {
+    background: rgba(230, 161, 0, 0.1);
+}
+.resource-card.status-yellow .resource-status-icon {
+    background: #E6A100;
+}
+.resource-card.status-yellow h2 {
+    color: #E6A100;
+}
+
+/* Red - Under-Resourced */
+.resource-card.status-red .resource-status-icon-bg {
+    background: rgba(217, 48, 37, 0.1);
+}
+.resource-card.status-red .resource-status-icon {
+    background: #D93025;
+}
+.resource-card.status-red h2 {
+    color: #D93025;
+}
+
+
+.resource-info h3 {
+    font-size: 14px;
+    font-weight: 500;
+    color: #8C8C8C;
+    margin: 0 0 4px 0;
+}
+
+.resource-info h2 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.resource-info p {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/*
+* Tasks per Member Card
+*/
+.tasks-per-member-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 24px;
+}
+
+.tasks-per-member-card h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+}
+
+.tasks-per-member-chart {
+    width: 100%;
+    /* Height will be set by Chart.js */
+}
+
+.chart-legend-horizontal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #EAECEE;
+}
+
+.chart-legend-horizontal .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+}
+
+.chart-legend-horizontal .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}

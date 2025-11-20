@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Make-It-All - Progress</title>
+    <link rel="stylesheet" href="../dashboard.css">
+    <link rel="stylesheet" href="progress.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body id="progress-page">
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="nav-top">
+                <div class="logo-container">
+                    <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon"> 
+                </div>
+                <ul class="nav-main">
+                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+                    <li class="active-parent">
+                        <a href="projects.html"><i data-feather="folder"></i>Projects</a>
+                        <!-- 
+                          KEY CHANGE: 
+                          - Sidebar list is now empty, JS will fill it.
+                          - Added id="project-sidebar-list"
+                        -->
+                        <ul class="nav-sub" id="project-sidebar-list">
+                            <!-- JS will populate this -->
+                        </ul>
+                    </li>
+                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
+                    <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+                </ul>
+            </div>
+            <div class="nav-footer">
+                <ul>
+                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="project-header">
+                <div>
+                    <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb">Project</span></p>
+                    <h1 id="project-name-header">Project</h1>
+                </div>
+                <nav class="project-nav" id="project-nav-links">
+                    <!-- JS will populate these links -->
+                    <a href="projects.html">Tasks</a>
+                    <a href="manager-progress.html" class="active">Progress</a>
+                    <a href="#">Resources</a>
+                </nav>
+                <button class="close-project-btn" id="close-project-btn" style="display: none;">Close Project</button>
+            </header>
+
+            <div class="progress-layout">
+                <!-- Left Column -->
+                <div class="progress-left">
+                    <!-- Task Progress Card -->
+                    <section class="progress-card">
+                        <h2>Task Progress</h2>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="task-progress-fill" style="width: 0%">
+                                    <span class="progress-icon">🏆</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="progress-text" id="progress-text">You have completed x% of your assigned tasks.</p>
+                    </section>
+
+                    <!-- Upcoming Deadlines Card -->
+                    <section class="deadlines-card">
+                        <h2>Upcoming Deadlines</h2>
+                        <div class="deadlines-list" id="deadlines-list">
+                            <!-- Deadlines will be rendered here -->
+                        </div>
+                    </section>
+
+                    <!-- Your Workload Card -->
+                    <section class="workload-card">
+                        <h2>Your Workload</h2>
+                        <div class="workload-bars">
+                            <div class="workload-item">
+                                <span class="workload-label">You</span>
+                                <div class="workload-bar-bg">
+                                    <div class="workload-bar-fill" id="user-workload" style="width: 0%"></div>
+                                </div>
+                                <span class="workload-count" id="user-task-count">0 tasks</span>
+                            </div>
+                            <div class="workload-item">
+                                <span class="workload-label">Team Average</span>
+                                <div class="workload-bar-bg">
+                                    <div class="workload-bar-fill team-avg" id="team-workload" style="width: 0%"></div>
+                                </div>
+                                <span class="workload-count" id="team-task-count">0 tasks</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Right Column -->
+                <div class="progress-right">
+                    <!-- Urgent Tasks Card -->
+                    <section class="urgent-card">
+                        <h2>Urgent</h2>
+                        <p class="urgent-subtitle">Prioritize these at-risk and overdue tasks:</p>
+                        <div class="urgent-tasks-list" id="urgent-tasks-list">
+                            <!-- Urgent tasks will be rendered here -->
+                        </div>
+                    </section>
+
+                    <!-- Task Distribution Card -->
+                    <section class="distribution-card">
+                        <h2>Task Distribution</h2>
+                        <p class="distribution-subtitle">Your current tasks are distributed:</p>
+                        <div class="pie-chart-container">
+                            <canvas id="taskDistributionChart"></canvas>
+                        </div>
+                        <div class="distribution-legend">
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #FF8C8C;"></span>
+                                <span id="todo-count">To Do: 0</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #FFD166;"></span>
+                                <span id="inprogress-count">In Progress: 0</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #A8DADC;"></span>
+                                <span id="review-count">Review: 0</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color" style="background: #81C5D4;"></span>
+                                <span id="completed-count">Completed: 0</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../app.js"></script>
+</body>
+</html>

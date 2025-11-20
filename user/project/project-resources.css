@@ -1,0 +1,166 @@
+/*
+* Project Resources Page Styles
+*/
+
+.resource-content {
+    padding: 30px 40px;
+    /* ADDED for new full-height layout */
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.resource-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.resource-header h2 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #1E1E1E;
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+.upload-btn:hover {
+    background: #333;
+}
+.upload-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.resource-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.resource-card h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #F0F0F0;
+}
+
+/* Contact List */
+.contact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.contact-item .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+}
+.contact-info {
+    line-height: 1.4;
+}
+.contact-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1E1E1E;
+    display: block;
+}
+.contact-role {
+    font-size: 14px;
+    color: #555;
+    display: block;
+}
+.contact-info a {
+    font-size: 14px;
+    color: #1E1E1E;
+    text-decoration: none;
+    font-weight: 500;
+}
+.contact-info a:hover {
+    text-decoration: underline;
+}
+
+/* Details List */
+.details-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.details-list li strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1E1E1E;
+    margin-bottom: 4px;
+}
+.details-list li span,
+.details-list li p {
+    font-size: 15px;
+    color: #555;
+    margin: 0;
+}
+
+/* Links List */
+.links-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.links-list li a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #1E1E1E;
+    text-decoration: none;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+.links-list li a:hover {
+    background: #F8F9FA;
+}
+.links-list li a svg {
+    width: 20px;
+    height: 20px;
+    color: #8C8C8C;
+}
