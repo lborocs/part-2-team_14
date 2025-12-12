@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Uploads folder (don't commit uploaded files)
+uploads/*
+!uploads/.gitkeep
+
+# MAMP/XAMPP
+.htaccess
+
+# IDE
+.vscode/
+.idea/
