@@ -705,12 +705,12 @@ DELIMITER ;
 
 -- Insert sample users
 INSERT INTO users (email, first_name, last_name, role, specialties, is_registered, password_hash) VALUES
-('alice.manager@makeitall.com', 'Alice', 'Johnson', 'manager', '["Project Management", "Strategy", "Leadership"]', TRUE, '$2b$10$examplehash1'),
-('bob.lead@makeitall.com', 'Bob', 'Smith', 'team_leader', '["Backend", "Python", "SQL", "API Design"]', TRUE, '$2b$10$examplehash2'),
-('carol.dev@makeitall.com', 'Carol', 'Williams', 'team_member', '["Frontend", "React", "CSS", "JavaScript"]', TRUE, '$2b$10$examplehash3'),
-('dave.dev@makeitall.com', 'Dave', 'Brown', 'team_member', '["Backend", "Node.js", "MongoDB"]', FALSE, NULL),
-('emma.specialist@makeitall.com', 'Emma', 'Davis', 'technical_specialist', '["DevOps", "AWS", "Docker", "CI/CD"]', TRUE, '$2b$10$examplehash4'),
-('frank.designer@makeitall.com', 'Frank', 'Miller', 'team_member', '["UI Design", "Figma", "Prototyping"]', TRUE, '$2b$10$examplehash5');
+('alice.manager@make-it-all.co.uk', 'Alice', 'Johnson', 'manager', '["Project Management", "Strategy", "Leadership"]', TRUE, '$2y$10$ysE1D1v.ezEci.mxqs3xcuQWfbbbgR/gMSWlPgHZCwesXZU1e54Sy'),
+('bob.lead@make-it-all.co.uk', 'Bob', 'Smith', 'team_leader', '["Backend", "Python", "SQL", "API Design"]', TRUE, '$2y$10$ysE1D1v.ezEci.mxqs3xcuQWfbbbgR/gMSWlPgHZCwesXZU1e54Sy'),
+('carol.dev@make-it-all.co.uk', 'Carol', 'Williams', 'team_member', '["Frontend", "React", "CSS", "JavaScript"]', TRUE, '$2y$10$ysE1D1v.ezEci.mxqs3xcuQWfbbbgR/gMSWlPgHZCwesXZU1e54Sy'),
+('dave.dev@make-it-all.co.uk', 'Dave', 'Brown', 'team_member', '["Backend", "Node.js", "MongoDB"]', FALSE, NULL),
+('emma.specialist@make-it-all.co.uk', 'Emma', 'Davis', 'technical_specialist', '["DevOps", "AWS", "Docker", "CI/CD"]', TRUE, '$2y$10$ysE1D1v.ezEci.mxqs3xcuQWfbbbgR/gMSWlPgHZCwesXZU1e54Sy'),
+('frank.designer@make-it-all.co.uk', 'Frank', 'Miller', 'team_member', '["UI Design", "Figma", "Prototyping"]', TRUE, '$2y$10$ysE1D1v.ezEci.mxqs3xcuQWfbbbgR/gMSWlPgHZCwesXZU1e54Sy');
 
 -- Set manager relationships
 UPDATE users SET manager_id = 1 WHERE user_id IN (2, 3, 4, 5, 6);
