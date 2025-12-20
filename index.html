@@ -32,7 +32,7 @@
                     <!-- Toggle password visibility -->
                     <script>
                     function myFunction(password, icon) {
-                        const input = document.getElementById("signup-password");
+                        const input = document.getElementById(password);
 
                         if (input.type === "password") {
                             input.type = "text";
@@ -44,6 +44,22 @@
                     };
                     </script>
                     
+                    <style>
+                        .input-group i {
+                        position: absolute;
+                        top: 50%;
+                        right: 10px; /* change to left: 10px; if you want it on the left */
+                        transform: translateY(-50%);
+                        cursor: pointer;
+                        font-size: 18px;
+                        color: #555;
+                        }
+
+                        .input-group i:hover {
+                        color: #000;
+                        }
+                    </style>
+
                     <small id="password-error">Password is too weak</small>
                 </div>
 
