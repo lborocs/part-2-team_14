@@ -27,7 +27,7 @@
                 <div class="input-group">
                     <label for="signup-password">Password</label>
                     <input type="password" id="signup-password" required />
-                    <i class="fa-solid fa-eye" onclick="myFunction('signup-password', this)"></i>
+                    <i class="fa-solid fa-eye-slash" onclick="myFunction('signup-password', this)"></i>
 
                     <!-- Toggle password visibility -->
                     <script>
@@ -48,19 +48,92 @@
                         .input-group i {
                         position: absolute;
                         top: 50%;
-                        right: 10px; /* change to left: 10px; if you want it on the left */
+                        right: 10px;
                         transform: translateY(-50%);
                         cursor: pointer;
                         font-size: 18px;
                         color: #555;
                         }
-
                         .input-group i:hover {
                         color: #000;
                         }
                     </style>
 
                     <small id="password-error">Password is too weak</small>
+                </div>
+
+                <div class="password-requirements">
+                    <p class="requirement" id="length">Min. 8 characters</p>
+                    <p class="requirement" id="characters">Include a special character: #.-?!@$%^&*</p>
+                    <p class="requirement" id="lowercase">Include lowercase letter</p>
+                    <p class="requirement" id="number">Min. 1 number</p>
+                    <p class="requirement" id="uppercase">Include uppercase letter</p>
+
+                    <script>
+                        const updateRequirement = (id, valid) => {
+                            const requirement = document.getElementById(id);
+                            if (valid) {
+                                requirement.classList.add("valid");
+                            } else {
+                                requirement.classList.remove("valid"); 
+                            }
+                        };
+
+                        const password = document.getElementById("signup-password");
+                        password.addEventListener("input", (event) => {
+                            const value = event.target.value;
+                            
+                            updateRequirement('length', value.length >= 8)
+                            updateRequirement('lowercase', /[a-z]/.test(value))
+                            updateRequirement('uppercase', /[A-Z]/.test(value))
+                            updateRequirement('number', /\d/.test(value))
+                            updateRequirement('characters', /[#.?!@$%^&*-]/.test(value))
+                        });
+                    </script>
+
+                    <style>
+                        .password-requirements {
+                        display: flex;
+                        flex-wrap: wrap;
+                        margin-top: -1rem;
+                        padding: 0 16px;
+                        padding-bottom: 20px;
+                        justify-content: center;
+                        }
+                        .requirement {
+                        font-size: 12px;
+                        flex: 1 0 50%;
+                        min-width: max-content;
+                        margin: 2px 0;
+                        text-align: left;
+                        display: flex;
+                        align-items: center;
+                        }
+                        .requirement:before {
+                        content: '\2716';
+                        padding-right: 5px;
+                        font-size: 1.6em;
+                        position: relative;
+                        top: .15em;
+                        }
+                        .requirement:not(.valid) {
+                        color: #808080;
+                        }
+                        .requirement.valid {
+                        color: #4CAF50;
+                        }
+                        .requirement.valid:before {
+                        content: '\2714';
+                        }
+                        .requirement.error {
+                        color: red;
+                        }
+                    </style>
+                </div>
+
+                <div class="input-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" name="confirm_password" id="confirm-password" required />
                 </div>
 
                 <button type="submit">Sign Up</button>
