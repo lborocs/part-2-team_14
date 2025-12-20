@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
     <div class="container form-section" id="container">
@@ -16,16 +18,35 @@
                 <img src="logo.png" alt="Make-It-All Logo" class="logo">
                 <h1>Create an Account</h1>
                 <span class="subtitle">Enter your details to register.</span>
-                
+
                 <div class="input-group">
                     <label for="signup-email">Email</label>
                     <input type="email" id="signup-email" required />
                 </div>
+
                 <div class="input-group">
                     <label for="signup-password">Password</label>
                     <input type="password" id="signup-password" required />
+                    <i class="fa-solid fa-eye" onclick="myFunction('signup-password', this)"></i>
+
+                    <!-- Toggle password visibility -->
+                    <script>
+                    function myFunction(password, icon) {
+                        const input = document.getElementById("signup-password");
+
+                        if (input.type === "password") {
+                            input.type = "text";
+                            icon.className = "fa-solid fa-eye";
+                        } else {
+                            input.type = "password";
+                            icon.className = "fa-solid fa-eye-slash";
+                        }
+                    };
+                    </script>
+                    
                     <small id="password-error">Password is too weak</small>
                 </div>
+
                 <button type="submit">Sign Up</button>
             </form>
         </div>
