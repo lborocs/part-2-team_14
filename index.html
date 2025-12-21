@@ -13,6 +13,7 @@
 </head>
 <body>
     <div class="container form-section" id="container">
+        <!-- Sign-up page -->
         <div class="form-container sign-up-container">
             <form action="#" id="signUpForm">
                 <img src="logo.png" alt="Make-It-All Logo" class="logo">
@@ -44,6 +45,7 @@
                     };
                     </script>
                     
+                    <!-- Visibility icon CSS -->
                     <style>
                         .input-group i {
                         position: absolute;
@@ -62,6 +64,7 @@
                     <small id="password-error">Password is too weak</small>
                 </div>
 
+                <!-- Password validation requirements -->
                 <div class="password-requirements">
                     <p class="requirement" id="length">Min. 8 characters</p>
                     <p class="requirement" id="characters">Include a special character: #.-?!@$%^&*</p>
@@ -69,6 +72,7 @@
                     <p class="requirement" id="number">Min. 1 number</p>
                     <p class="requirement" id="uppercase">Include uppercase letter</p>
 
+                    <!-- Responsive requirements -->
                     <script>
                         const updateRequirement = (id, valid) => {
                             const requirement = document.getElementById(id);
@@ -91,6 +95,7 @@
                         });
                     </script>
 
+                    <!-- Password requirement CSS -->
                     <style>
                         .password-requirements {
                         display: flex;
@@ -141,6 +146,7 @@
         </div>
 
         <div class="form-container sign-in-container">
+            <!-- Log-in page -->
             <form action="#" id="signInForm">
                 <img src="logo.png" alt="Make-It-All Logo" class="logo">
                 <h1>Login</h1>
