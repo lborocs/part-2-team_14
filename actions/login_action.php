@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$user) {
-            echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
+            echo json_encode(['success' => false, 'message' => 'Invalid email']);
             exit();
         }
         
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Verify password
         if (!password_verify($password, $user['password_hash'])) {
-            echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
+            echo json_encode(['success' => false, 'message' => 'Invalid password']);
             exit();
         }
         

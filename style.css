@@ -240,6 +240,10 @@ small#login-error {
     margin-top: 5px;
 }
 
+small#login-error.visible {
+    visibility: visible;
+}
+
 /*
 * =========================================
 * Mobile Responsive "Stack" Animation

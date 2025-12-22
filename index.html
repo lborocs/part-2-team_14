@@ -90,7 +90,7 @@
                             updateRequirement('length', value.length >= 8)
                             updateRequirement('lowercase', /[a-z]/.test(value))
                             updateRequirement('uppercase', /[A-Z]/.test(value))
-                            updateRequirement('number', /\d/.test(value))
+                            updateRequirement('number', /(\D*\d){3,}/.test(value));
                             updateRequirement('characters', /[#.?!@$%^&*-]/.test(value))
                         });
                     </script>
