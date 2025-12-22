@@ -156,7 +156,7 @@
                     <label for="login-email">Email</label>
                     <input type="email" id="login-email" required />
                 </div>
-                
+
                 <div class="input-group">
                     <label for="login-password">Password</label>
                     <input type="password" id="login-password" required />
@@ -164,7 +164,18 @@
                     <small id="login-error">Invalid email or password</small>
                 </div>
 
-                <span style="padding-right: 475px; padding-bottom: 30px; color: #8C8C8C;">Forgot your password?</span>
+                <!-- Forgot your password? -->
+                <p class="forgot-password">Forgot your password?</p>
+                <style>
+                    .forgot-password {
+                        margin: -20px 0 10px 0;
+                        font-size: 13px;
+                        color: #8C8C8C;
+                        padding-right: 500px;
+                        cursor: pointer;
+                        padding-bottom: 20px;
+                    }
+                </style>
 
                 <button type="submit">Log In</button>
             </form>
