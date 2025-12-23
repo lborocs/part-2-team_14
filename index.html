@@ -8,29 +8,92 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
     <div class="container form-section" id="container">
+        <!-- Sign-up page -->
         <div class="form-container sign-up-container">
             <form action="#" id="signUpForm">
                 <img src="logo.png" alt="Make-It-All Logo" class="logo">
                 <h1>Create an Account</h1>
                 <span class="subtitle">Enter your details to register.</span>
-                
+
                 <div class="input-group">
                     <label for="signup-email">Email</label>
                     <input type="email" id="signup-email" required />
                 </div>
+
                 <div class="input-group">
                     <label for="signup-password">Password</label>
                     <input type="password" id="signup-password" required />
+                    <i class="fa-solid fa-eye-slash" onclick="myFunction('signup-password', this)"></i>
+
+                    <!-- Toggle password visibility -->
+                    <script>
+                    function myFunction(password, icon) {
+                        const input = document.getElementById(password);
+
+                        if (input.type === "password") {
+                            input.type = "text";
+                            icon.className = "fa-solid fa-eye";
+                        } else {
+                            input.type = "password";
+                            icon.className = "fa-solid fa-eye-slash";
+                        }
+                    };
+                    </script>
+
                     <small id="password-error">Password is too weak</small>
                 </div>
+
+                <!-- Password validation requirements -->
+                <div class="password-requirements">
+                    <p class="requirement" id="length">Min. 8 characters</p>
+                    <p class="requirement" id="characters">Include a special character: #.-?!@$%^&*</p>
+                    <p class="requirement" id="lowercase">Include lowercase letter</p>
+                    <p class="requirement" id="number">Min. 3 numbers</p>
+                    <p class="requirement" id="uppercase">Include uppercase letter</p>
+
+                    <!-- Responsive requirements -->
+                    <script>
+                        const updateRequirement = (id, valid) => {
+                            const requirement = document.getElementById(id);
+                            if (valid) {
+                                requirement.classList.add("valid");
+                            } else {
+                                requirement.classList.remove("valid"); 
+                            }
+                        };
+
+                        const password = document.getElementById("signup-password");
+                        password.addEventListener("input", (event) => {
+                            const value = event.target.value;
+                            
+                            updateRequirement('length', value.length >= 8)
+                            updateRequirement('lowercase', /[a-z]/.test(value))
+                            updateRequirement('uppercase', /[A-Z]/.test(value))
+                            updateRequirement('number', /(\D*\d){3,}/.test(value));
+                            updateRequirement('characters', /[#.?!@$%^&*-]/.test(value))
+                        });
+                    </script>
+
+                    <!-- Password requirement CSS -->
+                </div>
+
+                <!-- Confirm password -->
+                <div class="input-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" name="confirm_password" id="confirm-password" required />
+                </div>
+
                 <button type="submit">Sign Up</button>
             </form>
         </div>
 
         <div class="form-container sign-in-container">
+            <!-- Log-in page -->
             <form action="#" id="signInForm">
                 <img src="logo.png" alt="Make-It-All Logo" class="logo">
                 <h1>Login</h1>
@@ -40,11 +103,18 @@
                     <label for="login-email">Email</label>
                     <input type="email" id="login-email" required />
                 </div>
+
                 <div class="input-group">
                     <label for="login-password">Password</label>
                     <input type="password" id="login-password" required />
+                    <i class="fa-solid fa-eye-slash" onclick="myFunction('login-password', this)"></i>
                     <small id="login-error">Invalid email or password</small>
                 </div>
+                <div>
+                <!-- Forgot your password? -->
+                <p class="forgot-password">Forgot your password?</p>
+</div>
+
                 <button type="submit">Log In</button>
             </form>
         </div>

@@ -69,10 +69,12 @@ signUpForm.addEventListener('submit', (e) => {
     
     const email = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value.trim();
+    const confirmPassword = document.getElementById('confirm-password').value.trim();
     
     const formData = new FormData();
     formData.append('email', email);
     formData.append('password', password);
+    formData.append('confirm_password', confirmPassword);
     
     fetch('actions/signup_action.php', {
         method: 'POST',
