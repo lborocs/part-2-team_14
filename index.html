@@ -44,22 +44,6 @@
                         }
                     };
                     </script>
-                    
-                    <!-- Visibility icon CSS -->
-                    <style>
-                        .input-group i {
-                        position: absolute;
-                        top: 50%;
-                        right: 10px;
-                        transform: translateY(-50%);
-                        cursor: pointer;
-                        font-size: 18px;
-                        color: #555;
-                        }
-                        .input-group i:hover {
-                        color: #000;
-                        }
-                    </style>
 
                     <small id="password-error">Password is too weak</small>
                 </div>
@@ -96,44 +80,6 @@
                     </script>
 
                     <!-- Password requirement CSS -->
-                    <style>
-                        .password-requirements {
-                        display: flex;
-                        flex-wrap: wrap;
-                        margin-top: -1rem;
-                        padding: 0 16px;
-                        padding-bottom: 20px;
-                        justify-content: center;
-                        }
-                        .requirement {
-                        font-size: 12px;
-                        flex: 1 0 50%;
-                        min-width: max-content;
-                        margin: 2px 0;
-                        text-align: left;
-                        display: flex;
-                        align-items: center;
-                        }
-                        .requirement:before {
-                        content: '\2716';
-                        padding-right: 5px;
-                        font-size: 1.6em;
-                        position: relative;
-                        top: .15em;
-                        }
-                        .requirement:not(.valid) {
-                        color: #808080;
-                        }
-                        .requirement.valid {
-                        color: #4CAF50;
-                        }
-                        .requirement.valid:before {
-                        content: '\2714';
-                        }
-                        .requirement.error {
-                        color: red;
-                        }
-                    </style>
                 </div>
 
                 <!-- Confirm password -->
@@ -164,19 +110,10 @@
                     <i class="fa-solid fa-eye-slash" onclick="myFunction('login-password', this)"></i>
                     <small id="login-error">Invalid email or password</small>
                 </div>
-
+                <div>
                 <!-- Forgot your password? -->
                 <p class="forgot-password">Forgot your password?</p>
-                <style>
-                    .forgot-password {
-                        margin: -20px 0 10px 0;
-                        font-size: 13px;
-                        color: #8C8C8C;
-                        padding-right: 505px;
-                        cursor: pointer;
-                        padding-bottom: 20px;
-                    }
-                </style>
+</div>
 
                 <button type="submit">Log In</button>
             </form>
