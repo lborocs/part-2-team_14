@@ -1057,63 +1057,36 @@ function loadKbPost(currentUser) {
 /**
  * Runs on the Create Project page (create-project.html)
  */
+
 function setupCreateProjectPage(currentUser) {
-    const form = document.getElementById('create-project-form');
-    if (!form) return;
+  const form = document.getElementById("create-project-form");
+  if (!form) return;
 
-    // --- Get and populate new form fields ---
-    const leaderSelect = document.getElementById('project-leader');
+  // searchable leader input (AJAX)
+  setupLeaderAutocomplete({
+    inputId: "leader-search",
+    hiddenId: "team-leader-id",
+    resultsId: "leader-results",
+    // If you made the endpoint INSIDE create-project.php:
+    endpointUrl: "create-project.php?ajax=leaders",
+    // If you instead created a separate file, use:
+    // endpointUrl: "search_leaders.php",
+    formId: "create-project-form",
+  });
 
-    // Populate Leader Dropdown (Anyone can be a leader)
-    if (leaderSelect) {
-        leaderSelect.innerHTML = '<option value="">Select a leader...</option>';
-        for (const email in simUsers) {
-            const user = simUsers[email];
+  //  add a safety check to ensure they picked from suggestions
+  form.addEventListener("submit", (e) => {
+    const projectName = document.getElementById("project-name")?.value?.trim();
+    const leaderId = document.getElementById("team-leader-id")?.value;
 
-            // FIX: The role filter is removed. Every user is now available.
-            leaderSelect.innerHTML += `<option value="${email}">${user.name} (${user.role})</option>`;
-        }
+    if (!projectName || !leaderId) {
+      e.preventDefault();
+      alert("Please enter a project name and select a team leader from the suggestions.");
+      return;
     }
-
-    // NOTE: Team Member Checklist population logic remains removed.
-
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const projectName = document.getElementById('project-name').value;
-        const projectDesc = document.getElementById('project-description').value;
-
-        // --- Get values from new fields ---
-        const teamLeaderEmail = document.getElementById('project-leader').value;
-
-        // Team Member collection logic remains removed, saving an empty array.
-        const teamMemberEmails = [];
-
-        // Updated validation
-        if (!projectName || !teamLeaderEmail) {
-            alert('Please enter a project name and select a team leader.');
-            return;
-        }
-
-        const newProject = {
-            id: projectName.toLowerCase().replace(/\s+/g, '-') + '-' + new Date().getTime(),
-            name: projectName,
-            description: projectDesc,
-            createdBy: currentUser.email,
-            createdDate: new Date().toISOString().split('T')[0],
-            // --- Save new data to the project object ---
-            teamLeader: teamLeaderEmail,
-            teamMembers: teamMemberEmails // Saved as empty array
-            // --- END NEW CODE ---
-        };
-
-        simProjects.push(newProject);
-        saveProjects();
-
-        sessionStorage.setItem('projectCreated', `Project "${projectName}" created successfully!`);
-        // Redirect to the new project's page
-        window.location.href = `../project/projects.html?project=${newProject.id}&user=${currentUser.email}`;
-    });
+  });
 }
+
 
 
 /**
@@ -2766,6 +2739,586 @@ function loadProjectArchivePage(currentUser) {
 }
 // *** END ADDED FUNCTION ***
 
+function sortProjects() {
+    const sortSelect = document.getElementById('sortProjects');
+    const grid = document.querySelector('.projects-grid');
+
+    // Safety check (prevents errors)
+    if (!sortSelect || !grid) return;
+
+    sortSelect.addEventListener('change', () => {
+        const cards = Array.from(grid.querySelectorAll('.project-card'));
+        const sortBy = sortSelect.value;
+
+        cards.sort((a, b) => {
+            if (sortBy === 'name') {
+                return a.dataset.name.localeCompare(b.dataset.name);
+            }
+
+            if (sortBy === 'progress') {
+                return b.dataset.progress - a.dataset.progress;
+            }
+
+            if (sortBy === 'due') {
+                return new Date(a.dataset.deadline) - new Date(b.dataset.deadline);
+            }
+
+            return 0;
+        });
+
+        // Re-attach cards in new order
+        cards.forEach(card => grid.appendChild(card));
+    });
+}
+
+function archivedJump() {
+    const btn = document.getElementById("jumpToArchived");
+    const archived = document.getElementById("archived-section");
+    if (!btn || !archived) return;
+
+    btn.addEventListener("click", () => {
+        archived.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+}
+
+function setupArchivedToggle() {
+    const btn = document.getElementById("jumpToArchived");
+    const content = document.getElementById("archived-content");
+    const section = document.getElementById("archived-section");
+
+    if (!btn || !content || !section) return;
+
+    btn.addEventListener("click", () => {
+        const isHidden = content.classList.contains("is-hidden");
+
+        content.classList.toggle("is-hidden");
+        btn.classList.toggle("is-open", isHidden);
+
+        if (isHidden) {
+            section.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    });
+}
+
+function setupProjectCardMenus() {
+    // 1) Open/close the 3-dots menu
+
+    document.addEventListener("click", (e) => {
+        const menuBtn = e.target.closest(".card-menu-btn");
+        const menuItem = e.target.closest(".card-menu-item");
+
+        // If user clicked the 3 dots button
+        if (menuBtn) {
+            const card = menuBtn.closest(".project-card");
+            const menu = card.querySelector(".card-menu-dropdown");
+
+            // Close any other open menus first
+            document.querySelectorAll(".card-menu-dropdown").forEach((m) => {
+                if (m !== menu) m.hidden = true;
+            });
+
+            // Toggle this menu
+            menu.hidden = !menu.hidden;
+            return;
+        }
+
+        // If user clicked an option in the menu (Mark complete / Archive / Reinstate)
+        if (menuItem) {
+            const card = menuItem.closest(".project-card");
+            const projectId = card.dataset.projectId; // from data-project-id
+            const action = menuItem.dataset.action;   // "complete", "archive", "reinstate"
+
+            // Close menu immediately
+            const menu = card.querySelector(".card-menu-dropdown");
+            if (menu) menu.hidden = true;
+
+            // Send request to PHP (same page)
+            runProjectAction(projectId, action, card);
+            return;
+        }
+
+        // If user clicked anywhere else, close all menus
+        document.querySelectorAll(".card-menu-dropdown").forEach((m) => (m.hidden = true));
+    });
+}
+
+async function runProjectAction(projectId, action, cardEl) {
+    try {
+        const res = await fetch(window.location.href, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ project_id: projectId, action }),
+        });
+
+        // Read ONCE as text so we can debug whatever the server returns
+        const raw = await res.text();
+        console.log("Status:", res.status);
+        console.log("Raw response:", raw);
+
+        // If server didn't return 2xx, show it
+        if (!res.ok) {
+            alert(`Server error ${res.status}. Check console.`);
+            return;
+        }
+
+        // Try to parse JSON
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (e) {
+            alert("Server did not return JSON. Check console for raw response.");
+            return;
+        }
+
+        if (!data.success) {
+            alert(data.message || "Action failed");
+            return;
+        }
+
+        updateCardUIAfterAction(action, cardEl);
+
+    } catch (err) {
+        console.error(err);
+        alert("Network/Server error");
+    }
+}
+
+function renderCardMenu(cardEl, state) {
+  const dropdown = cardEl.querySelector(".card-menu-dropdown");
+  if (!dropdown) return;
+
+  if (state === "active") {
+    dropdown.innerHTML = `
+      <button type="button" class="card-menu-item" data-action="complete">
+        Mark as complete
+      </button>
+      <button type="button" class="card-menu-item" data-action="archive">
+        Move to archives
+      </button>
+    `;
+  } else if (state === "archived") {
+    dropdown.innerHTML = `
+      <button type="button" class="card-menu-item" data-action="reinstate">
+        Reinstate
+      </button>
+    `;
+  }
+
+  dropdown.hidden = true; // always close after update
+}
+
+
+function updateArchivedEmptyState() {
+  const archivedGrid = document.querySelector("#archived-section .projects-grid");
+  if (!archivedGrid) return;
+
+  const hasArchivedCards = archivedGrid.querySelector(".project-card") !== null;
+  const existingEmpty = archivedGrid.querySelector(".empty-state");
+
+  if (!hasArchivedCards) {
+    if (!existingEmpty) {
+      archivedGrid.insertAdjacentHTML("beforeend", `
+        <div class="empty-state">
+          <i data-feather="archive"></i>
+          <p>No archived projects</p>
+        </div>
+      `);
+
+      // Re-render feather icon inside the new empty state
+      if (window.feather) feather.replace();
+    }
+  } else {
+    existingEmpty?.remove();
+  }
+}
+
+function restoreDeadlinePill(cardEl) {
+  const text = cardEl.dataset.deadlineText || "";
+  const cls = cardEl.dataset.deadlineClass || "days-pill";
+
+  const pill = cardEl.querySelector(".days-pill");
+  if (!pill) return;
+
+  pill.className = cls;
+
+  const span = pill.querySelector("span");
+  if (span) span.textContent = text;
+}
+
+
+
+function updateCardUIAfterAction(action, cardEl) {
+    const activeGrid = document.querySelector("#active-section .projects-grid");
+    const archivedGrid = document.querySelector("#archived-section .projects-grid");
+
+    // Helper: set progress to 100% visually
+    function setProgressTo100(card) {
+        const fill = card.querySelector(".progress-fill");
+        const text = card.querySelector(".progress-text");
+        if (fill) fill.style.width = "100%";
+        if (text) text.textContent = "100% complete";
+
+        // Also update dataset so sorting works later
+        card.dataset.progress = "100";
+    }
+
+    // Helper: set status pill text
+    function setPill(card, text, extraClass) {
+        const pill = card.querySelector(".days-pill");
+        if (!pill) return;
+
+        pill.className = "days-pill"; // reset
+        if (extraClass) pill.classList.add(extraClass);
+
+        const span = pill.querySelector("span");
+        if (span) span.textContent = text;
+    }
+
+    console.log("archivedGrid is", archivedGrid);
+
+    if (action === "archive") {
+        archivedGrid?.querySelector(".empty-state")?.remove();
+        archivedGrid.appendChild(cardEl);
+
+        cardEl.classList.add("project-card--archived");
+        setPill(cardEl, "Archived");
+
+        const archivedSection = document.getElementById("archived-section");
+        if (archivedSection) archivedSection.style.display = "";
+
+        renderCardMenu(cardEl, "archived");
+        updateArchivedEmptyState();
+    }
+
+
+    if (action === "complete") {
+        // Remove empty state if this is the first archived item
+        archivedGrid?.querySelector(".empty-state")?.remove();
+
+        // Move card to archived grid
+        archivedGrid.appendChild(cardEl);
+
+        // Mark card as archived + completed
+        cardEl.classList.add("project-card--archived");
+
+        // Set progress to 100%
+        setProgressTo100(cardEl);
+
+        // Update status pill
+        setPill(cardEl, "Completed", "is-completed");
+
+        // Make sure archived section is visible
+        const archivedSection = document.getElementById("archived-section");
+        if (archivedSection) archivedSection.style.display = "";
+
+        // Switch menu to "Reinstate"
+        renderCardMenu(cardEl, "archived");
+        updateArchivedEmptyState();
+    }
+
+
+    if (action === "reinstate") {
+        if (activeGrid) activeGrid.appendChild(cardEl);
+        cardEl.classList.remove("project-card--archived");
+        const originalText = cardEl.dataset.pillText || "Active";
+        const originalClass = cardEl.dataset.pillClass || "days-pill";
+        setPill(cardEl, originalText);
+        cardEl.querySelector(".days-pill").className = originalClass;
+
+        renderCardMenu(cardEl, "active");
+        restoreDeadlinePill(cardEl); 
+        updateArchivedEmptyState();
+    }
+
+}
+
+function setupLeaderAutocomplete({
+  inputId,
+  hiddenId,
+  resultsId,
+  endpointUrl,
+  formId
+}) {
+  const input = document.getElementById(inputId);
+  const hidden = document.getElementById(hiddenId);
+  const resultsBox = document.getElementById(resultsId);
+  const form = document.getElementById(formId);
+
+  if (!input || !hidden || !resultsBox || !form) return;
+
+  let timer = null;
+  let activeIndex = -1;
+  let items = [];
+
+  function closeResults() {
+    resultsBox.style.display = "none";
+    resultsBox.innerHTML = "";
+    activeIndex = -1;
+    items = [];
+  }
+
+  function renderResults(list) {
+    items = list;
+    activeIndex = -1;
+
+    if (!list.length) {
+      resultsBox.style.display = "none";
+      resultsBox.innerHTML = "";
+      return;
+    }
+
+    resultsBox.style.display = "block";
+    resultsBox.innerHTML = list
+      .map((u, idx) => `
+        <div class="autocomplete-item" data-idx="${idx}">
+          ${escapeHtml(u.label)}
+        </div>
+      `)
+      .join("");
+  }
+
+  function selectItem(idx) {
+    const u = items[idx];
+    if (!u) return;
+    input.value = u.label;     // what user sees
+    hidden.value = u.id;       // what gets submitted
+    closeResults();
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  async function fetchResults(query) {
+  const urlObj = new URL(endpointUrl, window.location.href);
+  urlObj.searchParams.set("q", query);
+
+  const res = await fetch(urlObj.toString(), { credentials: "same-origin" });
+  if (!res.ok) return [];
+
+  return await res.json();
+}
+
+
+  input.addEventListener("input", () => {
+    // user typed something new -> reset hidden until they pick from list
+    hidden.value = "";
+
+    const q = input.value.trim();
+    if (q.length < 2) {
+      closeResults();
+      return;
+    }
+
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      const data = await fetchResults(q);
+      // if server returned error object, treat as empty
+      if (!Array.isArray(data)) {
+        closeResults();
+        return;
+      }
+      renderResults(data);
+    }, 250); // debounce
+  });
+
+  resultsBox.addEventListener("click", (e) => {
+    const item = e.target.closest(".autocomplete-item");
+    if (!item) return;
+    selectItem(parseInt(item.dataset.idx, 10));
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (!items.length) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+    } else if (e.key === "Enter") {
+      // Only select if dropdown is open and we have an active choice
+      if (resultsBox.style.display === "block" && activeIndex >= 0) {
+        e.preventDefault();
+        selectItem(activeIndex);
+      }
+      return;
+    } else if (e.key === "Escape") {
+      closeResults();
+      return;
+    } else {
+      return;
+    }
+
+    // highlight active
+    const children = Array.from(resultsBox.querySelectorAll(".autocomplete-item"));
+    children.forEach((el, i) => el.classList.toggle("active", i === activeIndex));
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!resultsBox.contains(e.target) && e.target !== input) closeResults();
+  });
+
+  form.addEventListener("submit", (e) => {
+    if (!hidden.value) {
+      e.preventDefault();
+      alert("Please select a Team Leader from the suggestions.");
+    }
+  });
+}
+
+function setupProjectsOverviewSearch() {
+  const input = document.getElementById("project-search");
+  if (!input) return;
+
+  // ACTIVE grid + cards
+  const activeSection = document.getElementById("active-section");
+  const activeGrid = activeSection?.querySelector(".projects-grid");
+  const activeCards = activeGrid ? Array.from(activeGrid.querySelectorAll(".project-card")) : [];
+
+  // ARCHIVED grid + cards (manager only: may not exist)
+  const archivedContent = document.getElementById("archived-content"); // has is-hidden
+  const archivedGrid = archivedContent?.querySelector(".projects-grid");
+  const archivedCards = archivedGrid ? Array.from(archivedGrid.querySelectorAll(".project-card")) : [];
+
+  // Toggle button (your arrow) — id is jumpToArchived
+  const archiveToggleBtn = document.getElementById("jumpToArchived");
+
+  // Remember default state (usually hidden)
+  const archivedWasHiddenInitially = archivedContent
+    ? archivedContent.classList.contains("is-hidden")
+    : true;
+
+  // Helper: make an empty-state box that looks like your existing ones
+  function ensureEmptyState(gridEl, id, iconName, message) {
+    if (!gridEl) return null;
+
+    let el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement("div");
+      el.id = id;
+      el.className = "empty-state";
+      el.style.display = "none";
+      el.innerHTML = `
+        <i data-feather="${iconName}"></i>
+        <p>${message}</p>
+      `;
+      gridEl.appendChild(el);
+
+      // Make feather icons render for newly added elements
+      if (window.feather) feather.replace();
+    }
+    return el;
+  }
+
+  const activeNoMatch = ensureEmptyState(
+    activeGrid,
+    "active-no-match",
+    "search",
+    "Sorry, no active projects match your search."
+  );
+
+  const archivedNoMatch = ensureEmptyState(
+    archivedGrid,
+    "archived-no-match",
+    "search",
+    "Sorry, no archived projects match your search."
+  );
+
+  // Helper: show/hide cards by query
+  function filterCards(cards, queryLower) {
+    let matches = 0;
+    for (const card of cards) {
+      const name = (card.dataset.name || "").toLowerCase(); // you already set data-name
+      const ok = name.includes(queryLower);
+      card.style.display = ok ? "" : "none";
+      if (ok) matches++;
+    }
+    return matches;
+  }
+
+  function showAll(cards) {
+    cards.forEach((c) => (c.style.display = ""));
+  }
+
+  function openArchived() {
+    if (!archivedContent) return;
+    archivedContent.classList.remove("is-hidden");
+    if (archiveToggleBtn) archiveToggleBtn.classList.add("is-open");
+  }
+
+  function restoreArchivedDefault() {
+    if (!archivedContent) return;
+    if (archivedWasHiddenInitially) {
+      archivedContent.classList.add("is-hidden");
+      if (archiveToggleBtn) archiveToggleBtn.classList.remove("is-open");
+    }
+  }
+
+  function resetSearchUI() {
+    // reset cards
+    showAll(activeCards);
+    showAll(archivedCards);
+
+    // hide messages
+    if (activeNoMatch) activeNoMatch.style.display = "none";
+    if (archivedNoMatch) archivedNoMatch.style.display = "none";
+
+    // restore archived default (hidden)
+    restoreArchivedDefault();
+  }
+
+  // While typing: always open archived + filter both
+  input.addEventListener("input", () => {
+    const q = input.value.trim().toLowerCase();
+
+    // If empty, reset
+    if (q === "") {
+      resetSearchUI();
+      return;
+    }
+
+    // Always show archived section while searching (your requirement)
+    openArchived();
+
+    // Filter
+    const activeMatches = filterCards(activeCards, q);
+    const archivedMatches = filterCards(archivedCards, q);
+
+    // Show "no matches" message INSIDE each section grid
+    if (activeNoMatch) activeNoMatch.style.display = activeMatches === 0 ? "" : "none";
+    if (archivedNoMatch) archivedNoMatch.style.display = archivedMatches === 0 ? "" : "none";
+  });
+
+  // When they click out (blur): clear text + reset to normal
+  input.addEventListener("blur", () => {
+    if (input.value.trim() !== "") {
+      input.value = "";
+      resetSearchUI();
+    }
+  });
+}
+function setupProjectCardNavigation() {
+  document.addEventListener("click", (e) => {
+    const menuBtn = e.target.closest(".card-menu, .card-menu-btn, .card-menu-dropdown");
+    if (menuBtn) return; // don't navigate if they clicked the 3-dot menu
+
+    const card = e.target.closest(".project-card");
+    if (!card) return;
+
+    const href = card.dataset.href;
+    if (href) window.location.href = href;
+  });
+}
+
+
 
 // ===============================================
 // === DOCUMENT LOAD =============================
@@ -2850,6 +3403,14 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (pageId === 'project-archive-page') {
         // *** ADDED: Load logic for new archive page ***
         loadProjectArchivePage(currentUser);
+    }
+    else if (pageId === "projects-overview-page") {
+        sortProjects();
+        archivedJump();
+        setupArchivedToggle();
+        setupProjectCardMenus();
+        setupProjectsOverviewSearch();
+        setupProjectCardNavigation();
     }
 
     // Finally, activate all Feather icons
