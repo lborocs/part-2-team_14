@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
+
 <body id="projects-page">
 
     <div class="dashboard-container">
@@ -21,13 +23,9 @@
                 </div>
                 <ul class="nav-main">
                     <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
-                    <li class="active-parent">
-                        <a href="projects.html"><i data-feather="folder"></i>Projects</a>
-                        <ul class="nav-sub" id="project-sidebar-list">
-                            </ul>
-                    </li>
-                    <li id="nav-archive" style="display: none;"><a href="project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
-                    <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+                    <li class="active-parent"><a href="projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge
+                            Base</a></li>
                 </ul>
             </div>
             <div class="nav-footer">
@@ -38,21 +36,22 @@
         </nav>
 
         <main class="main-content">
-          <header class="project-header">
-            <div class="project-header-top">
-              <div class="breadcrumbs-title">
-                <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb">Project</span></p>
-                <h1 id="project-name-header">Project</h1>
-              </div>
-              <button class="close-project-btn" id="close-project-btn" style="display: none;">Close Project</button>
-            </div>
+            <header class="project-header">
+                <div class="project-header-top">
+                    <div class="breadcrumbs-title">
+                        <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb">Project</span></p>
+                        <h1 id="project-name-header">Project</h1>
+                    </div>
+                    <button class="close-project-btn" id="close-project-btn" style="display: none;">Close
+                        Project</button>
+                </div>
 
-            <nav class="project-nav" id="project-nav-links">
-              <a href="#" class="active">Tasks</a>
-              <a href="progress.html">Progress</a>
-              <a href="#">Resources</a>
-            </nav>
-          </header>
+                <nav class="project-nav" id="project-nav-links">
+                    <a href="#" class="active">Tasks</a>
+                    <a href="progress.html">Progress</a>
+                    <a href="#">Resources</a>
+                </nav>
+            </header>
 
 
             <section class="task-board">
@@ -64,7 +63,7 @@
                         <button class="add-task" style="display: none;"><i data-feather="plus"></i></button>
                     </div>
                     <div class="task-list">
-                        </div>
+                    </div>
                 </div>
 
                 <div class="task-column" data-status="inprogress">
@@ -74,7 +73,7 @@
                         <button class="add-task" style="display: none;"><i data-feather="plus"></i></button>
                     </div>
                     <div class="task-list">
-                        </div>
+                    </div>
                 </div>
 
                 <div class="task-column" data-status="review">
@@ -84,7 +83,7 @@
                         <button class="add-task" style="display: none;"><i data-feather="plus"></i></button>
                     </div>
                     <div class="task-list">
-                        </div>
+                    </div>
                 </div>
 
                 <div class="task-column" data-status="completed">
@@ -94,7 +93,7 @@
                         <button class="add-task" style="display: none;"><i data-feather="plus"></i></button>
                     </div>
                     <div class="task-list">
-                        </div>
+                    </div>
                 </div>
 
             </section>
@@ -118,7 +117,7 @@
                     <div class="form-group">
                         <label for="modal-task-project">Project</label>
                         <select id="modal-task-project" required>
-                            </select>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="modal-task-assignees">Assign To (select one or more)</label>
@@ -183,8 +182,8 @@
                     <p id="details-task-description"></p>
                 </div>
                 <div class="task-details-actions">
-                  <button id="delete-task-btn" class="delete-task-btn">Delete Task</button>
-                  <button id="project-complete-btn" class="project-complete-btn">Mark Complete</button>
+                    <button id="delete-task-btn" class="delete-task-btn">Delete Task</button>
+                    <button id="project-complete-btn" class="project-complete-btn">Mark Complete</button>
                 </div>
 
 
@@ -196,4 +195,5 @@
         feather.replace();
     </script>
 </body>
+
 </html>
