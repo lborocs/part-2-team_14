@@ -6,6 +6,30 @@ require_once __DIR__ . "/../../config/database.php";
 $database = new Database();
 $pdo = $database->getConnection();
 
+$sql = "
+SELECT
+    u.user_id,
+    u.email,
+    u.first_name,
+    u.last_name,
+    u.role,
+    u.profile_picture,
+    u.specialties,
+    GROUP_CONCAT(DISTINCT p.project_name SEPARATOR ', ') AS projects
+FROM users u
+LEFT JOIN project_members pm 
+    ON u.user_id = pm.user_id 
+    AND pm.left_at IS NULL
+LEFT JOIN projects p 
+    ON pm.project_id = p.project_id
+WHERE u.is_active = TRUE
+GROUP BY u.user_id
+ORDER BY u.first_name ASC
+";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute();
+$employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -36,7 +60,7 @@ $pdo = $database->getConnection();
         <nav class="sidebar">
             <div class="nav-top">
                 <div class="logo-container">
-                    <img src="..logo.png" class="logo-icon">
+                    <img src="../logo.png" class="logo-icon">
                 </div>
                 <ul class="nav-main">
                     <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
@@ -91,7 +115,7 @@ $pdo = $database->getConnection();
 
                 <!--Left: employee results count -->
                 <div class="employees-count">
-                    <strong>Results:</strong> 32 Employees
+                    Showing <strong>1-20</strong> of 84 Employee Results
                 </div>
 
                 <!-- Right: sort & filter -->
@@ -110,48 +134,103 @@ $pdo = $database->getConnection();
                     </button>
                 </div>
             </div>
+
             <div class="section-divider"></div>
 
             <!--Employee grid -->
-            <div class="employee-grid">
+            <div class="employee-section">
+                <div class="employee-grid">
                 
-                <article class="employee-card role-team-leader">
+                    <?php foreach ($employees as $employee): ?>
 
-                    <!-- 1) Role-colored top band -->
-                    <div class="employee-card-top">
-                        <div class="employee-checkbox"></div>
-                        <div class="employee-avatar"></div>
+                        <?php
+                            // Map role -> CSS class 
+                            $roleClass = match ($employee['role']) {
+                                'manager' => 'role-manager',
+                                'team_leader' => 'role-team-leader',
+                                'team_member' => 'role-team-member',
+                                'technical_specialist' => 'role-technical-specialist',
+                                default => 'role-team-member',
+                            };
+
+                            // Decode specialties (stored as JSON or comma text)
+                            $specialties = [];
+                            if (!empty($employee['specialties'])) {
+                                $specialties = json_decode($employee['specialties'], true) 
+                                    ?? explode(',', $employee['specialties']);
+                            }
+                        ?>
+
+                        <article 
+                            class="employee-card <?= $roleClass ?>" 
+                            data-profile-url="employee-profile.php?id=<?= urlencode($employee['user_id']) ?>"
+                        >
+
+                            <div class="employee-card-top">
+                                <div class="employee-avatar">
+                                    <img
+                                        src="<?= htmlspecialchars($employee['profile_picture']) ?>"
+                                        alt="Avatar"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="employee-card-body">
+                                <h3 class="employee-name">
+                                    <?= htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']) ?>
+                                </h3>
+
+                                <p class="employee-role">
+                                    <?= ucfirst(str_replace('_', ' ', $employee['role'])) ?>
+                                </p>
+
+                                <!-- SPECIALTIES -->
+                                <div class="block-title">Specialties</div>
+                                    <div class="specialties-container collapsed">
+                                        <?php foreach ($specialties as $skill): ?>
+                                            <span class="tag"><?= htmlspecialchars(trim($skill)) ?></span>
+                                        <?php endforeach; ?>
+                                    </div>
+
+                                    <button type="button" class="see-more-btn" hidden>
+                                        See more
+                                    </button>
+
+                                <div class="employee-card-footer">
+                                    <i data-feather="mail"></i>
+                                    <span class="employee-email">
+                                        <?= htmlspecialchars($employee['email']) ?>
+                                    </span>
+                                </div>
+                                    
+                            </div>
+
+
+                        </article>
+
+                    <?php endforeach; ?>
+                </div>
+
+                <!-- Pagination -->
+                <div class="employees-pagination">
+                    <button class="pagination-btn" disabled>
+                        Prev
+                    </button>
+
+                    <div class="pagination-pages">
+                        <button class="pagination-page active">1</button>
+                        <button class="pagination-page">2</button>
+                        <button class="pagination-page">3</button>
+                        <span class="pagination-ellipsis">...</span>
+                        <button class="pagination-page">8</button>
                     </div>
 
-                    <!-- 2) Content -->
-                    <div class="employee-card-body">
-                        <h3 class="employee-name">Jane Doe</h3>
-                        <p class="employee-role">Team Leader</p>
-
-                        <div class="employee-block">
-                            <div class="block-title">Specialities</div>
-                            <div class="tag-row">
-                                <span class="tag">UI</span>
-                                <span class="tag">CSS</span>
-                            </div>
-                        </div>
-
-                        <div class="employee-block">
-                            <div class="block-title">Projects</div>
-                            <div class="tag-row">
-                                <span class="tag tag-muted">Dashboard</span>
-                            </div>
-                        </div>
-
-                    </div>
-
-                </article>
-
-
+                    <button class="pagination-btn">
+                        Next
+                    </button>
+                </div>
 
             </div>
-
-
         </main>
 
     </div>
@@ -159,6 +238,8 @@ $pdo = $database->getConnection();
     <script>
         feather.replace();
     </script>
+
+    <script src="employees.js"></script>
 
 </body>
 </html>
