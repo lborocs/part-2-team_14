@@ -111,6 +111,8 @@
   font-weight: 700;
 }
 
+
+
 /* Sort UI  */
 .sort-wrap {
   display: flex;
@@ -252,10 +254,13 @@
 /* the scroll container */
 .projects-grid-scroll {
   max-height: calc((var(--card-height) * 2) + var(--grid-gap));
-  overflow-y: auto;
+  overflow-y: visible;
   overflow-x: hidden;
   padding-right: 6px;
   /* space so scrollbar doesn't overlap content */
+
+  padding-top: 10px;         /* ✅ add space for hover lift */
+  margin-top: -10px; 
 }
 
 .projects-grid {
@@ -264,6 +269,7 @@
   /* <-- key change */
   gap: 18px;
   width: 100%;
+  overflow: visible;
 }
 
 /* Make the empty state span the full grid row */
@@ -288,19 +294,23 @@
   /* lets bottom sit nicely */
   min-width: 0;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .project-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
 }
 
-/* Optional: keyboard accessibility */
-.project-card:focus-within {
-  outline: 2px solid #FBC02D;
-  outline-offset: 3px;
+/* Only show ring for keyboard focus */
+.project-card:focus-within { outline: none; box-shadow: none; }
+
+.project-card:has(:focus-visible) {
+  box-shadow:
+    0 0 0 3px #FBC02D,
+    0 8px 22px rgba(0, 0, 0, 0.12);
 }
+
 
 
 .project-card--archived {

@@ -77,24 +77,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $priority = 'medium';
     }
 
+    $_SESSION['role'] = $_SESSION['role'] ?? 'manager';
+
     // ------------------------------
     // Get created_by (logged in user)
     // ------------------------------
-    $createdBy = $_SESSION['user_id'] ?? null;
+    $createdBy = $_SESSION['user_id'] ?? 1; //for testing
 
-    // If your app stores email in session instead of user_id, look up user_id by email
-    if (!$createdBy) {
-        $sessionEmail = $_SESSION['email'] ?? null;
-
-        if ($sessionEmail) {
-            $stmtUser = $db->prepare("SELECT user_id FROM users WHERE email = :email LIMIT 1");
-            $stmtUser->execute([':email' => $sessionEmail]);
-            $createdBy = (int)($stmtUser->fetchColumn() ?: 0);
-        }
-    }
-
-    if (!$createdBy) {
-        die("Not logged in properly: missing user_id (and could not find user by session email).");
+    if ($createdBy <= 0) {
+        // not logged in
+        header("Location: ../index.html");
+        exit;
     }
 
 
@@ -116,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $newProjectId = (int)$db->lastInsertId();
 
-    // Optional: add team leader into project_members
+    // add team leader into project_members
     $stmt2 = $db->prepare("INSERT INTO project_members (project_id, user_id, project_role)
                          VALUES (:pid, :uid, 'team_leader')");
     $stmt2->execute([
@@ -124,9 +117,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':uid' => $leaderId
     ]);
 
-    // Include user=email in the redirect (if your team wants that URL)
+    // ✅ NEW: Promote selected user to team_leader (but never downgrade manager)
+    $promote = $db->prepare("
+        UPDATE users
+        SET role = 'team_leader'
+        WHERE user_id = :uid
+        AND role IN ('team_member','technical_specialist')
+    ");
+    $promote->execute([':uid' => $leaderId]);
+
     $userEmail = $_SESSION['email'] ?? '';
-    $redirect = "../project/projects.html?project=" . $newProjectId;
+    $redirect = "../project/projects.php?project_id=" . urlencode($newProjectId);
 
     if ($userEmail !== '') {
         $redirect .= "&user=" . urlencode($userEmail);
@@ -240,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <ul class="best-practices-list">
                             <li><strong>Clear Names:</strong> Use a descriptive name that your team will recognize.</li>
                             <li><strong>Define Goals:</strong> A brief description helps align everyone.</li>
-                            <li><strong>Assign People:</strong> Select a Team Leader and at least one member to get started.</li>
+                            <li><strong>Assign People:</strong> Select a Team Leader and fill in all required fields to get started.</li>
                         </ul>
                     </div>
                 </aside>

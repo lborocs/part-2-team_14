@@ -10,9 +10,21 @@ if (!$db) {
   die("Database connection failed.");
 }
 
-// checks role of current user (temporary)
-$role = $_SESSION['role'] ?? 'manager';
-$isManager = ($role === 'manager');
+//DEV BYPASS
+$isLoggedIn = isset($_SESSION['role'], $_SESSION['email'], $_SESSION['user_id']);
+
+if (!$isLoggedIn) {
+  // you're viewing without login -> force safe defaults
+  $role = 'manager';
+  $isManager = true;
+
+  $currentUserId = 1; // TEMP fallback
+} else {
+  $role = $_SESSION['role'];
+  $isManager = ($role === 'manager');
+  $currentUserId = $_SESSION['user_id'];
+}
+
 
 // actual code should have this bit but keeping upper one for access since i view page w/o login
 
@@ -28,7 +40,7 @@ $isManager = ($role === 'manager');
 // =============================
 // ACTION HANDLER (same file)
 // =============================
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
   header('Content-Type: application/json');
 
   // Only managers can do these actions
@@ -100,51 +112,66 @@ function daysLeft(?string $estimated, ?string $deadline): ?int
 }
 //gets active projects with sql statement
 $activeSql = "
-    SELECT
-      p.project_id,
-      p.project_name,
-      p.status,
-      p.priority,
-      p.deadline,
-      p.estimated_completion_date,
-      p.completion_percentage,
-      u.first_name AS leader_first_name,
-      u.last_name  AS leader_last_name,
-      u.profile_picture AS leader_picture
-    FROM projects p
-    LEFT JOIN users u ON p.team_leader_id = u.user_id
-    WHERE p.status IN ('active','planning','on_hold','completed')
-      AND p.status <> 'archived'
-    ORDER BY p.deadline ASC
-  ";
+  SELECT DISTINCT
+    p.project_id,
+    p.project_name,
+    p.status,
+    p.priority,
+    p.deadline,
+    p.estimated_completion_date,
+    p.completion_percentage,
+    u.first_name AS leader_first_name,
+    u.last_name  AS leader_last_name,
+    u.profile_picture AS leader_picture
+  FROM projects p
+  LEFT JOIN users u ON p.team_leader_id = u.user_id
+  LEFT JOIN project_members pm
+    ON pm.project_id = p.project_id
+  WHERE p.status IN ('active','planning','on_hold','completed')
+    AND p.status <> 'archived'
+    AND (
+      p.created_by = :uid
+      OR p.team_leader_id = :uid
+      OR pm.user_id = :uid
+    )
+  ORDER BY p.deadline ASC
+";
 $activeStmt = $db->prepare($activeSql);
-$activeStmt->execute();
+$activeStmt->execute([':uid' => $currentUserId]);
 $activeProjects = $activeStmt->fetchAll(PDO::FETCH_ASSOC);
+
+
 
 $archivedProjects = [];
 if ($isManager) {
   $archivedSql = "
-      SELECT
-        p.project_id,
-        p.project_name,
-        p.status,
-        p.priority,
-        p.deadline,
-        p.estimated_completion_date,
-        p.completion_percentage,
-        u.first_name AS leader_first_name,
-        u.last_name  AS leader_last_name,
-        u.profile_picture AS leader_picture
-      FROM projects p
-      LEFT JOIN users u ON p.team_leader_id = u.user_id
-      WHERE p.status = 'archived'
-      ORDER BY p.deadline DESC
-      ";
+  SELECT DISTINCT
+    p.project_id,
+    p.project_name,
+    p.status,
+    p.priority,
+    p.deadline,
+    p.estimated_completion_date,
+    p.completion_percentage,
+    u.first_name AS leader_first_name,
+    u.last_name  AS leader_last_name,
+    u.profile_picture AS leader_picture
+  FROM projects p
+  LEFT JOIN users u ON p.team_leader_id = u.user_id
+  LEFT JOIN project_members pm
+    ON pm.project_id = p.project_id
+  WHERE p.status = 'archived'
+    AND (
+      p.created_by = :uid
+      OR p.team_leader_id = :uid
+      OR pm.user_id = :uid
+    )
+  ORDER BY p.deadline DESC
+";
   $archivedStmt = $db->prepare($archivedSql);
-  $archivedStmt->execute();
+  $archivedStmt->execute([':uid' => $currentUserId]);
   $archivedProjects = $archivedStmt->fetchAll(PDO::FETCH_ASSOC);
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -221,6 +248,9 @@ if ($isManager) {
               <option value="due">Due date</option>
               <option value="progress">Progress %</option>
               <option value="name">Name (A-Z)</option>
+              <option value="priorityHigh">Priority (High → Low)</option>
+              <option value="priorityLow">Priority (Low → High)</option>
+
             </select>
           </div>
         </div>
@@ -270,15 +300,17 @@ if ($isManager) {
                 ?>
 
                 <!-- Project cards design -->
+
+                <?php $priority = strtolower($p['priority'] ?? 'medium'); ?>
                 <article
                   class="project-card"
-                  data-href="projects.html?project=<?= (int)$p['project_id'] ?>&user=<?= urlencode($_SESSION['email'] ?? '') ?>"
                   data-name="<?= strtolower(htmlspecialchars($p['project_name'])) ?>"
                   data-progress="<?= (int)$progress ?>"
                   data-deadline="<?= htmlspecialchars($p['deadline'] ?? '') ?>"
                   data-project-id="<?= htmlspecialchars($p['project_id'] ?? '') ?>"
                   data-deadline-text="<?= htmlspecialchars($dateText) ?>"
-                  data-deadline-class="<?= htmlspecialchars($dateClass) ?>">
+                  data-deadline-class="<?= htmlspecialchars($dateClass) ?>"
+                  data-priority="<?= htmlspecialchars($priority) ?>">
 
                   <!-- 3 dots for moving projects to archive -->
                   <?php if ($isManager): ?>
@@ -298,8 +330,6 @@ if ($isManager) {
                   <h3 class="project-title"><?= htmlspecialchars($p['project_name']) ?></h3>
 
                   <!-- Priority label and progress pill -->
-                  
-                  <?php $priority = strtolower($p['priority'] ?? 'medium'); ?>
 
                   <div class="progress-head">
                     <span class="small-label">PROGRESS</span>
@@ -391,7 +421,8 @@ if ($isManager) {
                       data-pill-text="<?= htmlspecialchars($dateText) ?>"
                       data-pill-class="<?= htmlspecialchars($dateClass) ?>"
                       data-deadline-text="<?= htmlspecialchars($dateText) ?>"
-                      data-deadline-class="<?= htmlspecialchars($dateClass) ?>">
+                      data-deadline-class="<?= htmlspecialchars($dateClass) ?>"
+                      data-priority="<?= htmlspecialchars($priority) ?>">
 
                       <!-- 3 dots menu -->
                       <div class="card-menu">
