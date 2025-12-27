@@ -6,6 +6,30 @@ require_once __DIR__ . "/../../config/database.php";
 $database = new Database();
 $pdo = $database->getConnection();
 
+// pagination configuration 
+$perPage = 20;
+$page = isset($_GET['page']) && is_numeric($_GET['page'])
+    ? max(1, (int) $_GET['page'])
+    : 1;
+$offset = ($page - 1) * $perPage;
+
+$countStmt = $pdo->prepare("
+    SELECT COUNT(DISTINCT u.user_id)
+    FROM users u
+    WHERE u.is_active = TRUE
+");
+$countStmt->execute();
+$totalEmployees = (int) $countStmt->fetchColumn();
+$totalPages = (int) ceil($totalEmployees / $perPage);
+$range = 1;
+
+// Preserve existing query parameters (except page)
+$queryParams = $_GET;
+unset($queryParams['page']);
+
+$queryString = http_build_query($queryParams);
+$queryString = $queryString ? '&' . $queryString : '';
+
 $sql = "
 SELECT
     u.user_id,
@@ -25,11 +49,26 @@ LEFT JOIN projects p
 WHERE u.is_active = TRUE
 GROUP BY u.user_id
 ORDER BY u.first_name ASC
+LIMIT :limit OFFSET :offset
 ";
 
 $stmt = $pdo->prepare($sql);
+$stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
+
 $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Results range display numbers 
+$start = $totalEmployees > 0 ? $offset + 1 : 0;
+$end = min($offset + count($employees), $totalEmployees);
+
+$isAjax = isset($_GET['ajax']) && $_GET['ajax'] === '1';
+
+if ($isAjax) {
+    include __DIR__ . '/partials/employee-grid.php';
+    exit;
+}
 ?>
 
 <!DOCTYPE html>
@@ -114,8 +153,9 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="employee-meta">
 
                 <!--Left: employee results count -->
-                <div class="employees-count">
-                    Showing <strong>1-20</strong> of 84 Employee Results
+                <div id="employees-count" class="employees-count">
+                    Showing <strong><?= $start ?>-<?= $end ?></strong>
+                    of <?= $totalEmployees ?> Employee Results
                 </div>
 
                 <!-- Right: sort & filter -->
@@ -139,7 +179,7 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             <!--Employee grid -->
             <div class="employee-section">
-                <div class="employee-grid">
+                <div id="employee-grid" class="employee-grid">
                 
                     <?php foreach ($employees as $employee): ?>
 
@@ -212,22 +252,62 @@ $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
 
                 <!-- Pagination -->
-                <div class="employees-pagination">
-                    <button class="pagination-btn" disabled>
-                        Prev
-                    </button>
+                <div id="employees-pagination" class="employees-pagination">
+                    <!-- prev button -->
+                    <?php if ($page > 1): ?>
+                        <a class="pagination-btn" href="?page=<?= $page - 1 ?><?= $queryString ?>">
+                            Prev
+                        </a>
+                    <?php else: ?>
+                        <button class="pagination-btn" disabled>
+                            Prev
+                        </button>
+                    <?php endif; ?>
 
+                    <!-- page numbers -->
                     <div class="pagination-pages">
-                        <button class="pagination-page active">1</button>
-                        <button class="pagination-page">2</button>
-                        <button class="pagination-page">3</button>
-                        <span class="pagination-ellipsis">...</span>
-                        <button class="pagination-page">8</button>
+                    <?php
+                    // Always show first page
+                    if ($page > 1) {
+                        echo '<a class="pagination-page" href="?page=1' . $queryString . '">1</a>';
+                    }
+
+                    // Left ellipsis
+                    if ($page > $range + 2) {
+                        echo '<span class="pagination-ellipsis">…</span>';
+                    }
+
+                    // Middle pages
+                    for ($i = max(1, $page - $range); $i <= min($totalPages, $page + $range); $i++) {
+                        if ($i == $page) {
+                            echo '<span class="pagination-page active">' . $i . '</span>';
+                        } else {
+                            echo '<a class="pagination-page" href="?page=' . $i . $queryString . '">' . $i . '</a>';
+                        }
+                    }
+
+                    // Right ellipsis
+                    if ($page < $totalPages - ($range + 1)) {
+                        echo '<span class="pagination-ellipsis">…</span>';
+                    }
+
+                    // Always show last page
+                    if ($page < $totalPages) {
+                        echo '<a class="pagination-page" href="?page=' . $totalPages . $queryString . '">' . $totalPages . '</a>';
+                    }
+                    ?>
                     </div>
 
-                    <button class="pagination-btn">
-                        Next
-                    </button>
+                    <!-- Next button -->
+                    <?php if ($page < $totalPages): ?>
+                        <a class="pagination-btn" href="?page=<?= $page + 1 ?><?= $queryString ?>">
+                            Next
+                        </a>
+                    <?php else: ?>
+                        <button class="pagination-btn" disabled>
+                            Next
+                        </button>
+                    <?php endif; ?>
                 </div>
 
             </div>

@@ -338,9 +338,25 @@
   cursor: pointer;
 }
 
-.pagination-btn:disabled {
+.pagination-btn[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.pagination-btn,
+.pagination-page {
+  text-decoration: none;
+  color: inherit;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 36px;
+  min-width: 36px;
+
+  padding: 0 12px;
+  box-sizing: border-box;
 }
 
 /*page numbers*/
@@ -350,9 +366,6 @@
 }
 
 .pagination-page {
-  width: 36px;
-  height: 36px;
-
   border-radius: 8px;
   border: 1px solid #DCDCDC;
   background: #fff;
@@ -369,6 +382,11 @@
   border-color: #FBC02D;
   color: #1E1E1E;
 }
+
+.pagination-page:not(.active):hover {
+  background: #f5f5f5;
+}
+
 
 /*ellipsis*/
 .pagination-ellipsis {
