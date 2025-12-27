@@ -12,6 +12,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /* ---------------------------------
+       SPECIALTIES: See more / See less
+    ---------------------------------- */
+    function initSpecialties() {
+        document.querySelectorAll('.employee-card').forEach(card => {
+            const container = card.querySelector('.specialties-container');
+            const btn = card.querySelector('.see-more-btn');
+
+            if (!container || !btn) return;
+
+            // Only show button if content overflows
+            if (container.scrollHeight > container.clientHeight) {
+                btn.hidden = false;
+            } else {
+                btn.hidden = true;
+            }
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // prevent card click
+                container.classList.toggle('expanded');
+                btn.textContent = container.classList.contains('expanded')
+                    ? 'See less'
+                    : 'See more';
+            });
+        });
+    }
+
+    // Run once on initial page load
+    initSpecialties();
+
+    /* ---------------------------------
        AJAX pagination (no page reload)
     ---------------------------------- */
     document.addEventListener('click', (e) => {
@@ -44,7 +74,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Re-init feather icons (new DOM)
                 feather.replace();
+
+                // IMPORTANT: re-init specialties on new cards
+                initSpecialties();
             });
     });
 
 });
+

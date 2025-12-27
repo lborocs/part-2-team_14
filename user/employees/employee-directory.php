@@ -225,7 +225,9 @@ if ($isAjax) {
                                 </p>
 
                                 <!-- SPECIALTIES -->
-                                <div class="block-title">Specialties</div>
+                                <div class="employee-specialties">
+                                    <div class="block-title">Specialties</div>
+
                                     <div class="specialties-container collapsed">
                                         <?php foreach ($specialties as $skill): ?>
                                             <span class="tag"><?= htmlspecialchars(trim($skill)) ?></span>
@@ -235,6 +237,7 @@ if ($isAjax) {
                                     <button type="button" class="see-more-btn" hidden>
                                         See more
                                     </button>
+                                </div>
 
                                 <div class="employee-card-footer">
                                     <i data-feather="mail"></i>
