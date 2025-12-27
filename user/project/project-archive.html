@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
+
 <body id="project-archive-page">
     <div class="dashboard-container">
         <nav class="sidebar">
@@ -20,9 +22,10 @@
                 </div>
                 <ul class="nav-main">
                     <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="projects.html"><i data-feather="folder"></i>Projects</a></li>
-                    <li id="nav-archive" class="active-parent"><a href="project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
-                    <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+                    <li class="active-parent"><a href="projects-overview.php"><i data-feather="folder"></i>Projects</a>
+                    </li>
+                    <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge
+                            Base</a></li>
                 </ul>
             </div>
             <div class="nav-footer">
@@ -36,18 +39,18 @@
             <header class="archive-header">
                 <h1>Project Archive</h1>
                 <div class="archive-controls">
-                  <div class="search-bar">
-                      <input type="text" placeholder="Search projects...">
-                      <span class="icon"><i data-feather="search"></i></span>
-                  </div>
+                    <div class="search-bar">
+                        <input type="text" placeholder="Search projects...">
+                        <span class="icon"><i data-feather="search"></i></span>
+                    </div>
 
-                  <div class="filter-dropdown">
-                      <select>
-                          <option>Filter: Date</option>
-                          <option>Filter: Recent</option>
-                      </select>
-                      <span class="icon"><i data-feather="chevron-down"></i></span>
-                  </div>
+                    <div class="filter-dropdown">
+                        <select>
+                            <option>Filter: Date</option>
+                            <option>Filter: Recent</option>
+                        </select>
+                        <span class="icon"><i data-feather="chevron-down"></i></span>
+                    </div>
 
 
                     <button class="clear-btn">Clear</button>
@@ -57,11 +60,12 @@
 
             <div class="archive-content">
                 <div class="archive-grid" id="archive-grid-container">
-                    </div>
+                </div>
             </div>
         </main>
     </div>
 
     <script src="../app.js"></script>
 </body>
+
 </html>
