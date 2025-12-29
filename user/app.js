@@ -3418,8 +3418,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         navArchive.style.display = 'block';
     }
     // *** END ADDED CODE ***
-
-
+[]
     // Run page-specific logic based on body ID
     const pageId = document.body.id;
 
