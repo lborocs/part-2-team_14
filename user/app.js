@@ -1762,7 +1762,6 @@ function createTaskCardHTML(task, currentUser) {
     const assigneesHtml = assignees.map((user, index) => {
         if (index >= 3) return '';
 
-        // ✅ If we have a real image, render it
         if (user.avatarUrl) {
             return `
       <span class="avatar" title="${user.name}">
@@ -1771,7 +1770,6 @@ function createTaskCardHTML(task, currentUser) {
     `;
         }
 
-        // ✅ fallback: your existing coloured circle
         return `<span class="avatar ${user.avatarClass}" title="${user.name}"></span>`;
     }).join('');
 
@@ -1855,7 +1853,6 @@ function renderTaskBoard(currentUser, currentProjectId) {
 
     const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
 
-    // ✅ SOURCE OF TRUTH
     // Prefer the normalized array if it exists (because we mutate it during drag/drop)
     let tasksToRender = Array.isArray(window.__TASKS_NORM__) && window.__TASKS_NORM__.length
         ? window.__TASKS_NORM__
@@ -2327,7 +2324,6 @@ function loadProjectsPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
     updateSidebarAndNav();
 
-    // ✅ Use DB role first (this is what should control manager/team_leader UI)
     const role = getEffectiveRole(currentUser);
     const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
     const showManagerControls = (role === "manager") || canManageProject;
@@ -2377,19 +2373,6 @@ function loadProjectsPage(currentUser) {
         modal.style.display = "none";
         if (modalForm) modalForm.reset();
     };
-
-    // -----------------------------
-    // ✅ Render the board FIRST
-    // (so the DOM is present, then we toggle "+" buttons)
-    // -----------------------------
-    renderTaskBoard(currentUser, currentProjectId);
-
-    // -----------------------------
-    // ✅ ROLE-BASED "+" button visibility
-    // -----------------------------
-    // ✅ ROLE-BASED "+" button visibility (robust)
-    
-
 
     if (modalProjectSelect) {
         const pid = currentProjectId || "";
