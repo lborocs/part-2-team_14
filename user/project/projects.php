@@ -941,7 +941,6 @@ foreach ($users as $u) {
                             <option value="today">Due today</option>
                             <option value="week">Due this week</option>
                             <option value="month">Due this month</option>
-                            <option value="none">No due date</option>
                         </select>
                     </label>
 

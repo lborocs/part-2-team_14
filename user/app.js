@@ -301,6 +301,12 @@ function getCurrentUser() {
     };
 }
 
+function updateAddTaskButtonsVisibility() {
+  const canManage = !!window.__CAN_MANAGE_PROJECT__;
+  document.querySelectorAll(".add-task").forEach(btn => {
+    btn.style.display = canManage ? "" : "none";
+  });
+}
 
 
 /**
@@ -1821,6 +1827,8 @@ function denormalizeStatus(uiStatus) {
  * Renders all tasks onto the project board
  */
 function renderTaskBoard(currentUser, currentProjectId) {
+    updateAddTaskButtonsVisibility();
+
     // Get all task columns
     const columns = document.querySelectorAll('.task-column');
 
@@ -3901,6 +3909,7 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
 
     clearTaskColumns();
     renderTaskBoard(getCurrentUser(), getCurrentProjectId());
+    updateAddTaskButtonsVisibility();
     updateTaskCounts();
 })
 
@@ -3953,6 +3962,7 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener('DOMContentLoaded', () => {
   setupAssignTaskForm();
 });
+
 
 
 
