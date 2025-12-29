@@ -278,40 +278,28 @@ function savePersonalTodos() {
 // HELPER FUNCTIONS
 
 /**
- * Gets the current simulated user from the URL query parameter.
- * This now correctly defaults and finds the user.
+ * Gets the current user from the PHP session.
  */
-function getCurrentUser() {
-    const urlParams = new URLSearchParams(window.location.search);
-    let userEmail = urlParams.get('user'); // Get email from URL
-    console.log(userEmail);
+async function getCurrentUser() {
+    try {
+        const response = await fetch('../../actions/login_sync.php', {
+            credentials: 'include'
+        });
 
-    //If not in URL, check sessionStorage (backup)
-    if (!userEmail) {
-        userEmail = sessionStorage.getItem('currentUserEmail');
-        console.warn('User parameter missing from URL, using session backup:', userEmail);
+        const data = await response.json();
+
+        if (!data.loggedIn) {
+            // Redirects if not logged in
+            window.location.href = '../index.html';
+            return null;
+        }
+
+        return data.user;
+
+    } catch (err) {
+        console.error('Failed to sync login state:', err);
+        return null;
     }
-
-    //Find the user in our simulated DB
-    if (userEmail && simUsers[userEmail]) {
-        //Store in session as backup
-        sessionStorage.setItem('currentUserEmail', userEmail);
-
-        return {
-            email: userEmail,
-            ...simUsers[userEmail]
-        };
-    }
-
-    //Fallback if absolutely no user info exists
-    console.error('No valid user found! Defaulting to member account.');
-    const fallbackEmail = 'user@make-it-all.co.uk';
-    sessionStorage.setItem('currentUserEmail', fallbackEmail);
-
-    return {
-        email: fallbackEmail,
-        ...simUsers[fallbackEmail]
-    };
 }
 
 /**
@@ -324,41 +312,6 @@ function getCurrentProjectId() {
         return params.get('project_id'); // numeric string like "2"
     }
     return null;
-}
-
-
-/**
- * Persists the current user's email AND project in all internal links.
- * This simulates a "logged in" session as you navigate.
- */
-function persistUserQueryParam(currentUser) {
-    const userQuery = `user=${currentUser.email}`;
-    const urlParams = new URLSearchParams(window.location.search);
-    let projectQuery = urlParams.get('project_id');
-
-    document.querySelectorAll('a').forEach(a => {
-        // Check if it's an internal link
-        if (a.href && a.hostname === window.location.hostname && !a.href.includes('#')) {
-            // Check if it's a mailto link, if so, skip
-            if (a.protocol === "mailto:") return;
-
-            // Don't modify links that already have params
-            if (a.href.includes('?')) return;
-
-            // Rebuild href to include both user and project
-            if (a.search) {
-                if (!a.search.includes('user=')) a.search += `&${userQuery}`;
-                if (a.pathname.includes('projects') || a.pathname.includes('progress') || a.pathname.includes('project-resources')) {
-                    if (!a.search.includes('project=')) a.search += `&${projectQuery}`;
-                }
-            } else {
-                a.href += `?${userQuery}`;
-                if (a.pathname.includes('projects') || a.pathname.includes('progress') || a.pathname.includes('project-resources')) {
-                    if (projectQuery) a.href += `&${projectQuery}`;
-                }
-            }
-        }
-    });
 }
 
 /**
@@ -3453,13 +3406,13 @@ function setupProjectCardNavigation() {
 // === DOCUMENT LOAD =============================
 // ===============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
     // Get the "logged in" user
-    const currentUser = getCurrentUser();
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return;
 
-    // Make all links on the page keep the user "logged in"
-    persistUserQueryParam(currentUser);
+    console.log('Logged in as:', currentUser);
 
     // *** ADDED: Show "Project Archive" in sidebar for managers ***
     const navArchive = document.getElementById('nav-archive');
