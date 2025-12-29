@@ -286,42 +286,22 @@ function savePersonalTodos() {
 
 // HELPER FUNCTIONS
 
-/**
- * Gets the current simulated user from the URL query parameter.
- * This now correctly defaults and finds the user.
- */
+
 function getCurrentUser() {
-    const urlParams = new URLSearchParams(window.location.search);
-    let userEmail = urlParams.get('user'); // Get email from URL
-    console.log(userEmail);
-
-    //If not in URL, check sessionStorage (backup)
-    if (!userEmail) {
-        userEmail = sessionStorage.getItem('currentUserEmail');
-        console.warn('User parameter missing from URL, using session backup:', userEmail);
-    }
-
-    //Find the user in our simulated DB
-    if (userEmail && simUsers[userEmail]) {
-        //Store in session as backup
-        sessionStorage.setItem('currentUserEmail', userEmail);
-
+    if (window.__CAN_MANAGE_PROJECT__) {
         return {
-            email: userEmail,
-            ...simUsers[userEmail]
+            role: "manager",
+            name: "Project Manager"
         };
     }
 
-    //Fallback if absolutely no user info exists
-    console.error('No valid user found! Defaulting to member account.');
-    const fallbackEmail = 'user@make-it-all.co.uk';
-    sessionStorage.setItem('currentUserEmail', fallbackEmail);
-
     return {
-        email: fallbackEmail,
-        ...simUsers[fallbackEmail]
+        role: "member",
+        name: "Team Member"
     };
 }
+
+
 
 /**
  * NEW: Gets the current project ID from the URL.
@@ -1591,66 +1571,76 @@ function setupCreateTopicForm(currentUser) {
 /**
  * Runs on the standalone Assign Task page (assign-task.html)
  */
-function setupAssignTaskForm(currentUser) {
-    const form = document.getElementById('assign-task-form');
-    if (!form) return;
+function setupAssignTaskForm() {
+     
+  const form = document.getElementById('assign-task-form');
+  if (!form) return;
 
-    // Populate projects
-    const projectSelect = document.getElementById('task-project');
-    if (projectSelect) {
-        projectSelect.innerHTML = '<option value="">Select a project...</option>';
-        simProjects.forEach(p => {
-            projectSelect.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-        });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault(); // ⛔ STOP PAGE RELOAD
+
+    const titleEl = document.getElementById('modal-task-title');
+    const priorityEl = document.getElementById('modal-task-priority');
+    const deadlineEl = document.getElementById('modal-task-deadline');
+
+    if (!titleEl || !priorityEl || !deadlineEl) {
+      console.error('Assign task form fields not found');
+      return;
     }
 
-    // Populate assignees
-    const assigneeSelect = document.getElementById('task-assignee');
-    if (assigneeSelect) {
-        assigneeSelect.innerHTML = '<option value="">Select team member...</option>';
-        for (const email in simUsers) {
-            assigneeSelect.innerHTML += `<option value="${email}">${simUsers[email].name}</option>`;
-        }
+    const taskName = titleEl.value.trim();
+    const priority = priorityEl.value;
+    const deadline = deadlineEl.value;
+    const description =
+      document.getElementById('modal-task-description')?.value.trim() || '';
+
+    const assignees = Array.from(
+      document.querySelectorAll('#modal-task-assignees input[type="checkbox"]:checked')
+    ).map(cb => cb.value);
+
+    if (!taskName || !deadline || assignees.length === 0) {
+      alert('Please fill all required fields');
+      return;
     }
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const title = document.getElementById('task-title').value;
-        const projectId = document.getElementById('task-project').value;
-        const assigneeEmail = document.getElementById('task-assignee').value;
-        const priority = document.getElementById('task-priority').value;
-        const deadline = document.getElementById('task-deadline').value;
-        const description = document.getElementById('task-description').value;
+    const formData = new FormData();
+    formData.append('ajax', 'create_task');
+    formData.append('task_name', taskName);
+    formData.append('priority', priority);
+    formData.append('deadline', deadline);
+    formData.append('description', description);
+const rawStatus = document.getElementById("modal-task-status")?.value || "todo";
 
-        if (!title || !projectId || !assigneeEmail || !priority || !deadline) {
-            alert('Please fill out all required fields.');
-            return;
-        }
+const statusMap = {
+  todo: "to_do",
+  inprogress: "in_progress",
+  review: "review",
+  completed: "completed"
+};
 
-        const project = simProjects.find(p => p.id === projectId);
+formData.append("status", statusMap[rawStatus] || "to_do");
+    assignees.forEach(a => formData.append('assignees[]', a));
 
-        const newTask = {
-            id: new Date().getTime(),
-            title: title,
-            project: project.name,
-            projectId: project.id,
-            assignedTo: [assigneeEmail],
-            priority: priority,
-            status: 'todo', // Default to 'todo'
-            deadline: deadline,
-            createdDate: new Date().toISOString().split('T')[0],
-            description: description,
-            createdBy: currentUser.email,
-            type: 'assigned'
-        };
+    const res = await fetch(
+      `projects.php?project_id=${encodeURIComponent(window.__PROJECT__.project_id)}`,
+      {
+        method: 'POST',
+        body: formData
+      }
+    );
 
-        simTasks.push(newTask);
-        saveTasks();
+    const data = await res.json();
 
-        sessionStorage.setItem('taskCreated', 'Task assigned successfully!');
-        window.location.href = `home/home.html?user=${currentUser.email}`;
-    });
-}
+    if (!data.success) {
+      alert(data.message || 'Failed to create task');
+      return;
+    }
+
+    document.getElementById('assign-task-modal').style.display = 'none';
+    fetchAndRenderTasks(); // reload Kanban
+  });
+} 
+
 
 /**
  * Runs on the Create Project page (create-project.html)
@@ -1690,6 +1680,56 @@ function setupCreateProjectForm(currentUser) {
  * Generates HTML for a single task card for the project board
  */
 function createTaskCardHTML(task, currentUser) {
+    function renderStatusPill(task) {
+    const statuses = {
+        todo: "To Do",
+        inprogress: "In Progress",
+        review: "Review",
+        completed: "Completed"
+    };
+
+    const priorities = {
+        low: "Low",
+        medium: "Medium",
+        high: "High",
+        urgent: "Urgent"
+    };
+
+    return `
+      <div class="task-status-menu" data-task-id="${task.id}">
+        <button class="status-pill icon-only" aria-label="Task actions">
+          <span class="ellipsis">⋯</span>
+        </button>
+
+        <div class="status-dropdown" hidden>
+          <div class="dropdown-section">
+            <div class="dropdown-label">Change status</div>
+            ${Object.entries(statuses)
+                .filter(([k]) => k !== task.status)
+                .map(([k, v]) =>
+                    `<button data-action="status" data-value="${k}">
+                        Move to ${v}
+                     </button>`
+                ).join("")}
+          </div>
+
+          <div class="dropdown-divider"></div>
+
+          <div class="dropdown-section">
+            <div class="dropdown-label">Change priority</div>
+            ${Object.entries(priorities)
+                .filter(([k]) => k !== task.priority)
+                .map(([k, v]) =>
+                    `<button data-action="priority" data-value="${k}">
+                        Set priority: ${v}
+                     </button>`
+                ).join("")}
+          </div>
+        </div>
+      </div>
+    `;
+}
+
     // Check for the special "Leader on Apollo" case
     const currentProjectId = getCurrentProjectId();
 
@@ -1702,6 +1742,7 @@ function createTaskCardHTML(task, currentUser) {
     const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
 
     const isDraggable = isManagerView && !isLeaderOnApollo;
+    const showMoveBtn = isManagerView && !isLeaderOnApollo;
 
     // Find assignee names
     const assignees = task.assignedTo.map(email => {
@@ -1734,17 +1775,22 @@ function createTaskCardHTML(task, currentUser) {
     // Capitalize priority
     const priorityText = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
 
-    return `
-        <div class="task-card" data-task-id="${task.id}" ${isDraggable ? 'draggable="true"' : ''}>
-            <span class="priority ${task.priority}">${priorityText}</span>
-            <h3 class="task-title">${task.title}</h3>
-            ${task.project ? `<p class="task-tag">${task.project}</p>` : ''}
-            <div class="task-assignees">
-                ${assigneesHtml}
-                ${moreAssignees}
-            </div>
-        </div>
-    `;
+ return `
+  <div class="task-card" data-task-id="${task.id}" ${isDraggable ? 'draggable="true"' : ''}>
+    <span class="priority ${task.priority}">${priorityText}</span>
+    <h3 class="task-title">${task.title}</h3>
+    ${task.description ? `<p class="task-desc">${task.description}</p>` : ''}
+
+    ${isManagerView ? renderStatusPill(task) : ""}
+
+    <div class="task-assignees">
+      ${assigneesHtml}
+      ${moreAssignees}
+    </div>
+  </div>
+`;
+
+
 }
 
 function getEffectiveRole(currentUser) {
@@ -1815,10 +1861,12 @@ function renderTaskBoard(currentUser, currentProjectId) {
             // normalize shape so your UI keeps working
             id: t.task_id,
             title: t.task_name,
-            description: t.description,
+            description: t.description || t.task_description || "",
             priority: t.priority || 'medium',
             status: normalizeDbStatus(t.status),
-            assignedTo: t.assignedTo || [],
+            assignedTo: Array.isArray(t.assignedUsers)
+    ? t.assignedUsers.map(u => u.email)
+    : (t.assignedTo || []),
             project: window.__PROJECT__?.project_name || '',
             projectId: currentProjectId,
             createdDate: t.created_date,
@@ -1859,6 +1907,8 @@ function renderTaskBoard(currentUser, currentProjectId) {
     if (isManagerView && !isLeaderOnApollo) {
         setupBoardDnDOnce(currentUser, currentProjectId);
     }
+    setupStatusPillActions(currentUser, currentProjectId);
+
 
     // Initialize task detail click listeners for everyone
     initTaskDetailsModal(currentUser);
@@ -1886,6 +1936,38 @@ async function updateTaskStatusInDb(taskId, newStatus) {
     }
     return data;
 }
+async function updateTaskPriorityInDb(taskId, priority) {
+    const res = await fetch(
+        `projects.php?project_id=${encodeURIComponent(getCurrentProjectId())}`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: new URLSearchParams({
+                ajax: "update_task_priority",
+                task_id: taskId,
+                priority: priority
+            })
+        }
+    );
+
+    const text = await res.text();
+    let data;
+
+    try {
+        data = JSON.parse(text);
+    } catch {
+        throw new Error("Invalid JSON response: " + text);
+    }
+
+    if (!res.ok || !data.success) {
+        throw new Error(data.message || "Priority update failed");
+    }
+
+    return data;
+}
+
 
 async function deleteTaskInDb(taskId) {
     const pid = getCurrentProjectId();
@@ -1909,6 +1991,89 @@ async function deleteTaskInDb(taskId) {
     }
 
     return data;
+}
+
+function setupStatusPillActions(currentUser, currentProjectId) {
+
+   document.addEventListener("click", (e) => {
+    const pill = e.target.closest(".status-pill");
+    if (!pill) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!window.__CAN_MANAGE_PROJECT__) return;
+
+    // close all others
+    document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+    document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+
+    const menu = pill.nextElementSibling;
+    const card = pill.closest(".task-card");
+
+    if (menu && card) {
+        menu.hidden = false;
+        card.classList.add("menu-open");
+    }
+});
+
+
+    // Handle move (CLICK OPTION)
+    document.addEventListener("click", async (e) => {
+    const option = e.target.closest(".status-dropdown button");
+    if (!option) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!window.__CAN_MANAGE_PROJECT__) return;
+
+    const wrapper = option.closest(".task-status-menu");
+    const taskId = wrapper.dataset.taskId;
+    const action = option.dataset.action;
+    const value = option.dataset.value;
+
+    const tasks = window.__TASKS_NORM__ || [];
+    const task = tasks.find(t => String(t.id) === String(taskId));
+    if (!task) return;
+
+    if (action === "status" && task.status !== value) {
+        const old = task.status;
+        task.status = value;
+
+        try {
+            await updateTaskStatusInDb(task.id, denormalizeStatus(value));
+        } catch {
+            task.status = old;
+            alert("Could not change status");
+            return;
+        }
+    }
+
+    if (action === "priority" && task.priority !== value) {
+        const old = task.priority;
+        task.priority = value;
+
+        try {
+            await updateTaskPriorityInDb(task.id, value);
+        } catch {
+            task.priority = old;
+            alert("Could not change priority");
+            return;
+        }
+    }
+
+    renderTaskBoard(currentUser, currentProjectId);
+});
+
+
+   document.addEventListener("click", (e) => {
+    if (e.target.closest(".task-status-menu")) return;
+
+    document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+    document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+});
+
 }
 
 
@@ -2006,6 +2171,8 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
         renderTaskBoard(currentUser, currentProjectId);
     });
 }
+
+
 /**
  * NEW: Initializes click listeners for task cards to show details
  */
@@ -2031,9 +2198,7 @@ function initTaskDetailsModal(currentUser) {
     });
 
     document.addEventListener("click", (e) => {
-        // Ignore clicks inside the modal (buttons, content, etc.)
-        if (e.target.closest("#task-details-modal")) return;
-
+if (e.target.closest(".task-status-menu")) return;
         const card = e.target.closest(".task-card");
         if (!card) return;
 
@@ -2055,10 +2220,19 @@ function initTaskDetailsModal(currentUser) {
         document.getElementById("details-task-project").textContent = task.project;
         document.getElementById("details-task-priority").textContent = task.priority;
         document.getElementById("details-task-priority").className = `priority-badge ${task.priority}`;
-        document.getElementById("details-task-assignees").textContent = assignees;
         document.getElementById("details-task-created").textContent = createdDate;
         document.getElementById("details-task-deadline").textContent = deadlineDate;
         document.getElementById("details-task-description").textContent = task.description || "No description provided.";
+const assigneesEl = document.getElementById("details-task-assignees");
+
+if (task.assignedTo && task.assignedTo.length > 0) {
+  assigneesEl.textContent = task.assignedTo
+    .map(email => simUsers[email]?.name || email)
+    .join(", ");
+} else {
+  assigneesEl.textContent = "Unassigned";
+}
+
 
         const markBtn = document.getElementById("project-complete-btn");
         const deleteBtn = document.getElementById("delete-task-btn");
@@ -2133,6 +2307,7 @@ function initTaskDetailsModal(currentUser) {
         detailsModal.style.display = "flex";
     });
 
+
 }
 
 
@@ -2205,22 +2380,7 @@ function loadProjectsPage(currentUser) {
     // ✅ ROLE-BASED "+" button visibility
     // -----------------------------
     // ✅ ROLE-BASED "+" button visibility (robust)
-    document.querySelectorAll(".add-task").forEach((btn) => {
-        // remove inline display:none coming from HTML
-        btn.style.removeProperty("display");
-
-        if (showManagerControls) {
-            btn.style.display = "inline-flex";
-
-            btn.onclick = (e) => {
-                const status = e.currentTarget.closest(".task-column")?.dataset.status;
-                openModal(status);
-            };
-        } else {
-            btn.style.display = "none";
-            btn.onclick = null;
-        }
-    });
+    
 
 
     if (modalProjectSelect) {
@@ -2288,17 +2448,7 @@ function loadProjectsPage(currentUser) {
         });
     }
 
-    // When modal opens, reset search + recount
-    const oldOpenModal = openModal;
-    const openModalWrapped = (status) => {
-        oldOpenModal(status);
-
-        if (assigneeSearch) assigneeSearch.value = "";
-        applyAssigneeFilter();
-        updateSelectedCount();
-    };
-    // overwrite the function reference used by your "+" buttons
-    openModal = openModalWrapped;
+   
 
 
     // =============================
@@ -2382,66 +2532,54 @@ function loadProjectsPage(currentUser) {
     // Modal submit (prototype-only until your DB endpoint exists)
     // -----------------------------
     if (modalForm) {
-        modalForm.onsubmit = async (e) => {
-            e.preventDefault();
+      form.onsubmit = async (e) => {
+  e.preventDefault();
+  e.stopPropagation();
 
-            if (!showManagerControls) {
-                alert("You do not have permission to create tasks.");
-                return;
-            }
+  const title = document.getElementById("modal-task-title").value.trim();
+  const deadline = document.getElementById("modal-task-deadline").value;
+  const priority = document.getElementById("modal-task-priority").value;
 
-            const title = document.getElementById("modal-task-title")?.value?.trim();
-            const projectId = document.getElementById("modal-task-project")?.value;
-            const priority = document.getElementById("modal-task-priority")?.value;
-            const deadline = document.getElementById("modal-task-deadline")?.value;
-            const description = document.getElementById("modal-task-description")?.value || "";
-            const status = modalStatusInput?.value || "todo";
+  const assignees = Array.from(
+    document.querySelectorAll("#modal-task-assignees input:checked")
+  ).map(cb => cb.value);
 
-            const checked = document.querySelectorAll('#modal-task-assignees input[type="checkbox"]:checked');
-            const assignees = Array.from(checked).map(cb => cb.value);
+  const rawStatus = document.getElementById("modal-task-status").value;
 
-            if (!title || !projectId || !priority || !deadline || assignees.length === 0) {
-                alert("Please fill out all required fields and select at least one assignee.");
-                return;
-            }
+  const statusMap = {
+    todo: "to_do",
+    inprogress: "in_progress",
+    review: "review",
+    completed: "completed"
+  };
 
-            try {
-                const res = await fetch(`projects.php?project_id=${encodeURIComponent(projectId)}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({
-                        ajax: "create_task",
-                        task_name: title,
-                        description,
-                        priority,
-                        status,      // UI status; PHP maps it
-                        deadline,    // must match DB expected format
-                        // send array items as assignees[]
-                        ...assignees.reduce((acc, email, i) => {
-                            acc[`assignees[${i}]`] = email;
-                            return acc;
-                        }, {})
-                    })
-                });
+  const status = statusMap[rawStatus] || "to_do";
 
-                const raw = await res.text();
-                let data;
-                try { data = JSON.parse(raw); }
-                catch { throw new Error("Server did not return JSON: " + raw); }
+  const fd = new FormData();
+  fd.append("ajax", "create_task");
+  fd.append("task_name", title);
+  fd.append("deadline", deadline);
+  fd.append("priority", priority);
+  fd.append("status", status);
 
-                if (!res.ok || !data.success) throw new Error(data.message || "Create failed");
+  assignees.forEach(a => fd.append("assignees[]", a));
 
-                closeModal();
-                showSuccessNotification("Task assigned successfully!");
+  const res = await fetch(
+    `projects.php?project_id=${window.__PROJECT__.project_id}`,
+    { method: "POST", body: fd }
+  );
 
-                // simplest + safest: reload so PHP re-injects window.__TASKS__
-                window.location.reload();
+  const data = await res.json();
 
-            } catch (err) {
-                console.error(err);
-                alert("Could not create task. Check console.");
-            }
-        };
+  if (!data.success) {
+    alert(data.message || "Create failed");
+    return;
+  }
+
+  document.getElementById("assign-task-modal").style.display = "none";
+  fetchAndRenderTasks();
+};
+
     }
 
 
@@ -2453,8 +2591,67 @@ function loadProjectsPage(currentUser) {
     }
 
     feather.replace();
+ 
+
 }
 
+function openAssignTaskModal(status = "todo") {
+    const modal = document.getElementById("assign-task-modal");
+    if (!modal) return;
+
+    // status
+    const statusInput = document.getElementById("modal-task-status");
+    if (statusInput) statusInput.value = status;
+
+    // project (lock to current project)
+    const projectSelect = document.getElementById("modal-task-project");
+    const pid = getCurrentProjectId();
+    const pname = window.__PROJECT__?.project_name || "Current Project";
+
+    if (projectSelect) {
+        projectSelect.innerHTML = `<option value="${pid}" selected>${pname}</option>`;
+    }
+
+    // assignees
+    const list = document.getElementById("modal-task-assignees");
+    const countEl = document.getElementById("assignee-selected-count");
+    if (list) {
+        list.innerHTML = "";
+        let count = 0;
+
+        const users = window.__USERS__ || {};
+
+        Object.entries(users).forEach(([email, user]) => {
+            const row = document.createElement("div");
+            row.className = "assignee-checkbox-item";
+
+            row.innerHTML = `
+                <input type="checkbox" value="${email}">
+                <label>${user.name}</label>
+            `;
+
+            const cb = row.querySelector("input");
+            cb.addEventListener("change", () => {
+                count += cb.checked ? 1 : -1;
+                if (countEl) countEl.textContent = `Selected: ${count}`;
+            });
+
+            list.appendChild(row);
+        });
+
+        if (countEl) countEl.textContent = "Selected: 0";
+    }
+
+    // deadline min = today
+    const deadline = document.getElementById("modal-task-deadline");
+    if (deadline) {
+        deadline.min = new Date().toISOString().split("T")[0];
+    }
+
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    feather.replace();
+}
 
 // ===============================================
 // === NEW FUNCTIONS FOR MANAGER PROGRESS PAGE ===
@@ -3451,11 +3648,42 @@ function setupProjectCardNavigation() {
         const projectId = card.dataset.projectId;
         if (!projectId) return;
 
+            // 🔍 DEBUG – BEFORE navigation
+        console.log("Navigating to", projectId);
+
+        // 🔍 DEBUG – AFTER navigation attempt
+        setTimeout(() => console.log("Still here"), 0);
+
         // Go to DB-backed project page
         window.location.href = `projects.php?project_id=${encodeURIComponent(projectId)}`;
     });
 }
 
+document.addEventListener("click", (e) => {
+    const addBtn = e.target.closest(".add-task");
+    if (!addBtn) return;
+
+    if (!window.__CAN_MANAGE_PROJECT__) return;
+
+    e.preventDefault();
+
+    const column = addBtn.closest(".task-column");
+    const status = column?.dataset.status || "todo";
+
+    openAssignTaskModal(status);
+});
+document.addEventListener("click", (e) => {
+    if (e.target.closest("#close-modal-btn")) {
+        const modal = document.getElementById("assign-task-modal");
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+    }
+
+    if (e.target.id === "assign-task-modal") {
+        e.target.style.display = "none";
+        document.body.style.overflow = "";
+    }
+});
 
 
 // ===============================================
@@ -3556,6 +3784,8 @@ document.addEventListener('DOMContentLoaded', () => {
     feather.replace();
 });
 
+
+
 // I've put this for testing, just type resetAllData(); to refresh the web page after testing
 function resetAllData() {
     if (confirm("This will erase all current data and reload the defaults. Continue?")) {
@@ -3564,3 +3794,194 @@ function resetAllData() {
         location.reload();
     }
 }
+
+
+// =============================
+// TASK SEARCH (AJAX)
+// =============================
+(function () {
+    const searchInput = document.getElementById("task-search-input");
+    const statusFilter = document.getElementById("filter-status");
+    const priorityFilter = document.getElementById("filter-priority");
+    const dueFilter = document.getElementById("filter-due");
+
+
+    if (!searchInput) return;
+
+    let searchTimeout = null;
+
+        function applyFilters() {
+        fetchAndRenderTasks({
+            search: searchInput.value.trim(),
+            status: statusFilter?.value || "",
+            priority: priorityFilter?.value || "",
+            due: dueFilter?.value || "",
+            page: 1
+        });
+    }
+
+
+    searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 300);
+    });
+
+    statusFilter?.addEventListener("change", applyFilters);
+    priorityFilter?.addEventListener("change", applyFilters);
+    dueFilter?.addEventListener("change", applyFilters);
+
+})();
+
+(function () {
+    const filterToggle = document.getElementById('filter-toggle');
+    const filterPanel = document.getElementById('filter-panel');
+
+    if (!filterToggle || !filterPanel) return;
+
+    filterToggle.addEventListener('click', () => {
+        filterPanel.style.display =
+            filterPanel.style.display === 'flex' ? 'none' : 'flex';
+    });
+})();
+function matchesDueFilter(deadline, filter) {
+    if (!filter) return true;           // no filter
+    if (!deadline) return false;        // no date → never matches
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const d = new Date(deadline);
+    d.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.floor(
+        (d - today) / (1000 * 60 * 60 * 24)
+    );
+
+    switch (filter) {
+        case "overdue":
+            return diffDays < 0;
+
+        case "today":
+            return diffDays === 0;
+
+        case "week":
+            return diffDays >= 0 && diffDays <= 7;
+
+        case "month":
+            return diffDays >= 0 && diffDays <= 30;
+
+        default:
+            return true;
+    }
+}
+
+function fetchAndRenderTasks({ search = "", status = "", priority = "", due = "", page = 1 } = {}) {
+    const url = new URL(window.location.href);
+
+    url.searchParams.set("ajax", "fetch_tasks");
+    url.searchParams.set("search", search);
+    url.searchParams.set("status", status);
+    url.searchParams.set("priority", priority);
+    url.searchParams.set("due", due);
+    url.searchParams.set("page", page);
+
+    fetch(url.toString())
+        .then(res => res.json())
+       .then(data => {
+    if (!data.success) return;
+
+    const dueValue = document.getElementById("filter-due")?.value || "";
+
+    // Apply due-date filter correctly
+    window.__TASKS__ = data.tasks.filter(task =>
+        matchesDueFilter(task.deadline, dueValue)
+    );
+
+    window.__TASKS_NORM__ = []; // force rebuild from filtered list
+
+    clearTaskColumns();
+    renderTaskBoard(getCurrentUser(), getCurrentProjectId());
+    updateTaskCounts();
+})
+
+        .catch(err => console.error("Task fetch error:", err));
+}
+function clearTaskColumns() {
+    document.querySelectorAll(".task-column .task-list")
+        .forEach(col => col.innerHTML = "");
+}
+
+function updateTaskCounts() {
+    document.querySelectorAll(".task-column").forEach(col => {
+        const count = col.querySelectorAll(".task-card").length;
+        col.querySelector(".task-count").textContent = count;
+    });
+}
+/*function renderTaskCard(task) {
+    const statusMap = {
+        "to_do": "todo",
+        "in_progress": "inprogress",
+        "review": "review",
+        "completed": "completed"
+    };
+
+    const columnKey = statusMap[task.status];
+    if (!columnKey) return;
+
+    const column = document.querySelector(
+        `.task-column[data-status="${columnKey}"] .task-list`
+    );
+
+    if (!column) return;
+
+    const card = document.createElement("div");
+    card.className = "task-card";
+    card.dataset.taskId = task.task_id;
+
+    card.innerHTML = `
+        <span class="priority ${task.priority}">${task.priority.toUpperCase()}</span>
+        <h4>${task.task_name}</h4>
+        <p>${task.description || ""}</p>
+    `;
+
+    column.appendChild(card);
+}*/
+document.addEventListener("DOMContentLoaded", () => {
+    fetchAndRenderTasks();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  setupAssignTaskForm();
+});
+
+
+
+// =============================
+// CLEAR FILTERS BUTTON
+// =============================
+const filterClearBtn = document.getElementById('filter-clear');
+const filterStatus = document.getElementById('filter-status');
+const filterPriority = document.getElementById('filter-priority');
+const filterDue = document.getElementById('filter-due');
+
+filterClearBtn?.addEventListener('click', () => {
+    // Reset dropdowns
+    if (filterStatus) filterStatus.value = '';
+    if (filterPriority) filterPriority.value = '';
+    if (filterDue) filterDue.value = '';
+
+    // Re-fetch tasks with no filters
+    fetchAndRenderTasks({
+        search: document.getElementById('task-search-input')?.value.trim() || '',
+        status: '',
+        priority: '',
+        due: '',
+        page: 1
+    });
+
+    // Optional: close filter panel after clearing
+    const panel = document.getElementById('filter-panel');
+    if (panel) panel.hidden = true;
+});
+
+
