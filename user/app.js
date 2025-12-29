@@ -807,8 +807,8 @@ function loadSettingsPage(currentUser) {
     document.getElementById('profile-name').value = currentUser.name;
     document.getElementById('profile-email').value = currentUser.email;
 
-    // Capitalize the first letter of the role
-    const role = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+    // Format the role (capitalise and replace underscroll)
+    const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
 
     // 2. Add form submit listeners (prototype alerts)
@@ -3411,8 +3411,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get the "logged in" user
     const currentUser = await getCurrentUser();
     if (!currentUser) return;
-
-    console.log('Logged in as:', currentUser);
 
     // *** ADDED: Show "Project Archive" in sidebar for managers ***
     const navArchive = document.getElementById('nav-archive');
