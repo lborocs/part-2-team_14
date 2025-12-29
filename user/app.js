@@ -28,15 +28,6 @@ function showSuccessNotification(message) {
     }, 3000);
 }
 
-// Accounts created for the purpose of the prototype.
-// In a real app, this data would come from a server and database.
-// We use 'localStorage' to make new posts and replies persist during the session.
-
-const simUsers = window.__USERS__ || {};
-console.log("__USERS__", window.__USERS__);
-console.log("simUsers keys", Object.keys(simUsers));
-
-
 // Initial hardcoded posts
 const initialPosts = [
     // Software Issues
