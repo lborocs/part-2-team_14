@@ -364,7 +364,7 @@ body {
     margin-bottom: 15px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
-    padding-bottom: 52px;  
+    padding-bottom: 16px;  
     z-index:0;  
 }
 .task-card.menu-open {
