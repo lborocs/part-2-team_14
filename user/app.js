@@ -287,7 +287,7 @@ function savePersonalTodos() {
 // HELPER FUNCTIONS
 
 
-function getCurrentUser() {
+function getCurrentUserStatus() {
     if (window.__CAN_MANAGE_PROJECT__) {
         return {
             role: "manager",
@@ -3684,17 +3684,10 @@ document.addEventListener("click", (e) => {
 document.addEventListener('DOMContentLoaded', () => {
 
     // Get the "logged in" user
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUserStatus();
 
     // Make all links on the page keep the user "logged in"
     persistUserQueryParam(currentUser);
-
-    // *** ADDED: Show "Project Archive" in sidebar for managers ***
-    const navArchive = document.getElementById('nav-archive');
-    if (navArchive && currentUser.role === 'manager') {
-        navArchive.style.display = 'block';
-    }
-    // *** END ADDED CODE ***
 
 
     // Run page-specific logic based on body ID
@@ -3891,7 +3884,7 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
     window.__TASKS_NORM__ = []; // force rebuild from filtered list
 
     clearTaskColumns();
-    renderTaskBoard(getCurrentUser(), getCurrentProjectId());
+    renderTaskBoard(getCurrentUserStatus(), getCurrentProjectId());
     updateAddTaskButtonsVisibility();
     updateTaskCounts();
 })
