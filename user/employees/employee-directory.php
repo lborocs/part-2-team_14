@@ -1,35 +1,51 @@
 <?php
-// load database connection
+/* ============================
+   BOOTSTRAP & DATABASE
+   ============================ */
+// Load database configuration
 require_once __DIR__ . "/../../config/database.php";
 
-// create db object and get PDO connection (to safely run SQL queries)
+// Create DB instance & PDO connection
 $database = new Database();
 $pdo = $database->getConnection();
 
-// pagination configuration 
+/* =============================
+   PAGINATION CONFIGURATION
+   ============================= */
 $perPage = 20;
+
+// Current page (defaults to 1)
 $page = isset($_GET['page']) && is_numeric($_GET['page'])
     ? max(1, (int) $_GET['page'])
     : 1;
 $offset = ($page - 1) * $perPage;
 
+/* ====================================================
+   TOTAL EMPLOYEE COUNT (for pagination + meta text)
+   ==================================================== */
 $countStmt = $pdo->prepare("
     SELECT COUNT(DISTINCT u.user_id)
     FROM users u
     WHERE u.is_active = TRUE
 ");
 $countStmt->execute();
+
 $totalEmployees = (int) $countStmt->fetchColumn();
 $totalPages = (int) ceil($totalEmployees / $perPage);
 $range = 1;
 
-// Preserve existing query parameters (except page)
+/* =================================================
+   PRESERVE QUERY PARAMETERS (AJAX / FILTER SAFE)
+   ================================================= */
 $queryParams = $_GET;
-unset($queryParams['page']);
+unset($queryParams['page']); // page handled seperately 
 
 $queryString = http_build_query($queryParams);
 $queryString = $queryString ? '&' . $queryString : '';
 
+/* =======================
+   EMPLOYEE LIST QUERY
+   ======================= */
 $sql = "
 SELECT
     u.user_id,
@@ -59,13 +75,19 @@ $stmt->execute();
 
 $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Results range display numbers 
+/* ==============================================
+   RESULT RANGE (e.g. "Showing 21–40 of 132")
+   ============================================== */ 
 $start = $totalEmployees > 0 ? $offset + 1 : 0;
 $end = min($offset + count($employees), $totalEmployees);
 
+/* ========================
+   AJAX REQUEST HANDLING
+   ======================== */
 $isAjax = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 
 if ($isAjax) {
+    // Only return the grid + pagination (used by employees.js)
     include __DIR__ . '/partials/employee-grid.php';
     exit;
 }
@@ -323,7 +345,6 @@ if ($isAjax) {
     </script>
 
     <script src="employees.js"></script>
-
 </body>
 </html>
 

@@ -1,6 +1,7 @@
 /*override scrolling in dashboard.css for main-content*/
 .main-content {
   overflow: auto; 
+  font-family: 'Poppins', sans-serif;
 }
 
 /* ------------------------
