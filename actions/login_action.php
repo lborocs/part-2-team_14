@@ -57,10 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['name'] = $user['first_name'] . ' ' . $user['last_name'];
         $_SESSION['role'] = $user['role'];
         
+        // Determine redirect based on role
+        $redirect = ($user['role'] === 'manager')
+            ? 'user/home/home.html?user=' . urlencode($user['email'])
+            : 'user/project/projects-overview.php';
+        
         echo json_encode([
             'success' => true,
             'message' => 'Login successful',
-            'redirect' => 'user/home/home.html?user=' . urlencode($user['email'])
+            'redirect' => $redirect
         ]);
         
     } catch (PDOException $e) {

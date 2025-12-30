@@ -28,15 +28,6 @@ function showSuccessNotification(message) {
     }, 3000);
 }
 
-// Accounts created for the purpose of the prototype.
-// In a real app, this data would come from a server and database.
-// We use 'localStorage' to make new posts and replies persist during the session.
-
-const simUsers = window.__USERS__ || {};
-console.log("__USERS__", window.__USERS__);
-console.log("simUsers keys", Object.keys(simUsers));
-
-
 // Initial hardcoded posts
 const initialPosts = [
     // Software Issues
@@ -285,7 +276,30 @@ function savePersonalTodos() {
 
 
 // HELPER FUNCTIONS
+/**
+ * Gets the current user from the PHP session.
+ */
+async function getCurrentUser() {
+    try {
+        const response = await fetch('../../actions/login_sync.php', {
+            credentials: 'include'
+        });
 
+        const data = await response.json();
+
+        if (!data.loggedIn) {
+            // Redirects if not logged in
+            window.location.href = '../index.html';
+            return null;
+        }
+
+        return data.user;
+
+    } catch (err) {
+        console.error('Failed to sync login state:', err);
+        return null;
+    }
+}
 
 function getCurrentUserStatus() {
     if (window.__CAN_MANAGE_PROJECT__) {
@@ -319,41 +333,6 @@ function getCurrentProjectId() {
         return params.get('project_id'); // numeric string like "2"
     }
     return null;
-}
-
-
-/**
- * Persists the current user's email AND project in all internal links.
- * This simulates a "logged in" session as you navigate.
- */
-function persistUserQueryParam(currentUser) {
-    const userQuery = `user=${currentUser.email}`;
-    const urlParams = new URLSearchParams(window.location.search);
-    let projectQuery = urlParams.get('project_id');
-
-    document.querySelectorAll('a').forEach(a => {
-        // Check if it's an internal link
-        if (a.href && a.hostname === window.location.hostname && !a.href.includes('#')) {
-            // Check if it's a mailto link, if so, skip
-            if (a.protocol === "mailto:") return;
-
-            // Don't modify links that already have params
-            if (a.href.includes('?')) return;
-
-            // Rebuild href to include both user and project
-            if (a.search) {
-                if (!a.search.includes('user=')) a.search += `&${userQuery}`;
-                if (a.pathname.includes('projects') || a.pathname.includes('progress') || a.pathname.includes('project-resources')) {
-                    if (!a.search.includes('project=')) a.search += `&${projectQuery}`;
-                }
-            } else {
-                a.href += `?${userQuery}`;
-                if (a.pathname.includes('projects') || a.pathname.includes('progress') || a.pathname.includes('project-resources')) {
-                    if (projectQuery) a.href += `&${projectQuery}`;
-                }
-            }
-        }
-    });
 }
 
 /**
@@ -849,8 +828,8 @@ function loadSettingsPage(currentUser) {
     document.getElementById('profile-name').value = currentUser.name;
     document.getElementById('profile-email').value = currentUser.email;
 
-    // Capitalize the first letter of the role
-    const role = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+    // Format the role (capitalise and replace underscroll)
+    const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
 
     // 2. Add form submit listeners (prototype alerts)
@@ -3681,14 +3660,18 @@ document.addEventListener("click", (e) => {
 // === DOCUMENT LOAD =============================
 // ===============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
 
     // Get the "logged in" user
-    const currentUser = getCurrentUserStatus();
+    const currentUser = await getCurrentUser();
+    if (!currentUser) return;
 
-    // Make all links on the page keep the user "logged in"
-    persistUserQueryParam(currentUser);
-
+    // *** ADDED: Show "Project Archive" in sidebar for managers ***
+    const navArchive = document.getElementById('nav-archive');
+    if (navArchive && currentUser.role === 'manager') {
+        navArchive.style.display = 'block';
+    }
+    // *** END ADDED CODE-- fixing conficts-Simi ***
 
     // Run page-specific logic based on body ID
     const pageId = document.body.id;
