@@ -152,3 +152,101 @@
     height: 12px;
     border-radius: 3px;
 }
+
+.manager-progress-layout{
+  margin-top: 18px; /* space under the grey line */
+}
+
+/* Upcoming deadlines list: show ~3 items then scroll */
+/* Make both cards same height without hardcoding a random number */
+.progress-card,
+.deadlines-card{
+  margin-bottom: 0;     /* important: removes extra spacing */
+  padding: 22px;        /* slightly tighter */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make the titles not add too much height */
+.progress-card h2,
+.deadlines-card h2{
+  margin: 0 0 14px 0;
+}
+
+/* Slightly shorter progress bar so it doesn't force height */
+.progress-bar{
+  height: 40px;
+  border-radius: 20px;
+}
+.progress-fill{
+  border-radius: 20px;
+}
+
+/* Keep progress text tight */
+.progress-text{
+  margin-top: 10px;
+}
+
+/* ✅ THIS controls how many deadline rows are visible */
+.deadlines-list{
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 6px;
+
+  /* show about 2 rows before scrolling */
+  max-height: 120px; /* tweak: 110–140 depending on your row padding */
+}
+
+
+/* 1) Add breathing room from screen edges + from grey line */
+.manager-progress-layout{
+  padding: 24px 40px;   /* <- this fixes “touching screen edges” */
+  margin-top: 18px;     /* space under the grey line */
+  align-items: stretch; /* grid items stretch */
+}
+
+/* 2) Make each grid column stretch its child card */
+.manager-progress-left,
+.manager-progress-right{
+  display: flex;
+}
+
+/* 3) Force both cards to be same height (fill the column) */
+.progress-card,
+.deadlines-card{
+  width: 100%;
+  height: 100%;
+  margin-bottom: 0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 4) Show about 2 items then scroll */
+.deadlines-list{
+  overflow-y: auto;
+  padding-right: 6px;
+  max-height: 120px; /* ~2 rows */
+}
+
+/* (Optional) tighter spacing */
+.progress-card h2,
+.deadlines-card h2{ margin: 0 0 14px 0; }
+
+.progress-bar{ height: 40px; border-radius: 20px; }
+.progress-fill{ border-radius: 20px; }
+.progress-text{ margin-top: 10px; }
+
+/* Keep your responsive split */
+@media (min-width: 768px){
+  .manager-progress-left{ grid-column: span 6; }
+  .manager-progress-right{ grid-column: span 6; }
+}
+
+
+@media (min-width: 768px) {
+  .manager-progress-left,
+  .manager-progress-right {
+    grid-column: span 6;
+  }
+}

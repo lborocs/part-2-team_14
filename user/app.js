@@ -264,11 +264,13 @@ const initialPersonalTodos = [
     }
 ];
 
+let simTasks = [];
+
 // Load tasks from localStorage or use initial set
-let simTasks = JSON.parse(localStorage.getItem('simTasks'));
-if (!localStorage.getItem('simTasks')) {
-    localStorage.setItem('simTasks', JSON.stringify(simTasks));
-}
+// let simTasks = JSON.parse(localStorage.getItem('simTasks'));
+// if (!localStorage.getItem('simTasks')) {
+//     localStorage.setItem('simTasks', JSON.stringify(simTasks));
+// }
 
 let simPersonalTodos = JSON.parse(localStorage.getItem('simPersonalTodos')) || initialPersonalTodos;
 if (!localStorage.getItem('simPersonalTodos')) {
@@ -290,38 +292,66 @@ function savePersonalTodos() {
  * Gets the current simulated user from the URL query parameter.
  * This now correctly defaults and finds the user.
  */
-function getCurrentUser() {
-    const urlParams = new URLSearchParams(window.location.search);
-    let userEmail = urlParams.get('user'); // Get email from URL
-    console.log(userEmail);
 
-    //If not in URL, check sessionStorage (backup)
+function setSimTasksFromDb(currentProjectId) {
+    // If you already have normalized tasks, use them directly
+    if (Array.isArray(window.__TASKS_NORM__) && window.__TASKS_NORM__.length) {
+        simTasks = window.__TASKS_NORM__.filter(t => String(t.projectId) === String(currentProjectId));
+        return;
+    }
+
+    // Otherwise map raw DB tasks into the shape your Progress code expects
+    if (Array.isArray(window.__TASKS__) && window.__TASKS__.length) {
+        simTasks = window.__TASKS__
+            .filter(t => String(t.project_id) === String(currentProjectId))   // change if your field name differs
+            .map(t => ({
+                id: t.task_id,
+                title: t.task_name,
+                description: t.description,
+                // IMPORTANT: Progress code expects status like "completed"
+                status: normalizeDbStatus(t.status),
+                deadline: t.deadline,
+                // IMPORTANT: Progress code expects assignedTo as an array of emails
+                assignedTo: Array.isArray(t.assignedTo) ? t.assignedTo : [],
+                projectId: t.project_id,
+                type: "assigned"
+            }));
+        return;
+    }
+
+    // fallback if no DB tasks exist
+    simTasks = [];
+}
+
+function getCurrentUser() {
+    // ✅ 1) Prefer server session user (DB-backed pages)
+    if (window.__CURRENT_USER_EMAIL__ && window.__USERS__) {
+        const email = String(window.__CURRENT_USER_EMAIL__).toLowerCase().trim();
+        if (window.__USERS__[email]) {
+            return { email, ...window.__USERS__[email] };
+        }
+    }
+
+    // ✅ 2) Otherwise fallback to URL param system (prototype pages)
+    const urlParams = new URLSearchParams(window.location.search);
+    let userEmail = urlParams.get('user');
+
     if (!userEmail) {
         userEmail = sessionStorage.getItem('currentUserEmail');
-        console.warn('User parameter missing from URL, using session backup:', userEmail);
     }
 
-    //Find the user in our simulated DB
+    userEmail = String(userEmail || '').toLowerCase().trim();
+
     if (userEmail && simUsers[userEmail]) {
-        //Store in session as backup
         sessionStorage.setItem('currentUserEmail', userEmail);
-
-        return {
-            email: userEmail,
-            ...simUsers[userEmail]
-        };
+        return { email: userEmail, ...simUsers[userEmail] };
     }
 
-    //Fallback if absolutely no user info exists
-    console.error('No valid user found! Defaulting to member account.');
     const fallbackEmail = 'user@make-it-all.co.uk';
     sessionStorage.setItem('currentUserEmail', fallbackEmail);
-
-    return {
-        email: fallbackEmail,
-        ...simUsers[fallbackEmail]
-    };
+    return { email: fallbackEmail, ...simUsers[fallbackEmail] };
 }
+
 
 /**
  * NEW: Gets the current project ID from the URL.
@@ -363,7 +393,7 @@ function persistUserQueryParam(currentUser) {
             } else {
                 a.href += `?${userQuery}`;
                 if (a.pathname.includes('projects') || a.pathname.includes('progress') || a.pathname.includes('project-resources')) {
-                    if (projectQuery) a.href += `&${projectQuery}`;
+                    if (projectQuery) a.href += `&project_id=${encodeURIComponent(projectQuery)}`;
                 }
             }
         }
@@ -393,7 +423,7 @@ function updateSidebarAndNav() {
     // 3) Decide which Progress page to use (manager/team_leader)
     const isManager = (role === "manager");
     const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
-    const progressPage = (isManager || canManageProject) ? "manager-progress.html" : "progress.html";
+    const progressPage = (isManager || canManageProject) ? "manager-progress.php" : "progress.php";
 
 
     // 4) Build nav links
@@ -403,7 +433,7 @@ function updateSidebarAndNav() {
 
         const tasksActive = path.includes("projects.php") ? "active" : "";
         const progressActive =
-            path.includes("progress.php") || path.includes("manager-progress.html") ? "active" : "";
+            path.includes("progress.php") || path.includes("manager-progress.php") ? "active" : "";
         const resourcesActive = path.includes("project-resources.html") ? "active" : "";
 
         navLinks.innerHTML = `
@@ -1350,10 +1380,11 @@ function renderNotifications() {
 }
 
 /**
- * Runs on the Progress page (progress.html) - shows only assigned tasks
+ * Runs on the Progress page (progress.php) - shows only assigned tasks
  */
 function loadProgressPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
+    setSimTasksFromDb(currentProjectId);
 
     // --- NEW: Role-based Redirect ---
     // Check if user is a manager/leader
@@ -1363,7 +1394,7 @@ function loadProgressPage(currentUser) {
 
     if (isManagerView && !isLeaderOnApollo) {
         // This is a manager/leader, redirect them to the manager progress page
-        window.location.href = `manager-progress.html?project_id=${encodeURIComponent(currentProjectId)}`;
+        window.location.href = `manager-progress.php?project_id=${encodeURIComponent(currentProjectId)}`;
         return; // Stop loading this page
     }
     // --- End Redirect ---
@@ -1376,26 +1407,29 @@ function loadProgressPage(currentUser) {
         task.assignedTo &&
         task.assignedTo.includes(currentUser.email) &&
         task.type === 'assigned' &&
-        task.projectId === currentProjectId // <-- NEW FILTER
+        String(task.projectId) === String(currentProjectId) // <-- NEW FILTER
     );
 
     // Calculate task progress
-    const completedTasks = userTasks.filter(t => t.status === 'completed').length;
-    const totalTasks = userTasks.length;
-    const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const tasks = Array.isArray(window.__TASKS__) ? window.__TASKS__ : [];
 
-    document.getElementById('task-progress-fill').style.width = progressPercent + '%';
+    const completed = tasks.filter(
+        t => normalizeDbStatus(t.status) === 'completed'
+    ).length;
+
+    const total = tasks.length;
+    const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    document.getElementById('task-progress-fill').style.width = percent + '%';
     document.getElementById('progress-text').textContent =
-        `You have completed ${progressPercent}% of your assigned tasks for this project.`;
+        `You have completed ${percent}% of your assigned tasks for this project.`;
+
 
     // Render upcoming deadlines (from this project's tasks)
     renderUpcomingDeadlines(userTasks);
 
     // Render workload (pass project ID)
     renderWorkload(currentUser, currentProjectId);
-
-    // Render urgent tasks (from this project's tasks)
-    renderUrgentTasks(userTasks, currentUser);
 
     // Render task distribution chart (from this project's tasks)
     renderTaskDistributionChart(userTasks);
@@ -1404,152 +1438,143 @@ function loadProgressPage(currentUser) {
 }
 
 function renderUpcomingDeadlines(userTasks) {
-    const deadlinesList = document.getElementById('deadlines-list');
-    const today = new Date("2025-10-25T12:00:00"); // Hardcode date for demo consistency
+    const deadlinesList = document.getElementById("deadlines-list");
+    if (!deadlinesList) return;
+
+    // ---------- helpers ----------
+    const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+    // ✅ handles: "YYYY-MM-DD", "YYYY-MM-DD HH:MM:SS" (MySQL), ISO strings
+    const parseLocalDate = (dateStr) => {
+        if (!dateStr) return null;
+
+        let s = String(dateStr).trim();
+
+        // MySQL DATETIME: "YYYY-MM-DD HH:MM:SS" -> "YYYY-MM-DDTHH:MM:SS"
+        if (s.includes(" ") && !s.includes("T")) {
+            s = s.replace(" ", "T");
+        }
+
+        // ISO / datetime
+        if (s.includes("T")) {
+            const d = new Date(s);
+            return isNaN(d) ? null : d;
+        }
+
+        // "YYYY-MM-DD" as LOCAL (avoids UTC shifting)
+        const parts = s.split("-");
+        if (parts.length === 3) {
+            const y = Number(parts[0]);
+            const m = Number(parts[1]);
+            const d = Number(parts[2]);
+            const local = new Date(y, m - 1, d);
+            return isNaN(local) ? null : local;
+        }
+
+        // fallback
+        const fallback = new Date(s);
+        return isNaN(fallback) ? null : fallback;
+    };
+
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const upcomingTasks = userTasks
-        .filter(t => t.status !== 'completed')
-        .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
-        .slice(0, 3);
+    const daysUntil = (deadlineStr) => {
+        const d = parseLocalDate(deadlineStr);
+        if (!d) return null;
+        d.setHours(0, 0, 0, 0);
+        return Math.ceil((d - today) / MS_PER_DAY);
+    };
 
-    if (upcomingTasks.length === 0) {
-        deadlinesList.innerHTML = '<p class="no-deadlines">No upcoming deadlines. You\'re all caught up!</p>';
-        return;
-    }
+    const formatPillDate = (deadlineStr) => {
+        const d = parseLocalDate(deadlineStr);
+        if (!d) return "";
+        return d.toLocaleDateString("en-US", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+        });
+    };
 
-    deadlinesList.innerHTML = upcomingTasks.map(task => {
-        const deadline = new Date(task.deadline);
-        const formattedDate = deadline.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+    // ---------- main ----------
+    const upcoming = (userTasks || [])
+        .filter((t) => t && t.deadline)
+        // ✅ only show tasks NOT completed
+        .filter((t) => (t.status || "").toLowerCase() !== "completed")
+        .map((t) => {
+            const du = daysUntil(t.deadline);
+            if (du === null) return null;
 
-        let status = 'on-track';
-        let statusText = 'On track';
+            const status = (t.status || "").toLowerCase();
 
-        if (deadline < today) {
-            status = 'overdue';
-            statusText = 'Overdue';
-        } else {
-            const daysUntil = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
-            if (daysUntil <= 2) {
-                status = 'at-risk';
-                statusText = 'At risk';
+            // OVERDUE: deadline passed + not completed
+            if (du < 0) {
+                return {
+                    task: t,
+                    statusKey: "overdue",
+                    statusText: "Overdue",
+                    sortGroup: 0,
+                    sortDays: du,
+                };
             }
-        }
 
-        return `
-            <div class="deadline-item">
-                <p class="deadline-title">${task.title}</p>
-                <div class="deadline-info">
-                    <span class="deadline-date">${formattedDate}</span>
-                    <span class="deadline-status ${status}">${statusText}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function renderWorkload(currentUser, currentProjectId) {
-    // Get this user's tasks for this project
-    const userTasks = simTasks.filter(task =>
-        task.assignedTo &&
-        task.assignedTo.includes(currentUser.email) &&
-        task.status !== 'completed' &&
-        task.projectId === currentProjectId
-    );
-    const userTaskCount = userTasks.length;
-
-    // Calculate team average for this project
-    const allTasksInProject = simTasks.filter(t => t.status !== 'completed' && t.projectId === currentProjectId);
-    const uniqueUsersInProject = [...new Set(allTasksInProject.flatMap(t => t.assignedTo))];
-    const teamAverage = uniqueUsersInProject.length > 0 ? Math.round(allTasksInProject.length / uniqueUsersInProject.length) : 0;
-
-    const maxTasks = Math.max(userTaskCount, teamAverage, 5); // Set a minimum max of 5 for display
-    const userPercent = (userTaskCount / maxTasks) * 100;
-    const teamPercent = (teamAverage / maxTasks) * 100;
-
-    document.getElementById('user-workload').style.width = userPercent + '%';
-    document.getElementById('team-workload').style.width = teamPercent + '%';
-    document.getElementById('user-task-count').textContent = `${userTaskCount} tasks`;
-    document.getElementById('team-task-count').textContent = `${teamAverage} tasks`;
-}
-
-function renderUrgentTasks(userTasks, currentUser) {
-    const urgentTasksList = document.getElementById('urgent-tasks-list');
-    const today = new Date("2025-10-25T12:00:00"); // Hardcode date
-    today.setHours(0, 0, 0, 0);
-
-    const urgentTasks = userTasks.filter(task => {
-        if (task.status === 'completed') return false;
-        const deadline = new Date(task.deadline);
-        const daysUntil = (deadline - today) / (1000 * 60 * 60 * 24);
-
-        return task.priority === 'urgent' || daysUntil < 0 ||
-            (daysUntil >= 0 && daysUntil <= 2);
-    }).slice(0, 3);
-
-    if (urgentTasks.length === 0) {
-        urgentTasksList.innerHTML = '<p class="no-deadlines">No urgent tasks. Keep it up!</p>';
-        return;
-    }
-
-    urgentTasksList.innerHTML = urgentTasks.map(task => {
-        const deadline = new Date(task.deadline);
-        const formattedDate = deadline.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
-
-        const isOverdue = new Date(task.deadline) < today;
-
-        return `
-            <div class="urgent-task">
-                <p class="urgent-task-title">${task.title}</p>
-                <div class="urgent-task-meta">
-                    <span class="urgent-task-date">${formattedDate}</span>
-                    <span class="urgent-task-status">${isOverdue ? 'Overdue' : 'At risk'}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function renderTaskDistributionChart(userTasks) {
-    const todoCount = userTasks.filter(t => t.status === 'todo').length;
-    const inProgressCount = userTasks.filter(t => t.status === 'inprogress').length;
-    const reviewCount = userTasks.filter(t => t.status === 'review').length;
-    const completedCount = userTasks.filter(t => t.status === 'completed').length;
-
-    document.getElementById('todo-count').textContent = `To Do: ${todoCount}`;
-    document.getElementById('inprogress-count').textContent = `In Progress: ${inProgressCount}`;
-    document.getElementById('review-count').textContent = `Review: ${reviewCount}`;
-    document.getElementById('completed-count').textContent = `Completed: ${completedCount}`;
-
-    const ctx = document.getElementById('taskDistributionChart');
-    if (ctx) {
-        // Destroy existing chart if it exists
-        const existingChart = Chart.getChart(ctx);
-        if (existingChart) {
-            existingChart.destroy();
-        }
-
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['To Do', 'In Progress', 'Review', 'Completed'],
-                datasets: [{
-                    data: [todoCount, inProgressCount, reviewCount, completedCount],
-                    backgroundColor: ['#FF8C8C', '#FFD166', '#A8DADC', '#81C5D4'],
-                    borderWidth: 2,
-                    borderColor: '#fff'
-                }]
-            },
-            options: {
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+            // 0..5 day window
+            if (du >= 0 && du <= 5) {
+                if (status === "todo" || status === "inprogress") {
+                    return {
+                        task: t,
+                        statusKey: "at-risk",
+                        statusText: "At risk",
+                        sortGroup: 1,
+                        sortDays: du,
+                    };
+                }
+                if (status === "review") {
+                    return {
+                        task: t,
+                        statusKey: "on-track",
+                        statusText: "On track",
+                        sortGroup: 2,
+                        sortDays: du,
+                    };
                 }
             }
+
+            return null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => {
+            if (a.sortGroup !== b.sortGroup) return a.sortGroup - b.sortGroup;
+
+            // overdue: more overdue first (e.g. -10 before -1)
+            if (a.sortGroup === 0) return a.sortDays - b.sortDays;
+
+            // others: soonest first
+            return a.sortDays - b.sortDays;
         });
+
+    // ✅ show up to 3 (don’t do Math.max(3, upcoming.length) because that shows everything)
+    const visible = upcoming;
+
+    if (visible.length === 0) {
+        deadlinesList.innerHTML = `<p class="no-deadlines">No upcoming deadlines.</p>`;
+        return;
     }
+
+    deadlinesList.innerHTML = visible
+        .map(({ task, statusKey, statusText }) => `
+      <div class="deadline-item">
+        <p class="deadline-title">${task.title ?? task.task_name ?? "Untitled task"}</p>
+        <div class="deadline-info">
+          <span class="deadline-date-pill">${formatPillDate(task.deadline)}</span>
+          <span class="deadline-status ${statusKey}">${statusText}</span>
+        </div>
+      </div>
+    `)
+        .join("");
 }
+
+
 
 /**
  * Runs on the Create Topic page (knowledge-base-create-topic.html)
@@ -1758,8 +1783,10 @@ function normalizeDbStatus(status) {
         review: 'review',
         completed: 'completed'
     };
-    return map[status] || 'todo';
+    const key = String(status || '').toLowerCase().trim();
+    return map[key] || 'todo';
 }
+
 
 function denormalizeStatus(uiStatus) {
     const map = {
@@ -2395,7 +2422,9 @@ function loadProjectsPage(currentUser) {
             const priority = document.getElementById("modal-task-priority")?.value;
             const deadline = document.getElementById("modal-task-deadline")?.value;
             const description = document.getElementById("modal-task-description")?.value || "";
-            const status = modalStatusInput?.value || "todo";
+            const uiStatus = modalStatusInput?.value || "todo";
+            const status = denormalizeStatus(uiStatus); // converts to DB format
+
 
             const checked = document.querySelectorAll('#modal-task-assignees input[type="checkbox"]:checked');
             const assignees = Array.from(checked).map(cb => cb.value);
@@ -2468,14 +2497,17 @@ function loadManagerProgressPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
     updateSidebarAndNav();
 
-    // Get all tasks for this specific project
-    const projectTasks = simTasks.filter(task => task.projectId === currentProjectId);
+    // IMPORTANT: load project tasks from DB-injected window.__TASKS__
+    setSimTasksFromDb(currentProjectId);
 
-    // Render all components
-    renderManagerTaskProgress(projectTasks);
-    renderManagerDeadlines(projectTasks);
-    renderProjectResources(projectTasks);
-    renderTasksPerMemberChart(projectTasks);
+    // Task Progress: use the DB value projects.completion_percentage
+    const pct = Number(window.__PROJECT__?.completion_percentage || 0);
+    document.getElementById('task-progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent =
+        `Your team has completed ${pct}% of this project.`;
+
+    // Upcoming deadlines for WHOLE project using existing rules
+    renderUpcomingDeadlines(simTasks);
 
     feather.replace();
 }
@@ -2547,145 +2579,6 @@ function renderManagerDeadlines(projectTasks) {
     }).join('');
 }
 
-/**
- * (Manager) Renders the Project Resources card
- */
-function renderProjectResources(projectTasks) {
-    const today = new Date("2025-10-25T12:00:00"); // Hardcode date
-    today.setHours(0, 0, 0, 0);
-
-    const overdueTasks = projectTasks.filter(t =>
-        t.status !== 'completed' && new Date(t.deadline) < today
-    ).length;
-
-    const card = document.getElementById('project-resource-card');
-    const statusText = document.getElementById('resource-status-text');
-    const statusDesc = document.getElementById('resource-status-desc');
-
-    // Remove old classes
-    card.classList.remove('status-green', 'status-yellow', 'status-red');
-
-    if (overdueTasks === 0) {
-        // Green
-        card.classList.add('status-green');
-        statusText.textContent = 'Sufficiently Resourced';
-        statusDesc.textContent = 'No tasks are overdue. Resources are efficiently allocated.';
-    } else if (overdueTasks >= 1 && overdueTasks <= 3) {
-        // Yellow
-        card.classList.add('status-yellow');
-        statusText.textContent = 'Tightly Resourced';
-        statusDesc.textContent = `One or more tasks are overdue. These tasks may need more resources to be completed.`;
-    } else {
-        // Red
-        card.classList.add('status-red');
-        statusText.textContent = 'Under-Resourced';
-        statusDesc.textContent = `More than three tasks are overdue. This project needs more resources, and your team members may require additional training.`;
-    }
-}
-
-/**
- * (Manager) Renders the "Tasks per member" stacked bar chart
- */
-function renderTasksPerMemberChart(projectTasks) {
-    // Get all unique users in this project
-    const userEmails = [...new Set(projectTasks.flatMap(t => t.assignedTo))];
-
-    const labels = [];
-    const todoData = [];
-    const inProgressData = [];
-    const completedData = [];
-
-    //Aggregate task counts for each user
-    userEmails.forEach(email => {
-        const user = simUsers[email];
-        if (!user) return;
-
-        labels.push(user.name);
-        const userTasks = projectTasks.filter(t => t.assignedTo.includes(email));
-
-        todoData.push(userTasks.filter(t => t.status === 'todo' || t.status === 'review').length); // Combine To Do and Review as "Not Started"
-        inProgressData.push(userTasks.filter(t => t.status === 'inprogress').length);
-        completedData.push(userTasks.filter(t => t.status === 'completed').length);
-    });
-
-    //Render the chart
-    const container = document.getElementById('tasks-per-member-chart-container');
-    container.innerHTML = '<canvas id="tasksPerMemberChart"></canvas>'; // Clear and add canvas
-    const ctx = document.getElementById('tasksPerMemberChart');
-
-    if (ctx) {
-        //Destroy existing chart if it exists
-        const existingChart = Chart.getChart(ctx);
-        if (existingChart) {
-            existingChart.destroy();
-        }
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Completed',
-                        data: completedData,
-                        backgroundColor: '#34A853',
-                    },
-                    {
-                        label: 'In Progress',
-                        data: inProgressData,
-                        backgroundColor: '#E6A100',
-                    },
-                    {
-                        label: 'Not Started',
-                        data: todoData,
-                        backgroundColor: '#D93025',
-                    }
-                ]
-            },
-            options: {
-                indexAxis: 'y', // Makes it a horizontal bar chart
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        stacked: true, // Stacks the bars
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: "'Poppins', sans-serif"
-                            }
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                family: "'Poppins', sans-serif"
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        font: {
-                            family: "'Poppins', sans-serif"
-                        }
-                    }
-                },
-                // Adjust height dynamically based on number of users
-                aspectRatio: Math.max(0.5, 4 / labels.length),
-            }
-        });
-    }
-}
 
 /**
  * Runs on the Project Resources page (project-resources.html)
