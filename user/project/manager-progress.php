@@ -129,7 +129,7 @@ if (!empty($taskIds)) {
     }
 }
 
-// Attach to each task in the exact shape your JS expects
+// Attach to each task in the exact shape JS expects
 foreach ($tasks as &$t) {
     $tid = (int)$t['task_id'];
     $assignees = $assigneesByTask[$tid] ?? [];

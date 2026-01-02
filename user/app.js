@@ -1017,156 +1017,6 @@ function loadHomePage(currentUser) {
     feather.replace();
 }
 
-/**
- * Renders the total tasks donut chart (assigned tasks only) or bar chart for managers
- */
-function renderTotalTasksChart(currentUser) {
-    const ctx = document.getElementById('totalTasksChart');
-    if (!ctx) return;
-
-    // Destroy existing chart if it exists
-    const existingChart = Chart.getChart(ctx);
-    if (existingChart) {
-        existingChart.destroy();
-    }
-
-    // Get donut-specific elements
-    const donutCenter = document.querySelector('.donut-center');
-    const chartLegend = document.querySelector('.chart-legend');
-
-    // For managers, show bar chart with projects
-    if (currentUser.role === 'manager') {
-        // Hide donut-specific elements
-        if (donutCenter) donutCenter.style.display = 'none';
-        if (chartLegend) chartLegend.style.display = 'none';
-
-        // Get all tasks grouped by project
-        const projectData = {};
-        simProjects.forEach(project => {
-            const projectTasks = simTasks.filter(task =>
-                task.projectId === project.id && task.type === 'assigned'
-            );
-
-            projectData[project.name] = {
-                todo: projectTasks.filter(t => t.status === 'todo').length,
-                inprogress: projectTasks.filter(t => t.status === 'inprogress').length,
-                review: projectTasks.filter(t => t.status === 'review').length,
-                completed: projectTasks.filter(t => t.status === 'completed').length,
-                total: projectTasks.length
-            };
-        });
-
-        const projectNames = Object.keys(projectData);
-        const totalTasks = projectNames.reduce((sum, name) => sum + projectData[name].total, 0);
-        document.getElementById('totalTasksCount').textContent = totalTasks;
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: projectNames,
-                datasets: [
-                    {
-                        label: 'To Do',
-                        data: projectNames.map(name => projectData[name].todo),
-                        backgroundColor: '#D93025'
-                    },
-                    {
-                        label: 'In Progress',
-                        data: projectNames.map(name => projectData[name].inprogress),
-                        backgroundColor: '#E6A100'
-                    },
-                    {
-                        label: 'In Review',
-                        data: projectNames.map(name => projectData[name].review),
-                        backgroundColor: '#34A853'
-                    },
-                    {
-                        label: 'Completed',
-                        data: projectNames.map(name => projectData[name].completed),
-                        backgroundColor: '#4285F4'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        stacked: true,
-                        grid: {
-                            display: false
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        beginAtZero: true,
-                        ticks: {
-                            font: {
-                                size: 12
-                            },
-                            stepSize: 20
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            font: {
-                                size: 12,
-                                weight: 400
-                            },
-                            padding: 10,
-                            boxWidth: 60,  // Make legend boxes larger
-                            boxHeight: 30
-                        }
-                    }
-                },
-
-            }
-        });
-    } else {
-        // For non-managers, show donut chart
-        // Show donut-specific elements
-        if (donutCenter) donutCenter.style.display = 'block';
-        if (chartLegend) chartLegend.style.display = 'flex';
-
-        const userTasks = simTasks.filter(task =>
-            task.assignedTo.includes(currentUser.email) && task.type === 'assigned'
-        );
-
-        const todoCount = userTasks.filter(t => t.status === 'todo').length;
-        const inProgressCount = userTasks.filter(t => t.status === 'inprogress').length;
-        const reviewCount = userTasks.filter(t => t.status === 'review').length;
-        const completedCount = userTasks.filter(t => t.status === 'completed').length;
-
-        const totalCount = userTasks.length;
-        document.getElementById('totalTasksCount').textContent = totalCount;
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['To Do', 'In Progress', 'In Review', 'Completed'],
-                datasets: [{
-                    data: [todoCount, inProgressCount, reviewCount, completedCount],
-                    backgroundColor: ['#D93025', '#E6A100', '#34A853', '#4285F4'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                cutout: '70%',
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-    }
-}
 
 /**
  * Renders the to-do list with personal todos
@@ -1428,9 +1278,6 @@ function loadProgressPage(currentUser) {
     // Render upcoming deadlines (from this project's tasks)
     renderUpcomingDeadlines(userTasks);
 
-    // Render workload (pass project ID)
-    renderWorkload(currentUser, currentProjectId);
-
     // Render task distribution chart (from this project's tasks)
     renderTaskDistributionChart(userTasks);
 
@@ -1553,7 +1400,6 @@ function renderUpcomingDeadlines(userTasks) {
             return a.sortDays - b.sortDays;
         });
 
-    // ✅ show up to 3 (don’t do Math.max(3, upcoming.length) because that shows everything)
     const visible = upcoming;
 
     if (visible.length === 0) {
@@ -1572,6 +1418,8 @@ function renderUpcomingDeadlines(userTasks) {
       </div>
     `)
         .join("");
+    
+    feather.replace();
 }
 
 
@@ -1740,7 +1588,7 @@ function createTaskCardHTML(task, currentUser) {
     const assigneesHtml = assignees.map((user, index) => {
         if (index >= 3) return '';
 
-        // ✅ If we have a real image, render it
+        // If we have a real image, render it
         if (user.avatarUrl) {
             return `
       <span class="avatar" title="${user.name}">
@@ -1749,7 +1597,7 @@ function createTaskCardHTML(task, currentUser) {
     `;
         }
 
-        // ✅ fallback: your existing coloured circle
+        // fallback: existing coloured circle
         return `<span class="avatar ${user.avatarClass}" title="${user.name}"></span>`;
     }).join('');
 
