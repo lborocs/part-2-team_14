@@ -142,7 +142,7 @@
                     No Employees Found.
                 </p>
                 <p id="no-struggling-employees-message" style="display: none; text-align: center; margin-top: 10px;">
-                    No Struggling Employees Found.
+                    No Employees Found.
                 </p>
             </div>
         </main>
