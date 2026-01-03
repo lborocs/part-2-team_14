@@ -508,6 +508,15 @@
             filterProjects();
         });
 
+        // function to convert to title case
+        function toTitleCase(str){
+            return str
+                .replace(/_/g, " ")
+                .replace(/\w\S*/g, txt =>
+                    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+                );
+        }
+
         // function to load the resource level options
         function loadResourceLevelOptions(){
             const resourceFilter = document.getElementById("status-filter");
@@ -518,9 +527,10 @@
                 resourceLevels.add(card.dataset.resourceLevel);
             });
             resourceLevels.forEach(level => {
+                const formatted = toTitleCase(level);
                 const option = document.createElement("option");
                 option.value = level;
-                option.textContent = level.replace("_", " ");
+                option.textContent = formatted;
                 resourceFilter.appendChild(option);
             });
         }
