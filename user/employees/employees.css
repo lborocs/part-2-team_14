@@ -97,46 +97,187 @@
 }
 
 /* Sort by dropdown */
-.employees-sort {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #DCDCDC;
+.sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.sort-dropdown {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #E0E0E0;
+  padding: 0 12px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* =============================
+   FILTER PANEL (Employee Page)
+============================= */
+.filter-group {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Filters button */
+.filter-toggle {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1.5px solid #D6D6D6;
   background: #fff;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
+  font-weight: 600;
+  color: #212121;
   cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.employees-sort:focus {
+.filter-toggle:hover {
+  border-color: #bdbdbd;
+}
+
+.filter-toggle:focus {
   outline: none;
-  border-color: #FBC02D;
+  border-color: #fbc02d;
+  box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.25);
 }
 
-/*Sort by and filter button*/
-.filter-btn {
-  display: inline-flex;
-  align-items: center;
-  background: #F2A900;
-  color: #555;
+/* Panel */
+.filter-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 320px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  z-index: 999;
+}
+
+.filter-panel[hidden] {
+  display: none;
+}
+
+/* Each filter section */
+.filter-section {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  border: none;
-  padding: 12px 20px;
+}
+
+/* Section title */
+.filter-section > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+/* Search input */
+.filter-search {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1.5px solid #D6D6D6;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  outline: none;
+}
+
+.filter-search:focus {
+  border-color: #fbc02d;
+  box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.25);
+}
+
+/* Scrollable checkbox list */
+.filter-list {
+  max-height: 100px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Checkbox row */
+.filter-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+
+  font-size: 13px;
+  color: #212121;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.filter-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #FBC02D;
+}
+
+/* -------------------------
+   FILTER ACTION BUTTONS
+-------------------------- */
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.filter-actions button {
+  flex: 1;
+  height: 40px;
   border-radius: 8px;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  text-decoration: none;
-  transition: background 0.2s ease;
 }
 
-.filter-btn:hover {
-  background: #E89A00;
+/* Clear button */
+.filter-clear {
+  border: 1.5px solid #e0e0e0;
+  background: #fafafa;
+  color: #555;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.filter-btn i{
-  width: 20px;
-  height: 20px;
+.filter-clear:hover {
+  background: #f0f0f0;
+  border-color: #cfcfcf;
+}
+
+/* apply button */
+.filter-apply {
+  border: none;
+  background: #FBC02D;
+  color: #1E1E1E;
+  transition: background 0.15s ease;
+}
+
+.filter-apply:hover {
+  background: #E6AE24;
 }
 
 
@@ -221,11 +362,6 @@
   font-weight: 600;
 }
 
-.employee-role{
-  margin: 2px 0 2px 0;
-  font-size: 13px;
-  color: #555;
-}
 .employee-block{ margin-top: 10px; }
 
 .specialties-container {
@@ -234,7 +370,7 @@
   gap: 6px;
 
   overflow: hidden;
-  max-height: 30px;              /* default = 1 row */
+  max-height: 20px;              /* default = 1 row */
   transition: max-height 0.2s ease;
 }
 
@@ -268,12 +404,18 @@
 .see-more-btn {
   margin-top: 6px;
   font-size: 12px;
-  color: #3b82f6;
+  color: #555;        
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
+  font-weight: 600;
 }
+
+.see-more-btn:hover {
+  text-decoration: underline;
+}
+
 
 .tag-row {
   display: flex;
@@ -282,19 +424,68 @@
 }
 
 
-.tag{
-  background: #FBC02D;
-  color: #1E1E1E;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 6px;
+/* =========================
+   SPECIALTY PILLS (priority-style)
+========================= */
+.specialty-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 10px;
+
+  font-size: 11px;
+  line-height: 18px;
+  font-weight: 600;
+
+  border-radius: 999px;
   white-space: nowrap;
 }
 
-.tag-muted{
+.spec-default {
+  background:#ECEFF1;
+  color:#455A64;
+}
+
+/* Muted specialty pill (de-emphasized state) */
+.specialty-pill.is-muted {
   background: #F0F0F0;
   color: #555;
 }
+
+/* ---------------------------------
+   SPECIALTY COLOR PALETTE
+---------------------------------- */
+
+/* Management & Strategy */
+.spec-project-management { background:#E3F2FD; color:#1565C0; }
+.spec-strategy           { background:#E1F5FE; color:#0277BD; }
+.spec-leadership         { background:#E8F5E9; color:#2E7D32; }
+
+/* Backend / Data */
+.spec-backend            { background:#EDE7F6; color:#512DA8; }
+.spec-python             { background:#FFFDE7; color:#F9A825; }
+.spec-sql                { background:#F1F8E9; color:#558B2F; }
+.spec-api-design         { background:#E0F2F1; color:#00695C; }
+
+/* Frontend */
+.spec-frontend           { background:#FCE4EC; color:#AD1457; }
+.spec-react              { background:#E3F2FD; color:#0288D1; }
+.spec-css                { background:#E8EAF6; color:#3949AB; }
+.spec-javascript         { background:#FFF8E1; color:#F9A825; }
+.spec-node-js            { background:#E8F5E9; color:#2E7D32; }
+.spec-mongodb            { background:#E0F2F1; color:#00796B; }
+
+/* DevOps */
+.spec-devops             { background:#F3E5F5; color:#6A1B9A; }
+.spec-aws                { background:#FFF3E0; color:#EF6C00; }
+.spec-docker             { background:#E1F5FE; color:#0277BD; }
+.spec-ci-cd              { background:#ECEFF1; color:#455A64; }
+
+/* Design */
+.spec-ui-design          { background:#FCE4EC; color:#C2185B; }
+.spec-figma              { background:#F3E5F5; color:#7B1FA2; }
+.spec-prototyping        { background:#E8EAF6; color:#303F9F; }
+
 
 .employee-card-footer {
   display: flex;

@@ -1,6 +1,38 @@
+<?php
+/* =======================
+   SPECIALTY → CSS CLASS MAP
+   ======================= */
+$specialtyClassMap = [
+    'Project Management' => 'spec-project-management',
+    'Strategy'           => 'spec-strategy',
+    'Leadership'         => 'spec-leadership',
+    'Backend'            => 'spec-backend',
+    'Python'             => 'spec-python',
+    'SQL'                => 'spec-sql',
+    'API Design'         => 'spec-api-design',
+    'Frontend'           => 'spec-frontend',
+    'React'              => 'spec-react',
+    'CSS'                => 'spec-css',
+    'JavaScript'         => 'spec-javascript',
+    'Node.js'            => 'spec-node-js',
+    'MongoDB'            => 'spec-mongodb',
+    'DevOps'             => 'spec-devops',
+    'AWS'                => 'spec-aws',
+    'Docker'             => 'spec-docker',
+    'CI/CD'              => 'spec-ci-cd',
+    'UI Design'          => 'spec-ui-design',
+    'Figma'              => 'spec-figma',
+    'Prototyping'        => 'spec-prototyping',
+];
+?>
+
 <div id="employees-count" class="employees-count">
-    Showing <strong><?= $start ?>-<?= $end ?></strong>
-    of <?= $totalEmployees ?> Employee Results
+    <?php if ($totalEmployees === 0): ?>
+        No Results Found
+    <?php else: ?>
+        Showing <strong><?= $start ?>-<?= $end ?></strong>
+        of <?= $totalEmployees ?> Employee Results
+    <?php endif; ?>
 </div>
 
 <div id="employee-grid" class="employee-grid">
@@ -37,16 +69,25 @@
                 <?= htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']) ?>
             </h3>
 
-            <p class="employee-role">
-                <?= ucfirst(str_replace('_', ' ', $employee['role'])) ?>
-            </p>
+            <div class="employee-specialties">
+                <div class="block-title">Specialties</div>
 
-            <div class="block-title">Specialties</div>
-            <div class="specialties-container collapsed">
-                <?php foreach ($specialties as $skill): ?>
-                    <span class="tag"><?= htmlspecialchars(trim($skill)) ?></span>
-                <?php endforeach; ?>
+                <div class="specialties-container collapsed">
+                    <?php foreach ($specialties as $skill): ?>
+                        <?php
+                            $skillName  = trim($skill);
+                            $skillClass = $specialtyClassMap[$skillName] ?? 'spec-default';
+                        ?>
+                        <span class="specialty-pill <?= $skillClass ?>">
+                            <?= htmlspecialchars($skillName) ?>
+                        </span>
+                    <?php endforeach; ?>
+                </div>
+
+
+                <button type="button" class="see-more-btn" hidden>...</button>
             </div>
+
 
             <div class="employee-card-footer">
                 <i data-feather="mail"></i>
