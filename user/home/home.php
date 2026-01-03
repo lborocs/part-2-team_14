@@ -111,7 +111,7 @@
                         <!-- checkbox to filter for struggling employees -->
                          <div class="checkbox-filter">
                             <input type="checkbox" id="struggling-checkbox" name="strugglingCheckbox">
-                            <label for="strugglingEmployees">Struggling Employees</label>
+                            <label for="strugglingEmployees">Need Support</label>
                         </div>
 
                         <!-- Filter dropdown to filter by projects -->
@@ -189,12 +189,20 @@
                     const overdueTasks = Number(project.overdue_tasks);
 
                     let projectHealth = "";
+                    let healthColour = "";
+                    let healthBgColour = "";
                     if (overdueTasks === 0){
                         projectHealth = "Good";
+                        healthColour = "#10b981";
+                        healthBgColour = "#d1fae5";
                     } else if (overdueTasks >= 1 && overdueTasks < 5){
                         projectHealth = "Average";
+                        healthColour = "#f59e0b";
+                        healthBgColour = "#fef3c7";
                     } else {
                         projectHealth = "Poor";
+                        healthColour = "#ef4444";
+                        healthBgColour = "#fee2e2";
                     }
 
                     // determines the short recommendation text by looking ath the resource level 
@@ -224,18 +232,24 @@
                     projectCard.dataset.resourceLevel = project.resource_level;
                     projectCard.dataset.deadline = project.deadline;
                     projectCard.dataset.completion = onTimePercent;
+
                     if (project.priority === "high"){
                         projectCard.classList.add("high-priority");
                     } else if (project.priority === "medium"){
                         projectCard.classList.add("medium-priority");
                     }
+
                     projectCard.innerHTML = `
                     <h3>${project.project_name}</h3>
-                    <div class="project-info">
-                        <div class="info-row">
-                            <span class="info-label">Project Health: </span>
-                            <span class="info-value">${projectHealth}</span>
+                    <div class="health-indicator-container">
+                        <div class="health-icon-wrapper">
+                            <div class="health-icon-outer" style="background-color: ${healthBgColour};">
+                                <div class="health-icon-inner" style="background-color: ${healthColour};"></div>
+                            </div>
                         </div>
+                        <span class="health-label">${projectHealth} Health</span>
+                    </div>
+                    <div class="project-info">
                         <div class="info-row">
                             <span class="info-label">Priority:</span>
                             <span class="priority-badge ${priorityClass}">${project.priority}</span>
@@ -266,7 +280,7 @@
                         </div>
                         <div class="info-row">
                             <span class="info-label">Resource Level:</span>
-                            <span class="resource-badge ${badgeClass}">${project.resource_level.replace('_', ' ')}</span>
+                            <span class="resource-badge ${badgeClass}">${project.resource_level.replace('_', ' ').toUpperCase()}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Recommendation:</span>
@@ -298,11 +312,16 @@
 
             priorities.forEach(item => {
                 const option = document.createElement("option");
-                option.value = item.priority;
-                option.textContent = item.priority.charAt(0).toUpperCase() + item.priority.slice(1);
+                const normalised = item.priority.toLowerCase().trim();
+                option.value = normalised;
+                option.textContent = normalised.charAt(0).toUpperCase() + normalised.slice(1);
                 priorityFilter.appendChild(option);
             });
         }
+
+        let originalProjectCards = [];
+        console.log(originalProjectCards);
+        let currentProjectCards = [];
 
         // the different filters 
         const activeFilters = {
@@ -313,47 +332,141 @@
             searchQuery: ""
         };
 
-        // function to filter the project cards 
+        // function to filter and sort the project cards
+
         function filterProjects(){
-            const cards = document.querySelectorAll(".project-card");
-            let anyVisible = false;
-            cards.forEach(card => {
-                let showCard = true;
+            const container = document.getElementById("project-health-grid-container");
 
-                if (activeFilters.priority && card.dataset.priority !== activeFilters.priority){
-                    showCard = false;
-                }
+            let cards = [...originalProjectCards];
 
-                if (activeFilters.level && card.dataset.resourceLevel !== activeFilters.level){
-                    showCard = false;
-                }
+            cards = applyFiltering(cards);
 
-                if (activeFilters.searchQuery){
-                    const projectName = card.querySelector("h3").textContent.toLowerCase();
-                    if (!projectName.includes(activeFilters.searchQuery.toLowerCase())){
-                        showCard = false;
-                    }
-                }
+            cards = applySorting(cards);
 
-                card.style.display = showCard ? "block" : "none";
-
-                if (showCard) anyVisible = true;
-            });
+            container.innerHTML = "";
+            cards.forEach(card => container.appendChild(card));
 
             const message = document.getElementById("no-projects-message");
-            if (!anyVisible){
+            if (cards.length === 0){
                 message.style.display = "block";
             } else {
                 message.style.display = "none";
             }
+
+            currentProjectCards = cards;
+
+        }
+
+        // function to sort the project cards 
+        function applySorting(cards){
+
+            let sorted = [...cards];
+
+            // sort by deadline
+
+            if (activeFilters.deadline === "asc" || activeFilters.deadline === "desc"){
+                sorted.sort((a,b) => {
+                    const dateA = new Date(a.dataset.deadline);
+                    const dateB = new Date(b.dataset.deadline);
+
+                    if (activeFilters.deadline === "asc"){
+                        return dateA - dateB;
+                    } else {
+                        return dateB - dateA;
+                    }
+                });
+            }
+
+            // sort by completion percentage 
+
+            if (activeFilters.percentage === "asc" || activeFilters.percentage === "desc"){
+                sorted.sort((a, b) => {
+                    const completionA = Number(a.dataset.completion);
+                    const completionB = Number(b.dataset.completion);
+
+                    if (activeFilters.percentage === "asc"){
+                        return completionA - completionB;
+                    } else {
+                        return completionB - completionA;
+                    }
+                });
+            }
+
+            return sorted;
+        }
+
+        // function to filter the project cards 
+        function applyFiltering(cards){
+            return cards.filter(card => {
+
+                // Priority filter 
+
+                if (activeFilters.priority && card.dataset.priority !== activeFilters.priority){
+                    return false;
+                }
+
+                // Resource level filter 
+
+                if (activeFilters.level && card.dataset.resourceLevel !== activeFilters.level){
+                    return false;
+                }
+
+                // search filter 
+
+                if (activeFilters.searchQuery){
+                    const projectName = card.querySelector("h3").textContent.toLowerCase();
+                    if (!projectName.includes(activeFilters.searchQuery.toLowerCase())){
+                        return false;
+                    }
+                }
+
+                return true;
+
+            });
         }
 
         // function to create the filter pill 
         function createFilterPill(filterType, value){
+
+            console.log("Before mapping:", filterType, value);
+
+            value = String(value).trim().toLowerCase();
+
+            const labelMaps = {
+                priority: {
+                    high: "High",
+                    medium: "Medium",
+                    low: "Low"
+                },
+                level: {
+                    under_resourced: "Under Resourced",
+                    sufficient: "Sufficient",
+                    tight: "Tight"
+                },
+                deadline: {
+                    asc: "Earliest To Latest",
+                    desc: "Latest To Earliest"
+                },
+                percentage: {
+                    asc: "Lowest To Highest",
+                    desc: "Highest To Lowest"
+                }
+            }
+
+            let friendlyValue = value; 
+
+            if (labelMaps[filterType] && labelMaps[filterType][value]){
+                friendlyValue = labelMaps[filterType][value];
+            } else {
+                friendlyValue = value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ');
+            }
+
+            console.log("After mapping:", filterType, friendlyValue);
+
             const pill = document.createElement("span");
             pill.classList.add("filter-pill", filterType);
             pill.innerHTML = `
-                ${filterType.charAt(0).toUpperCase() + filterType.slice(1)}: ${value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ')}
+                ${filterType.charAt(0).toUpperCase() + filterType.slice(1)}: ${friendlyValue}
                 <span class="remove-pill">x</span>
             `;
             pill.querySelector(".remove-pill").addEventListener("click", function(){
@@ -376,21 +489,13 @@
                 pill.remove();
                 filterProjects();
             });
+
+            console.log("Priority raw value:", JSON.stringify(value));
+
             document.getElementById("filter-pills").appendChild(pill);
         }
 
-        // function to filter the project cards by priority 
-        function filterProjectsByPriority(selectedPriority){
-            const cards = document.querySelectorAll(".project-card");
-            cards.forEach(card => {
-                if (!selectedPriority || card.dataset.priority === selectedPriority){
-                    card.style.display = "block";
-                } else {
-                    card.style.display = "none";
-                }
-            });
-        }
-
+        // sort by priority event listener 
         const priorityFilter = document.getElementById("priority-filter");
         priorityFilter.addEventListener("change", function(){
             const selectedPriority = this.value;
@@ -420,18 +525,7 @@
             });
         }
 
-        // function to filter the project cards by resource level
-        function filterProjectsByResourceLevel(selectedResourceLevel){
-            const cards = document.querySelectorAll(".project-card");
-            cards.forEach(card => {
-                if(!selectedResourceLevel || card.dataset.resourceLevel === selectedResourceLevel){
-                    card.style.display = "block";
-                } else {
-                    card.style.display = "none";
-                }
-            });
-        }
-
+        // sort by resource level event listener 
         const resourceFilter = document.getElementById("status-filter");
         resourceFilter.addEventListener("change", function(){
             const selectedResourceLevel = this.value;
@@ -446,70 +540,37 @@
             filterProjects();
         });
 
-        // function to sort the project cards by deadline
-        function sortProjectsByDeadline(selectedDeadlineSort){
-            const container = document.getElementById("project-health-grid-container");
-            const cards = Array.from(container.querySelectorAll(".project-card")).filter(card => card.style.display !== "none");
-            cards.sort((a, b) => {
-                const dateA = new Date(a.dataset.deadline);
-                const dateB = new Date(b.dataset.deadline);
-                if (selectedDeadlineSort === "asc"){
-                    return dateA - dateB;
-                } else if (selectedDeadlineSort === "desc"){
-                    return dateB - dateA;
-                } 
-                return 0;
-            });
-
-            container.innerHTML = "";
-            cards.forEach(card => container.appendChild(card));
-        }
-
+        // sort by deadline event listener 
         document.getElementById("deadline-sort-filter").addEventListener("change", function(){
             const selectedDeadlineSort = this.value;
             activeFilters.deadline = selectedDeadlineSort;
             document.querySelectorAll(".filter-pill.deadline").forEach(pill => pill.remove());
-            filterProjects();
             if(selectedDeadlineSort){
                 createFilterPill('deadline', selectedDeadlineSort);
-                sortProjectsByDeadline(selectedDeadlineSort)
             }
+            filterProjects();
         });
 
-        // function to sort project cards by completion percentage 
-        function sortProjectsByCompletion (selectedCompletionSort){
-            const container = document.getElementById("project-health-grid-container");
-            const cards = Array.from(container.querySelectorAll(".project-card")).filter(card => card.style.display !== "none");
-            cards.sort((a,b) => {
-                const completionA = Number(a.dataset.completion);
-                const completionB = Number(b.dataset.completion);
-                if (selectedCompletionSort === "asc"){
-                    return completionA - completionB;
-                } else if (selectedCompletionSort === "desc"){
-                    return completionB - completionA;
-                }
-                return 0;
-            });
-            container.innerHTML = "";
-            cards.forEach(card => container.appendChild(card));
-        }
-
+        // sort by completion percentage event listener
         document.getElementById("completion-sort-filter").addEventListener("change", function(){
             const selectedCompletionSort = this.value;
             activeFilters.percentage = selectedCompletionSort;
             document.querySelectorAll(".filter-pill.percentage").forEach(pill => pill.remove());
-            filterProjects();
             if (selectedCompletionSort){
                 createFilterPill('percentage', selectedCompletionSort);
-                sortProjectsByCompletion(selectedCompletionSort);
             }
+
+            filterProjects();
         });
 
+        // search bar event listener 
         const searchInput = document.querySelector(".search-bar input");
         searchInput.addEventListener("input", function(){
             activeFilters.searchQuery = this.value.trim();
             filterProjects();
         });
+
+        // employee performance table 
 
         let allEmployees = []
         
@@ -533,6 +594,15 @@
                     percentClass = "red-percent";
                 }
 
+                let overdueTaskClass = "";
+                if (emp.overdue_tasks == 0){
+                    overdueTaskClass = "green-percent";
+                } else if (emp.overdue_tasks == 1){
+                    overdueTaskClass = "amber-percent";
+                } else{
+                    overdueTaskClass = "red-percent";
+                }
+
                 let projectsHTML = "";
                 if (emp.projects){
                     const projectList = emp.projects.split(',');
@@ -544,7 +614,7 @@
                     <td>${projectsHTML}</td>
                     <td>${totalTasks}</td>
                     <td>${completedTasks}</td>
-                    <td>${emp.overdue_tasks}</td>
+                    <td class="${overdueTaskClass}">${emp.overdue_tasks}</td>
                     <td class="${percentClass}">${onTimePercent}%</td>
             `   ;
 
@@ -728,9 +798,13 @@
         });
 
 
-       document.addEventListener("DOMContentLoaded", () => {
-            displayProjects();
+       document.addEventListener("DOMContentLoaded", async () => {
+            await displayProjects();
             loadPriorityOptions();
+            const container = document.getElementById("project-health-grid-container");
+            originalProjectCards = Array.from(container.querySelectorAll(".project-card"));
+            currentProjectCards = [...originalProjectCards];
+            filterProjects();
             displayEmployees();
             loadProjectNameOptions();
         });
