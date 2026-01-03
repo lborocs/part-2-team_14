@@ -302,6 +302,15 @@
   border-radius: 12px;
   background: #fff;
   cursor: pointer;
+  border: 1px solid #EAECEE;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  transition: all 0.2s ease;
+}
+
+.employee-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.07);
+  border-color: #FBC02D;
 }
 
 .employee-card.selected{
@@ -317,11 +326,8 @@
   justify-content: center;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
+  background: #6B7280; /*placeholder color for now until we figure out what to do with the banner colour*/
 }
-.employee-card.role-team-leader .employee-card-top{ background:#84A98C; }
-.employee-card.role-team-member .employee-card-top{ background:#5F8FB4; }
-.employee-card.role-manager .employee-card-top{ background:#D98B5C; }
-.employee-card.role-technical-specialist .employee-card-top{ background:#8C7AAE; }
 
 .employee-avatar{
   width: 90px;
@@ -604,3 +610,200 @@
   font-size: 14px;
 }
 
+/* =============================
+   SELECTION MODE STYLES
+============================= */
+
+/* All action buttons in the same container */
+.employee-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.select-mode-btn,
+.select-all-btn,
+.cancel-select-btn {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+/* Select button (yellow) */
+.select-mode-btn {
+    border: 1.5px solid #FBC02D;
+    background: #FBC02D;
+    color: #1E1E1E;
+}
+
+.select-mode-btn:hover {
+    background: #E6AE24;
+}
+
+/* Select All button (yellow) */
+.select-all-btn {
+    border: 1.5px solid #FBC02D;
+    background: #FBC02D;
+    color: #1E1E1E;
+}
+
+.select-all-btn:hover {
+    background: #E6AE24;
+}
+
+/* Cancel button (white) */
+.cancel-select-btn {
+    border: 1.5px solid #E0E0E0;
+    background: #fff;
+    color: #555;
+}
+
+.cancel-select-btn:hover {
+    background: #f5f5f5;
+    border-color: #cfcfcf;
+}
+
+/* Employee card selection checkbox */
+.employee-card {
+    position: relative;
+}
+
+.employee-checkbox {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 2px solid #D6D6D6;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 10;
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+/* Show checkbox when in select mode */
+body.select-mode .employee-checkbox {
+    display: flex;
+}
+
+.employee-checkbox:hover {
+    border-color: #FBC02D;
+}
+
+/* Checkmark icon */
+.employee-checkbox svg {
+    display: none;
+    width: 16px;
+    height: 16px;
+    color: #fff;
+}
+
+/* When card is selected */
+.employee-card.selected .employee-checkbox {
+    background: #FBC02D;
+    border-color: #FBC02D;
+}
+
+.employee-card.selected .employee-checkbox svg {
+    display: block;
+}
+
+/* =============================
+   FIXED BOTTOM ACTION BAR
+============================= */
+.bottom-action-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  margin-left: 140px; /* Half of sidebar width (280px / 2) to center within main content */
+  transform: translateX(-50%);
+  
+  background: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 24px;
+  
+  /* Smooth appearance */
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.bottom-action-bar[hidden] {
+  display: none;
+}
+
+.selection-info {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.bottom-actions {
+  display: flex;
+  gap: 10px;
+  border-left: 1px solid #E0E0E0;
+  padding-left: 20px;
+}
+
+/*ACTION BUTTONS*/
+/* assign task & add to project button css in dashboard.css*/
+/* create new project button  */
+.action-btn {
+  height: 42px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 8px;
+  background: #FBC02D;
+  color: #1E1E1E;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  background: #F9A825;
+}
+
+.action-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Minimal padding since bar is floating */
+body.select-mode .employee-section {
+  padding-bottom: 20px;
+}

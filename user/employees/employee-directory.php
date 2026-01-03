@@ -84,25 +84,14 @@ $orderBy = $allowedSorts[$sortKey] ?? $allowedSorts['name_asc'];
    ============================= */
 $selectedSpecialties = $_GET['specialty'] ?? [];
 $selectedProjects    = $_GET['project'] ?? [];
-// DEBUG - Remove this after fixing
-//echo "<pre>GET specialty raw: ";
-//print_r($_GET['specialty'] ?? 'NOT SET');
-//echo "\n\nProcessed selectedSpecialties: ";
-//print_r($selectedSpecialties);
-//echo "</pre>";
 
 if (!is_array($selectedSpecialties)) {
     $selectedSpecialties = [$selectedSpecialties];
-    // TEMPORARY DEBUG
-    //echo "<pre>Selected Specialties: ";
-    //print_r($selectedSpecialties);
-    //echo "</pre>";
 }
 if (!is_array($selectedProjects)) {
     $selectedProjects = [$selectedProjects];
 }
 
-// sanitize
 $selectedSpecialties = array_values(
     array_filter(
         array_map('trim', $selectedSpecialties),
@@ -365,10 +354,10 @@ if ($isAjax) {
 
                 <!-- Action buttons -->
                 <div class="employee-actions">
-                    <button class="create-post-btn">Assign Task</button>
-                    <button class="create-post-btn">Add to Project</button>
-                    <button class="create-post-btn">Create Project</button>
-                </div>         
+                    <button class="select-mode-btn" id="select-mode-btn">Select</button>
+                    <button class="select-all-btn" id="select-all-btn" hidden>Select All</button>
+                    <button class="cancel-select-btn" id="cancel-select-btn" hidden>Cancel</button>
+                </div>      
             </div>
             <div class="section-divider"></div>
 
@@ -503,6 +492,7 @@ if ($isAjax) {
                         <article 
                             class="employee-card" 
                             data-profile-url="employee-profile.php?id=<?= urlencode($employee['user_id']) ?>"
+                            data-employee-id="<?= $employee['user_id'] ?>"
                         >
 
                             <div class="employee-card-top">
@@ -614,15 +604,33 @@ if ($isAjax) {
                 </div>
 
             </div>
+
+            <!-- Fixed bottom action bar (hidden by default) -->
+            <div class="bottom-action-bar" id="bottom-action-bar" hidden>
+                <div class="selection-info">
+                    <span id="selection-count">0 employees selected</span>
+                </div>
+                <div class="bottom-actions">
+                    <button class="action-btn" id="assign-task-btn">
+                        <span>Assign Task</span>
+                    </button>
+                    <button class="action-btn" id="add-to-project-btn">
+                        <i data-feather="user-plus"></i>
+                        <span>Add to Project</span>
+                    </button>
+                    <button class="action-btn" id="create-project-btn">
+                        <i data-feather="plus"></i>
+                        <span>Create New Project</span>
+                    </button>
+                </div>
+            </div>
         </main>
 
     </div>
-
+    <script src="employees.js"></script>
     <script>
         feather.replace();
     </script>
-
-    <script src="employees.js"></script>
 </body>
 </html>
 

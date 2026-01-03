@@ -9,38 +9,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return fetch(url)
         .then(res => res.text())
         .then(html => {
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
 
-        document.getElementById('employees-count')?.replaceWith(
-            temp.querySelector('#employees-count')
-        );
-        document.getElementById('employee-grid')?.replaceWith(
-            temp.querySelector('#employee-grid')
-        );
-        document.getElementById('employees-pagination')?.replaceWith(
-            temp.querySelector('#employees-pagination')
-        );
+            document.getElementById('employees-count')?.replaceWith(
+                temp.querySelector('#employees-count')
+            );
+            document.getElementById('employee-grid')?.replaceWith(
+                temp.querySelector('#employee-grid')
+            );
+            document.getElementById('employees-pagination')?.replaceWith(
+                temp.querySelector('#employees-pagination')
+            );
 
-        url.searchParams.delete('ajax');
-        window.history.pushState({}, '', url.toString());
+            url.searchParams.delete('ajax');
+            window.history.pushState({}, '', url.toString());
 
-        feather.replace();
-        initSpecialties();
+            feather.replace();
+            initSpecialties();
+            restoreSelections(); 
         });
     }
-
-
-    /* ---------------------------------
-       Double-click employee card → profile
-    ---------------------------------- */
-    document.querySelectorAll('.employee-card').forEach(card => {
-        card.addEventListener('dblclick', (e) => {
-            if (e.target.closest('a, button')) return;
-            const url = card.dataset.profileUrl;
-            if (url) window.location.href = url;
-        });
-    });
 
     /* ---------------------------------
        SPECIALTIES: See more / See less
@@ -74,6 +63,152 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Run once on initial page load
     initSpecialties();
+
+    /* ========================================
+       SELECTION MODE FUNCTIONALITY
+    ======================================== */
+    let selectedEmployees = new Set();
+    let isSelectMode = false;
+
+    const selectModeBtn = document.getElementById('select-mode-btn');
+    const selectAllBtn = document.getElementById('select-all-btn');
+    const cancelSelectBtn = document.getElementById('cancel-select-btn');
+    const bottomActionBar = document.getElementById('bottom-action-bar');
+    const selectionCount = document.getElementById('selection-count');
+
+    // Update UI helper
+    function updateSelectionUI() {
+        const count = selectedEmployees.size;
+        if (count > 0) {
+            bottomActionBar.hidden = false;
+            selectionCount.textContent = `${count} employee${count !== 1 ? 's' : ''} selected`;
+        } else {
+            bottomActionBar.hidden = true;
+        }
+    }
+
+    // Enter select mode
+    if (selectModeBtn) {
+        selectModeBtn.addEventListener('click', () => {
+            isSelectMode = true;
+            document.body.classList.add('select-mode');
+            selectModeBtn.hidden = true;
+            selectAllBtn.hidden = false;
+            cancelSelectBtn.hidden = false;
+            updateSelectionUI();
+        });
+    }
+
+    // Cancel select mode
+    if (cancelSelectBtn) {
+        cancelSelectBtn.addEventListener('click', () => {
+            isSelectMode = false;
+            document.body.classList.remove('select-mode');
+            selectModeBtn.hidden = false;
+            selectAllBtn.hidden = true;
+            cancelSelectBtn.hidden = true;
+            selectedEmployees.clear();
+            document.querySelectorAll('.employee-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            bottomActionBar.hidden = true;
+        });
+    }
+
+    // Select all
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', () => {
+            document.querySelectorAll('.employee-card').forEach(card => {
+                const id = card.dataset.employeeId;
+                if (id) {
+                    selectedEmployees.add(id);
+                    card.classList.add('selected');
+                }
+            });
+            updateSelectionUI();
+        });
+    }
+
+    // Card clicks
+    document.addEventListener('click', (e) => {
+        const card = e.target.closest('.employee-card');
+        if (!card) return;
+        
+        // Ignore clicks on specific elements
+        if (e.target.closest('.see-more-btn')) return;
+        
+        if (isSelectMode) {
+            // Select mode: toggle selection
+            const id = card.dataset.employeeId;
+            if (!id) return;
+            
+            if (selectedEmployees.has(id)) {
+                selectedEmployees.delete(id);
+                card.classList.remove('selected');
+            } else {
+                selectedEmployees.add(id);
+                card.classList.add('selected');
+            }
+            updateSelectionUI();
+        } else {
+            // Normal mode: navigate to profile
+            const url = card.dataset.profileUrl;
+            if (url) window.location.href = url;
+        }
+    });
+
+    // Restore selections after AJAX
+    function restoreSelections() {
+        document.querySelectorAll('.employee-card').forEach(card => {
+            const id = card.dataset.employeeId;
+            if (id && selectedEmployees.has(id)) {
+                card.classList.add('selected');
+            }
+        });
+        if (isSelectMode) {
+            document.body.classList.add('select-mode');
+        }
+    }
+
+    /* ========================================
+       ACTION BUTTON HANDLERS
+    ======================================== */
+    
+    // Add to Project button
+    const addToProjectBtn = document.getElementById('add-to-project-btn');
+    if (addToProjectBtn) {
+        addToProjectBtn.addEventListener('click', () => {
+            const selectedIds = Array.from(selectedEmployees);
+            
+            if (selectedIds.length === 0) {
+                alert('Please select at least one employee.');
+                return;
+            }
+            
+            // Store selected employees in sessionStorage
+            sessionStorage.setItem('preselectedEmployees', JSON.stringify(selectedIds));
+            
+            // Navigate to add-to-project page
+            window.location.href = 'add-to-project.php';
+        });
+    }
+    
+    // Assign Task button (placeholder for now)
+    const assignTaskBtn = document.getElementById('assign-task-btn');
+    if (assignTaskBtn) {
+        assignTaskBtn.addEventListener('click', () => {
+            const selectedIds = Array.from(selectedEmployees);
+            
+            if (selectedIds.length === 0) {
+                alert('Please select at least one employee.');
+                return;
+            }
+            
+            // TODO: Implement assign task functionality
+            console.log('Selected employees:', selectedIds);
+            alert('Assign Task functionality - Coming soon!');
+        });
+    }
 
     /* ---------------------------------
     FILTER PANEL TOGGLE
@@ -220,6 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // IMPORTANT: re-init specialties on new cards
                 initSpecialties();
+                restoreSelections();
             });
     });
 
@@ -257,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     feather.replace();
                     initSpecialties();
+                    restoreSelections();
                 });
         });
     }

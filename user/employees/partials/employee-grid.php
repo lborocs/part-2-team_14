@@ -39,14 +39,6 @@ $specialtyClassMap = [
 <?php foreach ($employees as $employee): ?>
 
     <?php
-        $roleClass = match ($employee['role']) {
-            'manager' => 'role-manager',
-            'team_leader' => 'role-team-leader',
-            'team_member' => 'role-team-member',
-            'technical_specialist' => 'role-technical-specialist',
-            default => 'role-team-member',
-        };
-
         $specialties = [];
         if (!empty($employee['specialties'])) {
             $specialties = json_decode($employee['specialties'], true)
@@ -55,9 +47,17 @@ $specialtyClassMap = [
     ?>
 
     <article
-        class="employee-card <?= $roleClass ?>"
+        class="employee-card"
         data-profile-url="employee-profile.php?id=<?= urlencode($employee['user_id']) ?>"
+        data-employee-id="<?= $employee['user_id'] ?>"
     >
+        <!-- Selection checkbox (hidden by default) -->
+        <div class="employee-checkbox" data-employee-id="<?= $employee['user_id'] ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+        
         <div class="employee-card-top">
             <div class="employee-avatar">
                 <img src="<?= htmlspecialchars($employee['profile_picture']) ?>" alt="">
