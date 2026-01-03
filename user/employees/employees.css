@@ -1,0 +1,809 @@
+/*override scrolling in dashboard.css for main-content*/
+.main-content {
+  overflow: auto; 
+  font-family: 'Poppins', sans-serif;
+}
+
+/* ------------------------
+--Search & Action Buttons--
+---------------------------
+*/
+.employees-controls{
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 40px 0px 40px;
+  position: relative;
+}
+
+/*search bar*/
+.employee-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  min-width: 0;
+  position: relative;
+  flex: 1;
+}
+
+.employee-search svg {
+  position: static;
+  transform: none;
+  color: #8C8C8C;
+  width: 18px;
+  height: 18px;
+}
+
+.employee-search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  background: transparent;
+}
+
+.employee-search:focus-within {
+    border-color: #FBC02D;
+    box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.3);
+}
+
+/* Right-side actions */
+.employee-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/*Section Divider*/
+.section-divider {
+  border-top: 1px solid #EAECEE;
+  margin: 20px 40px 20px 40px;
+}
+
+/* ------------------------
+----EMPLOYEES META DATA----
+---------------------------
+*/
+/*Employees meta div*/
+.employee-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 40px 0px 40px;
+}
+
+/*Employee count text*/
+.employees-count {
+  font-size: 24px;
+  font-weight: 600;
+  color: #555
+}
+
+.employees-count strong{
+  font-weight: 1000;
+  color: #555
+}
+
+/*Tools (sort & filter)*/
+.employees-tools {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: 12px;
+}
+
+/* Sort by dropdown */
+.sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sort-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.sort-dropdown {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #E0E0E0;
+  padding: 0 12px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* =============================
+   FILTER PANEL (Employee Page)
+============================= */
+.filter-group {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Filters button */
+.filter-toggle {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1.5px solid #D6D6D6;
+  background: #fff;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #212121;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.filter-toggle:hover {
+  border-color: #bdbdbd;
+}
+
+.filter-toggle:focus {
+  outline: none;
+  border-color: #fbc02d;
+  box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.25);
+}
+
+/* Panel */
+.filter-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 320px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  z-index: 999;
+}
+
+.filter-panel[hidden] {
+  display: none;
+}
+
+/* Each filter section */
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Section title */
+.filter-section > span {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+/* Search input */
+.filter-search {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1.5px solid #D6D6D6;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  outline: none;
+}
+
+.filter-search:focus {
+  border-color: #fbc02d;
+  box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.25);
+}
+
+/* Scrollable checkbox list */
+.filter-list {
+  max-height: 100px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Checkbox row */
+.filter-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+
+  font-size: 13px;
+  color: #212121;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.filter-check input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #FBC02D;
+}
+
+/* -------------------------
+   FILTER ACTION BUTTONS
+-------------------------- */
+.filter-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.filter-actions button {
+  flex: 1;
+  height: 40px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Clear button */
+.filter-clear {
+  border: 1.5px solid #e0e0e0;
+  background: #fafafa;
+  color: #555;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.filter-clear:hover {
+  background: #f0f0f0;
+  border-color: #cfcfcf;
+}
+
+/* apply button */
+.filter-apply {
+  border: none;
+  background: #FBC02D;
+  color: #1E1E1E;
+  transition: background 0.15s ease;
+}
+
+.filter-apply:hover {
+  background: #E6AE24;
+}
+
+
+/* ------------------------
+----EMPLOYEES GRID/CARDS----
+---------------------------
+*/
+.employee-section {
+  padding: 20px 40px 0px 40px;
+}
+/*Employee grid*/
+.employee-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 25px;
+}
+
+.employee-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 280px; /* fixed height */
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  border: 1px solid #EAECEE;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  transition: all 0.2s ease;
+}
+
+.employee-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.07);
+  border-color: #FBC02D;
+}
+
+.employee-card.selected{
+  border-color: #FBC02D;
+  box-shadow: 0 0 0 2px rgba(251,192,45,0.25);
+}
+
+.employee-card-top{
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  justify-content: center;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  background: #6B7280; /*placeholder color for now until we figure out what to do with the banner colour*/
+}
+
+.employee-avatar{
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #EAECEE;
+  border: 3px solid #fff;
+}
+
+.employee-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.employee-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  padding: 8px;
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.employee-specialties {
+  border-top: 1px solid #EAECEE;
+  align-self: stretch;
+  text-align: left;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.employee-name{
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.employee-block{ margin-top: 10px; }
+
+.specialties-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  overflow: hidden;
+  max-height: 20px;              /* default = 1 row */
+  transition: max-height 0.2s ease;
+}
+
+/* expanded = scrollable, but compact */
+.specialties-container.expanded {
+  max-height: 96px;              /* NOT 90px */
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* scrollbar (optional, subtle) */
+.specialties-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.specialties-container::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 2px;
+}
+
+
+.block-title{
+  font-size: 12px;
+  font-weight: 600;
+  color: #8C8C8C;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+/* See more link */
+.see-more-btn {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #555;        
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+}
+
+.see-more-btn:hover {
+  text-decoration: underline;
+}
+
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+
+/* =========================
+   SPECIALTY PILLS (priority-style)
+========================= */
+.specialty-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 10px;
+
+  font-size: 11px;
+  line-height: 18px;
+  font-weight: 600;
+
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.spec-default {
+  background:#ECEFF1;
+  color:#455A64;
+}
+
+/* Muted specialty pill (de-emphasized state) */
+.specialty-pill.is-muted {
+  background: #F0F0F0;
+  color: #555;
+}
+
+/* ---------------------------------
+   SPECIALTY COLOR PALETTE
+---------------------------------- */
+
+/* Management & Strategy */
+.spec-project-management { background:#E3F2FD; color:#1565C0; }
+.spec-strategy           { background:#E1F5FE; color:#0277BD; }
+.spec-leadership         { background:#E8F5E9; color:#2E7D32; }
+
+/* Backend / Data */
+.spec-backend            { background:#EDE7F6; color:#512DA8; }
+.spec-python             { background:#FFFDE7; color:#F9A825; }
+.spec-sql                { background:#F1F8E9; color:#558B2F; }
+.spec-api-design         { background:#E0F2F1; color:#00695C; }
+
+/* Frontend */
+.spec-frontend           { background:#FCE4EC; color:#AD1457; }
+.spec-react              { background:#E3F2FD; color:#0288D1; }
+.spec-css                { background:#E8EAF6; color:#3949AB; }
+.spec-javascript         { background:#FFF8E1; color:#F9A825; }
+.spec-node-js            { background:#E8F5E9; color:#2E7D32; }
+.spec-mongodb            { background:#E0F2F1; color:#00796B; }
+
+/* DevOps */
+.spec-devops             { background:#F3E5F5; color:#6A1B9A; }
+.spec-aws                { background:#FFF3E0; color:#EF6C00; }
+.spec-docker             { background:#E1F5FE; color:#0277BD; }
+.spec-ci-cd              { background:#ECEFF1; color:#455A64; }
+
+/* Design */
+.spec-ui-design          { background:#FCE4EC; color:#C2185B; }
+.spec-figma              { background:#F3E5F5; color:#7B1FA2; }
+.spec-prototyping        { background:#E8EAF6; color:#303F9F; }
+
+
+.employee-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid #EAECEE;
+
+  width: 100%;
+  justify-content: center;
+  font-size: 13px;
+  color: #666;
+}
+
+.employee-email {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
+}
+
+.employee-card-footer svg {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;   /* prevents shrinking */
+  min-height: 18px;
+  stroke-width: 2;
+}
+
+/* ------------------------
+--------PAGINATION---------
+---------------------------
+*/
+/*pagination container*/
+.employees-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+
+  padding: 16px 40px;
+  background: #fefbf4
+}
+
+/*prev and next buttons */
+.pagination-btn {
+  background: #fff;
+  border: 1px solid #DCDCDC;
+  border-radius: 8px;
+  padding: 8px 14px;
+
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.pagination-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-btn,
+.pagination-page {
+  text-decoration: none;
+  color: inherit;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 36px;
+  min-width: 36px;
+
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+/*page numbers*/
+.pagination-pages {
+  display: flex;
+  gap: 6px;
+}
+
+.pagination-page {
+  border-radius: 8px;
+  border: 1px solid #DCDCDC;
+  background: #fff;
+
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.pagination-page.active {
+  background: #FBC02D;
+  border-color: #FBC02D;
+  color: #1E1E1E;
+}
+
+.pagination-page:not(.active):hover {
+  background: #f5f5f5;
+}
+
+
+/*ellipsis*/
+.pagination-ellipsis {
+  padding: 0 6px;
+  color: #8C8C8C;
+  font-size: 14px;
+}
+
+/* =============================
+   SELECTION MODE STYLES
+============================= */
+
+/* All action buttons in the same container */
+.employee-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.select-mode-btn,
+.select-all-btn,
+.cancel-select-btn {
+    height: 40px;
+    padding: 0 20px;
+    border-radius: 10px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+/* Select button (yellow) */
+.select-mode-btn {
+    border: 1.5px solid #FBC02D;
+    background: #FBC02D;
+    color: #1E1E1E;
+}
+
+.select-mode-btn:hover {
+    background: #E6AE24;
+}
+
+/* Select All button (yellow) */
+.select-all-btn {
+    border: 1.5px solid #FBC02D;
+    background: #FBC02D;
+    color: #1E1E1E;
+}
+
+.select-all-btn:hover {
+    background: #E6AE24;
+}
+
+/* Cancel button (white) */
+.cancel-select-btn {
+    border: 1.5px solid #E0E0E0;
+    background: #fff;
+    color: #555;
+}
+
+.cancel-select-btn:hover {
+    background: #f5f5f5;
+    border-color: #cfcfcf;
+}
+
+/* Employee card selection checkbox */
+.employee-card {
+    position: relative;
+}
+
+.employee-checkbox {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 2px solid #D6D6D6;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 10;
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+/* Show checkbox when in select mode */
+body.select-mode .employee-checkbox {
+    display: flex;
+}
+
+.employee-checkbox:hover {
+    border-color: #FBC02D;
+}
+
+/* Checkmark icon */
+.employee-checkbox svg {
+    display: none;
+    width: 16px;
+    height: 16px;
+    color: #fff;
+}
+
+/* When card is selected */
+.employee-card.selected .employee-checkbox {
+    background: #FBC02D;
+    border-color: #FBC02D;
+}
+
+.employee-card.selected .employee-checkbox svg {
+    display: block;
+}
+
+/* =============================
+   FIXED BOTTOM ACTION BAR
+============================= */
+.bottom-action-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  margin-left: 140px; /* Half of sidebar width (280px / 2) to center within main content */
+  transform: translateX(-50%);
+  
+  background: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 24px;
+  
+  /* Smooth appearance */
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.bottom-action-bar[hidden] {
+  display: none;
+}
+
+.selection-info {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+
+.bottom-actions {
+  display: flex;
+  gap: 10px;
+  border-left: 1px solid #E0E0E0;
+  padding-left: 20px;
+}
+
+/*ACTION BUTTONS*/
+/* assign task & add to project button css in dashboard.css*/
+/* create new project button  */
+.action-btn {
+  height: 42px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 8px;
+  background: #FBC02D;
+  color: #1E1E1E;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.action-btn:hover {
+  background: #F9A825;
+}
+
+.action-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Minimal padding since bar is floating */
+body.select-mode .employee-section {
+  padding-bottom: 20px;
+}
