@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$user) {
-            echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
+            echo json_encode(['success' => false, 'message' => 'Invalid email']);
             exit();
         }
         
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Verify password
         if (!password_verify($password, $user['password_hash'])) {
-            echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
+            echo json_encode(['success' => false, 'message' => 'Invalid password']);
             exit();
         }
         
@@ -57,10 +57,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['name'] = $user['first_name'] . ' ' . $user['last_name'];
         $_SESSION['role'] = $user['role'];
         
+        // Determine redirect based on role
+        $redirect = ($user['role'] === 'manager')
+            ? 'user/home/home.html?user=' . urlencode($user['email'])
+            : 'user/project/projects-overview.php';
+        
         echo json_encode([
             'success' => true,
             'message' => 'Login successful',
-            'redirect' => 'user/home/home.html?user=' . urlencode($user['email'])
+            'redirect' => $redirect
         ]);
         
     } catch (PDOException $e) {

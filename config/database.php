@@ -3,7 +3,7 @@ class Database {
     private $host = 'localhost';
     private $db_name = 'team14_makeitall_database';
     private $username = 'root';
-    private $password = 'root';  // MAMP default
+    private $password = '';  // XAMPP default (empty)
     private $conn;
 
     public function getConnection() {

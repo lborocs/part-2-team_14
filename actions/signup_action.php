@@ -7,9 +7,10 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
     
-    if (empty($email) || empty($password)) {
-        echo json_encode(['success' => false, 'message' => 'Email and password are required']);
+    if (empty($email) || empty($password) || empty($confirm_password)) {
+        echo json_encode(['success' => false, 'message' => 'All fields are required']);
         exit();
     }
     
@@ -22,6 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate password (at least 8 chars, 1 letter, 3 numbers, 1 special char)
     if (!preg_match('/^(?=.*[A-Za-z])(?=.*[^A-Za-z0-9])(?=(?:.*\d){3,}).{8,}$/', $password)) {
         echo json_encode(['success' => false, 'message' => 'Password must be at least 8 characters with 1 letter, 3 numbers, and 1 special character']);
+        exit();
+    }
+
+    // Confirm password match
+    if ($password !== $confirm_password) {
+        echo json_encode(['success' => false, 'message' => 'Passwords must match']);
         exit();
     }
     
