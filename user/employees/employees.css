@@ -214,6 +214,13 @@
   gap: 8px;
 }
 
+/* OVERRIDE dashboard.css label styling for checkboxes */
+.filter-panel label.filter-check {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
 /* Checkbox row */
 .filter-check {
   display: flex;
@@ -222,7 +229,7 @@
   justify-content: flex-start;
   gap: 10px;
 
-  font-size: 13px;
+  font-size: 14px;
   color: #212121;
   cursor: pointer;
   line-height: 1.2;
@@ -242,7 +249,6 @@
 .filter-actions {
   display: flex;
   gap: 10px;
-  margin-top: 6px;
 }
 
 .filter-actions button {
@@ -255,18 +261,7 @@
   cursor: pointer;
 }
 
-/* Clear button */
-.filter-clear {
-  border: 1.5px solid #e0e0e0;
-  background: #fafafa;
-  color: #555;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.filter-clear:hover {
-  background: #f0f0f0;
-  border-color: #cfcfcf;
-}
+/* Clear button comes from dashboard.css (filter-clear)*/
 
 /* apply button */
 .filter-apply {
@@ -274,12 +269,12 @@
   background: #FBC02D;
   color: #1E1E1E;
   transition: background 0.15s ease;
+  margin-top: 6px;
 }
 
 .filter-apply:hover {
   background: #E6AE24;
 }
-
 
 /* ------------------------
 ----EMPLOYEES GRID/CARDS----
@@ -326,7 +321,6 @@
   justify-content: center;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  background: #6B7280; /*placeholder color for now until we figure out what to do with the banner colour*/
 }
 
 .employee-avatar{

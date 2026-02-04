@@ -22,8 +22,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: #E5E7EB; 
-  color: #374151; 
+  color: #fff; 
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 13px;
@@ -130,10 +129,13 @@
   padding: 8px;
 }
 
+/* Override dashboard.css label styling for project checkboxes */
 .project-checkbox-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 10px !important;
+
   padding: 10px 12px;
   margin-bottom: 4px;
   border-radius: 6px;
@@ -146,10 +148,10 @@
 }
 
 .project-checkbox-item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: #FBC02D;
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
 }
 
 .project-checkbox-item span {

@@ -1,4 +1,68 @@
 <?php
+session_start(); // Ensure session is available
+
+// Re-define specialty colors (must match employee-directory.php)
+$specialtyColors = [
+    'Project Management' => '#1565C0',
+    'Strategy'           => '#0277BD',
+    'Leadership'         => '#2E7D32',
+    'Backend'            => '#512DA8',
+    'Python'             => '#F9A825',
+    'SQL'                => '#558B2F',
+    'API Design'         => '#00695C',
+    'Frontend'           => '#AD1457',
+    'React'              => '#0288D1',
+    'CSS'                => '#3949AB',
+    'JavaScript'         => '#F9A825',
+    'Node.js'            => '#2E7D32',
+    'MongoDB'            => '#00796B',
+    'DevOps'             => '#6A1B9A',
+    'AWS'                => '#EF6C00',
+    'Docker'             => '#0277BD',
+    'CI/CD'              => '#455A64',
+    'UI Design'          => '#C2185B',
+    'Figma'              => '#7B1FA2',
+    'Prototyping'        => '#303F9F',
+];
+
+// Re-define color function (must match employee-directory.php)
+function getEmployeeColor($userId, $userSpecialties, $specialtyColors, &$colorMap) {
+    // If color already assigned in this session, return it
+    if (isset($colorMap[$userId])) {
+        return $colorMap[$userId];
+    }
+    
+    // Parse specialties
+    $specialties = [];
+    if (!empty($userSpecialties)) {
+        $specialties = json_decode($userSpecialties, true) ?? explode(',', $userSpecialties);
+        $specialties = array_map('trim', $specialties);
+    }
+    
+    // Get matching colors from user's specialties
+    $availableColors = [];
+    foreach ($specialties as $spec) {
+        if (isset($specialtyColors[$spec])) {
+            $availableColors[] = $specialtyColors[$spec];
+        }
+    }
+    
+    // If no matching specialty colors, use a random specialty color from the palette
+    if (empty($availableColors)) {
+        $availableColors = array_values($specialtyColors);
+    }
+    
+    // Randomly pick one color from available options
+    $selectedColor = $availableColors[array_rand($availableColors)];
+    
+    // Store in session
+    $colorMap[$userId] = $selectedColor;
+    
+    return $selectedColor;
+}
+?>
+
+<?php
 /* =======================
    SPECIALTY → CSS CLASS MAP
    ======================= */
@@ -39,6 +103,13 @@ $specialtyClassMap = [
 <?php foreach ($employees as $employee): ?>
 
     <?php
+        $employeeColor = getEmployeeColor(
+            $employee['user_id'], 
+            $employee['specialties'], 
+            $specialtyColors, 
+            $_SESSION['employee_colors']
+        );
+
         $specialties = [];
         if (!empty($employee['specialties'])) {
             $specialties = json_decode($employee['specialties'], true)
@@ -58,7 +129,7 @@ $specialtyClassMap = [
             </svg>
         </div>
         
-        <div class="employee-card-top">
+        <div class="employee-card-top" style="background-color: <?= htmlspecialchars($employeeColor) ?>;">
             <div class="employee-avatar">
                 <img src="<?= htmlspecialchars($employee['profile_picture']) ?>" alt="">
             </div>

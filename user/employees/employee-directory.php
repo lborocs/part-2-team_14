@@ -10,6 +10,76 @@ $database = new Database();
 $pdo = $database->getConnection();
 
 /* =============================
+   COLOR ASSIGNMENT SYSTEM
+   ============================= */
+session_start(); // Start session to maintain colors
+
+// Define specialty-based colors (from your existing specialtyClassMap)
+$specialtyColors = [
+    'Project Management' => '#1565C0',
+    'Strategy'           => '#0277BD',
+    'Leadership'         => '#2E7D32',
+    'Backend'            => '#512DA8',
+    'Python'             => '#F9A825',
+    'SQL'                => '#558B2F',
+    'API Design'         => '#00695C',
+    'Frontend'           => '#AD1457',
+    'React'              => '#0288D1',
+    'CSS'                => '#3949AB',
+    'JavaScript'         => '#F9A825',
+    'Node.js'            => '#2E7D32',
+    'MongoDB'            => '#00796B',
+    'DevOps'             => '#6A1B9A',
+    'AWS'                => '#EF6C00',
+    'Docker'             => '#0277BD',
+    'CI/CD'              => '#455A64',
+    'UI Design'          => '#C2185B',
+    'Figma'              => '#7B1FA2',
+    'Prototyping'        => '#303F9F',
+];
+
+// Initialize color map in session if not exists
+if (!isset($_SESSION['employee_colors'])) {
+    $_SESSION['employee_colors'] = [];
+}
+
+// Function to get or assign color for employee based on their specialties
+function getEmployeeColor($userId, $userSpecialties, $specialtyColors, &$colorMap) {
+    // If color already assigned in this session, return it
+    if (isset($colorMap[$userId])) {
+        return $colorMap[$userId];
+    }
+    
+    // Parse specialties
+    $specialties = [];
+    if (!empty($userSpecialties)) {
+        $specialties = json_decode($userSpecialties, true) ?? explode(',', $userSpecialties);
+        $specialties = array_map('trim', $specialties);
+    }
+    
+    // Get matching colors from user's specialties
+    $availableColors = [];
+    foreach ($specialties as $spec) {
+        if (isset($specialtyColors[$spec])) {
+            $availableColors[] = $specialtyColors[$spec];
+        }
+    }
+    
+    // If no matching specialty colors, use a random specialty color from the palette
+    if (empty($availableColors)) {
+        $availableColors = array_values($specialtyColors);
+    }
+    
+    // Randomly pick one color from available options
+    $selectedColor = $availableColors[array_rand($availableColors)];
+    
+    // Store in session
+    $colorMap[$userId] = $selectedColor;
+    
+    return $selectedColor;
+}
+
+/* =============================
    FILTER OPTIONS (Specialties + Projects)
    ============================= */
 
@@ -313,8 +383,8 @@ if ($isAjax) {
                     <img src="../logo.png" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <li class="active-parent">
                         <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
                     </li>
@@ -480,6 +550,13 @@ if ($isAjax) {
                     <?php foreach ($employees as $employee): ?>
 
                         <?php
+                            // Get color for this employee based on specialties
+                            $employeeColor = getEmployeeColor(
+                                $employee['user_id'], 
+                                $employee['specialties'], 
+                                $specialtyColors, 
+                                $_SESSION['employee_colors']
+                            );
 
                             // Decode specialties (stored as JSON or comma text)
                             $specialties = [];
@@ -495,7 +572,7 @@ if ($isAjax) {
                             data-employee-id="<?= $employee['user_id'] ?>"
                         >
 
-                            <div class="employee-card-top">
+                            <div class="employee-card-top" style="background-color: <?= htmlspecialchars($employeeColor) ?>;">
                                 <div class="employee-avatar">
                                     <img
                                         src="<?= htmlspecialchars($employee['profile_picture']) ?>"

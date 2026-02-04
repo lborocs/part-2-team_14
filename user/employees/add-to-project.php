@@ -1,6 +1,65 @@
 <?php
 session_start();
 
+// Define same specialty colors
+$specialtyColors = [
+    'Project Management' => '#1565C0',
+    'Strategy'           => '#0277BD',
+    'Leadership'         => '#2E7D32',
+    'Backend'            => '#512DA8',
+    'Python'             => '#F9A825',
+    'SQL'                => '#558B2F',
+    'API Design'         => '#00695C',
+    'Frontend'           => '#AD1457',
+    'React'              => '#0288D1',
+    'CSS'                => '#3949AB',
+    'JavaScript'         => '#F9A825',
+    'Node.js'            => '#2E7D32',
+    'MongoDB'            => '#00796B',
+    'DevOps'             => '#6A1B9A',
+    'AWS'                => '#EF6C00',
+    'Docker'             => '#0277BD',
+    'CI/CD'              => '#455A64',
+    'UI Design'          => '#C2185B',
+    'Figma'              => '#7B1FA2',
+    'Prototyping'        => '#303F9F',
+];
+
+function getEmployeeColor($userId, $userSpecialties, $specialtyColors, &$colorMap) {
+    // If color already assigned in this session, return it
+    if (isset($colorMap[$userId])) {
+        return $colorMap[$userId];
+    }
+    
+    // Parse specialties
+    $specialties = [];
+    if (!empty($userSpecialties)) {
+        $specialties = json_decode($userSpecialties, true) ?? explode(',', $userSpecialties);
+        $specialties = array_map('trim', $specialties);
+    }
+    
+    // Get matching colors from user's specialties
+    $availableColors = [];
+    foreach ($specialties as $spec) {
+        if (isset($specialtyColors[$spec])) {
+            $availableColors[] = $specialtyColors[$spec];
+        }
+    }
+    
+    // If no matching specialty colors, use a random specialty color from the palette
+    if (empty($availableColors)) {
+        $availableColors = array_values($specialtyColors);
+    }
+    
+    // Randomly pick one color from available options
+    $selectedColor = $availableColors[array_rand($availableColors)];
+    
+    // Store in session
+    $colorMap[$userId] = $selectedColor;
+    
+    return $selectedColor;
+}
+
 require_once __DIR__ . '/../../config/database.php';
 $database = new Database();
 $db = $database->getConnection();
@@ -9,6 +68,9 @@ if (!$db) {
     die("Database connection failed.");
 }
 
+// ===============================
+// AJAX ENDPOINT: Get Employee Names
+// ===============================
 // ===============================
 // AJAX ENDPOINT: Get Employee Names
 // ===============================
@@ -34,23 +96,32 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_employees') {
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
     
     $stmt = $db->prepare("
-        SELECT user_id, first_name, last_name, email, profile_picture
+        SELECT user_id, first_name, last_name, email, profile_picture, specialties
         FROM users
         WHERE user_id IN ($placeholders)
     ");
     $stmt->execute($ids);
     $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Format response
-    $response = array_map(function($emp) {
+    // Format response with colors
+    $response = array_map(function($emp) use ($specialtyColors) {
+        // Get color from session using specialties
+        $color = getEmployeeColor(
+            $emp['user_id'], 
+            $emp['specialties'], 
+            $specialtyColors, 
+            $_SESSION['employee_colors']
+        );
+        
         return [
             'id' => (int)$emp['user_id'],
             'name' => $emp['first_name'] . ' ' . $emp['last_name'],
             'email' => $emp['email'],
-            'profile_picture' => $emp['profile_picture']
+            'profile_picture' => $emp['profile_picture'],
+            'color' => $color
         ];
     }, $employees);
-    
+
     echo json_encode($response);
     exit;
 }
