@@ -382,14 +382,22 @@ function updateSidebarAndNav() {
     const progressPage = (isManager || canManageProject) ? "manager-progress.html" : "progress.html";
 
 
+
     // 4) Build nav links
     const navLinks = document.getElementById("project-nav-links");
     if (navLinks) {
         const path = window.location.pathname.toLowerCase();
 
-        const tasksActive = path.includes("projects.php") ? "active" : "";
-        const progressActive =
-            path.includes("progress.php") || path.includes("manager-progress.html") ? "active" : "";
+        const tasksActive = (path.includes("projects.php") || path.includes("projects.html")) ? "active" : "";
+
+const progressActive =
+  path.includes("progress.html") ||
+  path.includes("manager-progress.html") ||
+  path.includes("progress.html") ||
+  path.includes("manager-progress.html")
+    ? "active"
+    : "";
+
         const resourcesActive = path.includes("project-resources.html") ? "active" : "";
 
         navLinks.innerHTML = `
@@ -1338,34 +1346,51 @@ function renderNotifications() {
 /**
  * Runs on the Progress page (progress.html) - shows only assigned tasks
  */
-function loadProgressPage(currentUser) {
+async function loadProgressPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
+    
+    if (!currentProjectId) {
+        alert('No project selected');
+        window.location.href = 'projects-overview.php';
+        return;
+    }
 
-    // --- NEW: Role-based Redirect ---
-    // Check if user is a manager/leader
+    // --- Fetch project data from database ---
+    try {
+        const response = await fetch(`projects.php?ajax=get_project&project_id=${encodeURIComponent(currentProjectId)}`);
+        const data = await response.json();
+        
+        if (data.success && data.project) {
+            window.__PROJECT__ = data.project;
+        } else {
+            console.error('Failed to load project:', data.message);
+            alert('Could not load project information');
+            return;
+        }
+    } catch (err) {
+        console.error('Error fetching project:', err);
+        alert('Error loading project data');
+        return;
+    }
+
+    // --- Role-based Redirect ---
     const isManagerView = (currentUser.role === 'manager' || currentUser.role === 'team_leader');
-    // Check for the special "Leader on Apollo" exception
     const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
 
     if (isManagerView && !isLeaderOnApollo) {
-        // This is a manager/leader, redirect them to the manager progress page
         window.location.href = `manager-progress.html?project_id=${encodeURIComponent(currentProjectId)}`;
-        return; // Stop loading this page
+        return;
     }
-    // --- End Redirect ---
 
-    // If we are here, it's a team member (or the special exception)
     updateSidebarAndNav();
 
-    // Only use assigned tasks for this user AND this project
     const userTasks = simTasks.filter(task =>
         task.assignedTo &&
         task.assignedTo.includes(currentUser.email) &&
         task.type === 'assigned' &&
-        task.projectId === currentProjectId // <-- NEW FILTER
+        task.projectId === currentProjectId
     );
 
-    // Calculate task progress
     const completedTasks = userTasks.filter(t => t.status === 'completed').length;
     const totalTasks = userTasks.length;
     const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -1374,16 +1399,9 @@ function loadProgressPage(currentUser) {
     document.getElementById('progress-text').textContent =
         `You have completed ${progressPercent}% of your assigned tasks for this project.`;
 
-    // Render upcoming deadlines (from this project's tasks)
     renderUpcomingDeadlines(userTasks);
-
-    // Render workload (pass project ID)
     renderWorkload(currentUser, currentProjectId);
-
-    // Render urgent tasks (from this project's tasks)
     renderUrgentTasks(userTasks, currentUser);
-
-    // Render task distribution chart (from this project's tasks)
     renderTaskDistributionChart(userTasks);
 
     feather.replace();
@@ -2706,14 +2724,35 @@ function openAssignTaskModal(status = "todo") {
 /**
  * Runs on the Manager Progress page (manager-progress-page)
  */
-function loadManagerProgressPage(currentUser) {
+async function loadManagerProgressPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
+    
+    if (!currentProjectId) {
+        alert('No project selected');
+        window.location.href = 'projects-overview.php';
+        return;
+    }
+
+    // --- Fetch project data from database ---
+    try {
+        const response = await fetch(`projects.php?ajax=get_project&project_id=${encodeURIComponent(currentProjectId)}`);
+        const data = await response.json();
+        
+        if (data.success && data.project) {
+            window.__PROJECT__ = data.project;
+        } else {
+            console.error('Failed to load project:', data.message);
+            return;
+        }
+    } catch (err) {
+        console.error('Error fetching project:', err);
+        return;
+    }
+
     updateSidebarAndNav();
 
-    // Get all tasks for this specific project
-    const projectTasks = simTasks.filter(task => task.projectId === currentProjectId);
+const projectTasks = await fetchProjectTasksFromDb(currentProjectId);
 
-    // Render all components
     renderManagerTaskProgress(projectTasks);
     renderManagerDeadlines(projectTasks);
     renderProjectResources(projectTasks);
@@ -3704,6 +3743,7 @@ function setupProjectCardNavigation() {
         setTimeout(() => console.log("Still here"), 0);
 
         // Go to DB-backed project page
+        sessionStorage.setItem("currentProjectName", card.dataset.name || "Project");
         window.location.href = `projects.php?project_id=${encodeURIComponent(projectId)}`;
     });
 }
@@ -3797,10 +3837,10 @@ window.__CURRENT_USER__ = currentUser;
         loadHomePage(currentUser);
     } else if (pageId === 'progress-page') {
         // Team Member Progress page (with redirect)
-        loadProgressPage(currentUser);
+        await loadProgressPage(currentUser);
     } else if (pageId === 'manager-progress-page') {
         // Manager Progress page
-        loadManagerProgressPage(currentUser);
+        await loadManagerProgressPage(currentUser);
     } else if (pageId === 'project-resources-page') {
         // Project Resources page
         loadProjectResourcesPage(currentUser);
@@ -3923,6 +3963,25 @@ function matchesDueFilter(deadline, filter) {
             return true;
     }
 }
+ async function fetchProjectTasksFromDb(projectId) {
+  const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
+  const res = await fetch(url, { credentials: "include" });
+  const data = await res.json();
+  if (!data.success) return [];
+
+  // data.tasks are DB shape -> normalize to your UI shape
+  return (data.tasks || []).map(t => ({
+    id: t.task_id,
+    title: t.task_name,
+    description: t.description || "",
+    priority: t.priority || "medium",
+    status: normalizeDbStatus(t.status),     // you already have this function
+    deadline: t.deadline,
+    assignedTo: Array.isArray(t.assignedUsers)
+      ? t.assignedUsers.map(u => u.email)
+      : []
+  }));
+}
 
 function fetchAndRenderTasks({ search = "", status = "", priority = "", due = "", page = 1 } = {}) {
     const url = new URL(window.location.href);
@@ -3997,12 +4056,15 @@ function updateTaskCounts() {
     column.appendChild(card);
 }*/
 document.addEventListener("DOMContentLoaded", () => {
+  const pageId = document.body?.id;
+
+  // Only fetch/render the kanban tasks on the Projects board page
+  if (pageId === "projects-page") {
     fetchAndRenderTasks();
+    setupAssignTaskForm(); // only if your board page needs it
+  }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-  setupAssignTaskForm();
-}); 
 
 
 

@@ -81,11 +81,24 @@
             </div>
         </main>
     </div>
+<script>
+  // Instant title while app.js does async fetches
+  const cachedName = sessionStorage.getItem("currentProjectName");
+  if (cachedName) {
+    const b = document.getElementById("project-name-breadcrumb");
+    const h = document.getElementById("project-name-header");
+    if (b) b.textContent = cachedName;
+    if (h) h.textContent = cachedName;
+  }
+</script>
+<script src="../app.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../app.js"></script>
     <script>
         feather.replace();
     </script>
+
+
 </body>
 </html>

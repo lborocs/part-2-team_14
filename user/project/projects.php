@@ -25,6 +25,45 @@ if (!$userId) {
     http_response_code(401);
     exit("Not logged in (login not merged yet).");
 }
+// =============================
+// AJAX: GET PROJECT DATA FOR PROGRESS PAGES
+// =============================
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_project') {
+    header('Content-Type: application/json');
+    
+    $project_id = $_GET['project_id'] ?? null;
+    
+    if (!$project_id) {
+        echo json_encode(['success' => false, 'message' => 'No project ID']);
+        exit;
+    }
+    
+    try {
+        $stmt = $db->prepare("
+            SELECT p.*, 
+                   u.first_name as team_leader_first_name,
+                   u.last_name as team_leader_last_name,
+                   u.profile_picture as team_leader_avatar
+            FROM projects p
+            LEFT JOIN users u ON p.team_leader_id = u.user_id
+            WHERE p.project_id = ?
+        ");
+        $stmt->execute([$project_id]);
+        $project = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($project) {
+            echo json_encode([
+                'success' => true,
+                'project' => $project
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Project not found']);
+        }
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit;
+}
 
 $projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
 

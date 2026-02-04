@@ -27,3 +27,9 @@
         grid-template-columns: 1fr;
     }
 }
+
+.deadlines-list{
+  max-height: 240px;   /* tweak until about 3 items show */
+  overflow-y: auto;
+  padding-right: 6px;  /* prevents scrollbar covering content */
+}
