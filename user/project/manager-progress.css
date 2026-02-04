@@ -8,6 +8,18 @@
     flex-grow: 1;
 }
 
+/* Make Team Progress card look like Upcoming Deadlines card */
+.member-progress-card{
+  background: #fff;
+  border-radius: 12px; /* match deadlines-card */
+  padding: 30px;       /* match deadlines-card */
+  margin-bottom: 30px; /* match deadlines-card spacing */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* match deadlines-card */
+}
+
+
+
+
 /* Left + Right columns behave like normal grid columns */
 .manager-progress-left,
 .manager-progress-right {
@@ -20,6 +32,119 @@
 .manager-progress-right > section {
     width: 100%;
 }
+
+.member-progress-card h2{
+  font-size: 22px;     
+  font-weight: 600;     
+  margin: 0 0 20px 0;   
+}
+
+
+/* Header layout: stack title then search */
+.member-progress-header {
+  display: block;
+  margin-bottom: 14px;
+}
+
+/* Search bar wrapper matches your "Search tasks..." look */
+.member-progress-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e6e6e6;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff;
+  width: 100%;
+  max-width: 420px; /* optional */
+}
+
+.member-progress-search-wrap i {
+  width: 18px;
+  height: 18px;
+  color: #777;
+}
+
+.member-progress-search {
+  border: 0;
+  outline: 0;
+  width: 100%;
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  color: #111;
+}
+
+.member-progress-search::placeholder {
+  color: #8c8c8c;
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+}
+
+/* Make the list scrollable */
+.member-progress-list{
+  max-height: 360px;     /* ~3 rows visible */
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+
+/* Compact row (no avatar) */
+.member-progress-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  background: #fff;
+  margin-bottom: 12px;
+}
+
+/* Name + subtitle */
+.member-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #111;
+}
+
+.member-sub {
+  font-size: 13px;
+  color: #777;
+  margin-top: 3px;
+}
+
+/* Bar smaller */
+.member-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.member-bar{
+  flex: 1;
+  height: 8px;
+  background: #ededed;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.member-bar-fill{
+  height: 100%;
+  background: #FBC02D;  
+  border-radius: 999px;
+}
+
+
+/* Percent right side */
+.member-percent {
+  font-weight: 700;
+  font-size: 14px;
+  color: #111;
+  min-width: 44px;
+  text-align: right;
+}
+
+
 
 /* Responsive (same as your progress page) */
 @media (max-width: 1200px) {

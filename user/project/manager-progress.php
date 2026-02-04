@@ -35,6 +35,72 @@ $canManageProject = $access['canManageProject'];
 $canCloseProject  = $access['canCloseProject'];
 
 // =============================
+// AJAX: MEMBER PROGRESS (SECURE)
+// =============================
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'member_progress') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    // must be manager/team_leader for this project
+    if (!$canManageProject) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'No permission']);
+        exit;
+    }
+
+    try {
+        // Only people who have tasks assigned in THIS project
+        $stmt = $db->prepare("
+            SELECT
+                u.user_id,
+                u.email,
+                u.first_name,
+                u.last_name,
+                u.profile_picture,
+                COUNT(DISTINCT ta.task_id) AS total_tasks,
+                SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) AS completed_tasks
+            FROM task_assignments ta
+            JOIN tasks t
+              ON t.task_id = ta.task_id
+             AND t.project_id = :pid
+            JOIN users u
+              ON u.user_id = ta.user_id
+            WHERE u.is_active = 1
+            GROUP BY u.user_id, u.email, u.first_name, u.last_name, u.profile_picture
+            ORDER BY u.first_name ASC, u.last_name ASC
+        ");
+        $stmt->execute([':pid' => $projectId]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $people = array_map(function ($r) {
+            $total = (int)$r['total_tasks'];
+            $done  = (int)$r['completed_tasks'];
+            $pct   = $total > 0 ? (int)round(($done / $total) * 100) : 0;
+
+            $name = trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? ''));
+            if ($name === '') $name = strtolower(trim($r['email'] ?? ''));
+
+            return [
+                'user_id' => (int)$r['user_id'],
+                'name' => $name,
+                'email' => strtolower(trim($r['email'] ?? '')),
+                'avatarUrl' => !empty($r['profile_picture']) ? $r['profile_picture'] : null,
+                'total_tasks' => $total,
+                'completed_tasks' => $done,
+                'percent' => $pct
+            ];
+        }, $rows);
+
+        echo json_encode(['success' => true, 'people' => $people]);
+        exit;
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Server error']);
+        exit;
+    }
+}
+
+
+// =============================
 // CLOSE PROJECT (AJAX) - manager-progress.php
 // (same behaviour as projects.php)
 // =============================
@@ -172,15 +238,31 @@ foreach ($users as $u) {
 
             <div class="manager-progress-layout">
                 <div class="manager-progress-left">
-                    <section class="progress-card">
-                        <h2>Task Progress</h2>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar">
-                                <div class="progress-fill" id="task-progress-fill" style="width:0%"></div>
+                    <section class="member-progress-card">
+                        <div class="member-progress-header">
+                            <h2>Team Progress</h2>
+
+                            <div class="member-progress-search-wrap">
+                                <i data-feather="search"></i>
+                                <input
+                                    type="text"
+                                    id="member-progress-search"
+                                    class="member-progress-search"
+                                    placeholder="Search members..."
+                                    autocomplete="off" />
                             </div>
                         </div>
-                        <p class="progress-text" id="progress-text">Your team has completed 0% of tasks assigned.</p>
+
+
+                        <div class="member-progress-list" id="member-progress-list">
+                            <!-- JS renders rows -->
+                        </div>
+
+                        <p class="member-progress-hint" id="member-progress-hint" style="display:none;">
+                            No matches found.
+                        </p>
                     </section>
+
                 </div>
 
                 <div class="manager-progress-right">
@@ -189,21 +271,6 @@ foreach ($users as $u) {
                         <div class="deadlines-list" id="deadlines-list"></div>
                     </section>
 
-                    <!-- ✅ REQUIRED by renderProjectResources -->
-                    <section class="distribution-card status-green" id="project-resource-card">
-                        <h2>Project Resources</h2>
-                        <p class="distribution-subtitle" id="resource-status-text">Sufficiently Resourced</p>
-                        <p class="distribution-subtitle" id="resource-status-desc">
-                            No tasks are overdue. Resources are efficiently allocated.
-                        </p>
-                    </section>
-
-                    <!-- ✅ REQUIRED by renderTasksPerMemberChart -->
-                    <section class="distribution-card">
-                        <h2>Tasks per Member</h2>
-                        <p class="distribution-subtitle">Workload distribution across the team:</p>
-                        <div id="tasks-per-member-chart-container" style="height:320px;"></div>
-                    </section>
                 </div>
             </div>
         </main>
