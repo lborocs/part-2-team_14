@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
+
 <body id="manager-progress-page">
     <div class="dashboard-container">
         <nav class="sidebar">
@@ -23,10 +25,11 @@
                 </div>
                 <ul class="nav-main">
                     <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
-                    <li class="active-parent"><a href="projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <li class="active-parent"><a href="projects-overview.php"><i data-feather="folder"></i>Projects</a>
                     </li>
-                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
-                    <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+                    </li>
+                    <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge
+                            Base</a></li>
                 </ul>
             </div>
             <div class="nav-footer">
@@ -37,21 +40,22 @@
         </nav>
 
         <main class="main-content">
-          <header class="project-header">
-            <div class="project-header-top">
-              <div class="breadcrumbs-title">
-                <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb">Project</span></p>
-                <h1 id="project-name-header">Project</h1>
-              </div>
-              <button class="close-project-btn" id="close-project-btn" style="display: none;">Close Project</button>
-            </div>
+            <header class="project-header">
+                <div class="project-header-top">
+                    <div class="breadcrumbs-title">
+                        <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb">Project</span></p>
+                        <h1 id="project-name-header">Project</h1>
+                    </div>
+                    <button class="close-project-btn" id="close-project-btn" style="display: none;">Close
+                        Project</button>
+                </div>
 
-            <nav class="project-nav" id="project-nav-links">
-              <a href="#" class="active">Tasks</a>
-              <a href="progress.html">Progress</a>
-              <a href="#">Resources</a>
-            </nav>
-          </header>
+                <nav class="project-nav" id="project-nav-links">
+                    <a href="#" class="active">Tasks</a>
+                    <a href="progress.html">Progress</a>
+                    <a href="#">Resources</a>
+                </nav>
+            </header>
 
 
             <div class="manager-progress-layout">
@@ -68,6 +72,11 @@
                         <p class="progress-text" id="progress-text">Your team has completed 0% of tasks assigned.</p>
                     </section>
 
+
+                </div>
+
+                <!-- Right Column -->
+                <div class="manager-progress-right">
                     <!-- Upcoming Deadlines Card -->
                     <section class="deadlines-card">
                         <h2>Upcoming Deadlines</h2>
@@ -75,40 +84,8 @@
                             <!-- Deadlines will be rendered here -->
                         </div>
                     </section>
-                </div>
 
-                <!-- Right Column -->
-                <div class="manager-progress-right">
-                    <!-- Project Resources Card -->
-                    <section class="resource-card" id="project-resource-card">
-                        <div class="resource-status-icon-bg" id="resource-icon-bg">
-                            <div class="resource-status-icon" id="resource-icon-dot"></div>
-                        </div>
-                        <div class="resource-info">
-                            <h3>Project Resources</h3>
-                            <h2 id="resource-status-text">Sufficiently Resourced</h2>
-                            <p id="resource-status-desc">No tasks are overdue. Resources are efficiently allocated.</p>
-                        </div>
-                    </section>
 
-                    <!-- Tasks per Member Card -->
-                    <section class="tasks-per-member-card">
-                        <h2>Tasks per member</h2>
-                        <div class="tasks-per-member-chart" id="tasks-per-member-chart-container">
-                            <!-- Canvas will be injected here -->
-                        </div>
-                        <div class="chart-legend-horizontal">
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #34A853;"></span> Completed
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #E6A100;"></span> In Progress
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #D93025;"></span> Not Started (To Do)
-                            </div>
-                        </div>
-                    </section>
                 </div>
             </div>
         </main>
@@ -116,5 +93,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../app.js"></script>
+    <script>
+        feather.replace();
+    </script>
 </body>
+
 </html>

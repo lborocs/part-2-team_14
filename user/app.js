@@ -28,6 +28,18 @@ function showSuccessNotification(message) {
     }, 3000);
 }
 
+function getUsersMap() {
+  // Prefer PHP injected users
+  if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
+
+  // Fallback if you still have simUsers defined somewhere else
+  if (typeof window.simUsers === "object") return window.simUsers;
+
+  // Final fallback
+  return {};
+}
+
+
 // Initial hardcoded posts
 const initialPosts = [
     // Software Issues
@@ -256,9 +268,9 @@ const initialPersonalTodos = [
 ];
 
 // Load tasks from localStorage or use initial set
-let simTasks = JSON.parse(localStorage.getItem('simTasks'));
+let simTasks = JSON.parse(localStorage.getItem('simTasks')) || [];
 if (!localStorage.getItem('simTasks')) {
-    localStorage.setItem('simTasks', JSON.stringify(simTasks));
+    localStorage.setItem('simTasks', JSON.stringify([]));
 }
 
 let simPersonalTodos = JSON.parse(localStorage.getItem('simPersonalTodos')) || initialPersonalTodos;
@@ -300,6 +312,15 @@ async function getCurrentUser() {
         return null;
     }
 }
+
+function getUsersSource() {
+  // Prefer users injected by PHP
+  if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
+  // fallback (if you ever define simUsers elsewhere)
+  if (typeof simUsers !== "undefined") return simUsers;
+  return {}; // safe fallback
+}
+
 
 function getCurrentUserStatus() {
     if (window.__CAN_MANAGE_PROJECT__) {
@@ -1553,23 +1574,24 @@ function setupCreateTopicForm(currentUser) {
     });
 }
 
-/**
- * Runs on the standalone Assign Task page (assign-task.html)
- */
 function setupAssignTaskForm() {
-     
-  const form = document.getElementById('assign-task-form');
+  const form = document.getElementById("assign-task-form");
   if (!form) return;
 
-  form.addEventListener('submit', async (e) => {
+ // ✅ Prevent double-binding (stops multiple submit handlers)
+if (form.dataset.bound === "1") return;
+form.dataset.bound = "1";
+
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault(); // ⛔ STOP PAGE RELOAD
 
-    const titleEl = document.getElementById('modal-task-title');
-    const priorityEl = document.getElementById('modal-task-priority');
-    const deadlineEl = document.getElementById('modal-task-deadline');
+    const titleEl = document.getElementById("modal-task-title");
+    const priorityEl = document.getElementById("modal-task-priority");
+    const deadlineEl = document.getElementById("modal-task-deadline");
 
     if (!titleEl || !priorityEl || !deadlineEl) {
-      console.error('Assign task form fields not found');
+      console.error("Assign task form fields not found");
       return;
     }
 
@@ -1577,54 +1599,65 @@ function setupAssignTaskForm() {
     const priority = priorityEl.value;
     const deadline = deadlineEl.value;
     const description =
-      document.getElementById('modal-task-description')?.value.trim() || '';
+      document.getElementById("modal-task-description")?.value.trim() || "";
 
     const assignees = Array.from(
-      document.querySelectorAll('#modal-task-assignees input[type="checkbox"]:checked')
-    ).map(cb => cb.value);
+      document.querySelectorAll(
+        '#modal-task-assignees input[type="checkbox"]:checked'
+      )
+    ).map((cb) => cb.value);
 
     if (!taskName || !deadline || assignees.length === 0) {
-      alert('Please fill all required fields');
+      alert("Please fill all required fields");
       return;
     }
 
     const formData = new FormData();
-    formData.append('ajax', 'create_task');
-    formData.append('task_name', taskName);
-    formData.append('priority', priority);
-    formData.append('deadline', deadline);
-    formData.append('description', description);
-const rawStatus = document.getElementById("modal-task-status")?.value || "todo";
+    formData.append("ajax", "create_task");
+    formData.append("task_name", taskName);
+    formData.append("priority", priority);
+    formData.append("deadline", deadline);
+    formData.append("description", description);
 
-const statusMap = {
-  todo: "to_do",
-  inprogress: "in_progress",
-  review: "review",
-  completed: "completed"
-};
+    const rawStatus =
+      document.getElementById("modal-task-status")?.value || "todo";
 
-formData.append("status", statusMap[rawStatus] || "to_do");
-    assignees.forEach(a => formData.append('assignees[]', a));
+    const statusMap = {
+      todo: "to_do",
+      inprogress: "in_progress",
+      review: "review",
+      completed: "completed",
+    };
+
+    formData.append("status", statusMap[rawStatus] || "to_do");
+
+    assignees.forEach((a) => formData.append("assignees[]", a));
 
     const res = await fetch(
-      `projects.php?project_id=${encodeURIComponent(window.__PROJECT__.project_id)}`,
+      `projects.php?project_id=${encodeURIComponent(
+        window.__PROJECT__.project_id
+      )}`,
       {
-        method: 'POST',
-        body: formData
+        method: "POST",
+        body: formData,
       }
     );
 
     const data = await res.json();
 
     if (!data.success) {
-      alert(data.message || 'Failed to create task');
+      alert(data.message || "Failed to create task");
       return;
     }
 
-    document.getElementById('assign-task-modal').style.display = 'none';
+    // Close modal + refresh
+    document.getElementById("assign-task-modal").style.display = "none";
+    document.body.style.overflow = "";
+
     fetchAndRenderTasks(); // reload Kanban
   });
-} 
+}
+
 
 
 /**
@@ -1729,11 +1762,15 @@ function createTaskCardHTML(task, currentUser) {
     const isDraggable = isManagerView && !isLeaderOnApollo;
     const showMoveBtn = isManagerView && !isLeaderOnApollo;
 
-    // Find assignee names
-    const assignees = task.assignedTo.map(email => {
-        const user = simUsers[email];
-        return user ? { name: user.name, avatarClass: user.avatarClass, avatarUrl: user.avatarUrl } : null;
-    }).filter(Boolean);
+    const usersMap = getUsersMap();
+
+const assignees = (task.assignedTo || []).map(email => {
+  const user = usersMap[email];
+  return user
+    ? { name: user.name, avatarClass: user.avatarClass, avatarUrl: user.avatarUrl }
+    : { name: email, avatarClass: "avatar-3", avatarUrl: null }; // fallback
+}).filter(Boolean);
+
     console.log("Task:", task);
     console.log("assignedTo: " + task.assignedTo);
 
@@ -1848,9 +1885,9 @@ function renderTaskBoard(currentUser, currentProjectId) {
             description: t.description || t.task_description || "",
             priority: t.priority || 'medium',
             status: normalizeDbStatus(t.status),
-            assignedTo: Array.isArray(t.assignedUsers)
+         assignedTo: Array.isArray(t.assignedUsers)
     ? t.assignedUsers.map(u => u.email)
-    : (t.assignedTo || []),
+    : (Array.isArray(t.assignedTo) ? t.assignedTo : []),
             project: window.__PROJECT__?.project_name || '',
             projectId: currentProjectId,
             createdDate: t.created_date,
@@ -2157,142 +2194,167 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
 }
 
 
-/**
- * NEW: Initializes click listeners for task cards to show details
- */
 function initTaskDetailsModal(currentUser) {
-    const detailsModal = document.getElementById('task-details-modal');
-    const detailsCloseBtn = document.getElementById('details-close-modal-btn');
+  const detailsModal = document.getElementById("task-details-modal");
+  const detailsCloseBtn = document.getElementById("details-close-modal-btn");
 
-    if (!detailsModal || !detailsCloseBtn) return;
+  if (!detailsModal || !detailsCloseBtn) return;
 
-    if (detailsModal.dataset.bound === "1") return;
-    detailsModal.dataset.bound = "1";
+  // Prevent multiple bindings
+  if (detailsModal.dataset.bound === "1") return;
+  detailsModal.dataset.bound = "1";
 
-    const closeModal = () => {
-        detailsModal.style.display = 'none';
+  const closeModal = () => {
+    detailsModal.style.display = "none";
+    document.body.style.overflow = "";
+  };
+
+  detailsCloseBtn.addEventListener("click", closeModal);
+
+  detailsModal.addEventListener("click", (e) => {
+    if (e.target === detailsModal) closeModal();
+  });
+
+  // ✅ Event delegation for clicking a task card
+  document.addEventListener("click", (e) => {
+    // If they clicked the 3-dot menu, do NOT open modal
+    if (e.target.closest(".task-status-menu")) return;
+
+    const card = e.target.closest(".task-card");
+    if (!card) return;
+
+    const taskId = card.dataset.taskId;
+    const allTasks = Array.isArray(window.__TASKS_NORM__) ? window.__TASKS_NORM__ : [];
+    const task = allTasks.find((t) => String(t.id) === String(taskId));
+    if (!task) return;
+
+    const usersObj = getUsersSource();
+
+    // Fill modal fields
+    document.getElementById("details-task-title").textContent = task.title || "";
+    document.getElementById("details-task-project").textContent = task.project || "";
+    document.getElementById("details-task-description").textContent =
+      task.description || "No description provided.";
+
+    // Priority badge
+    const prEl = document.getElementById("details-task-priority");
+    if (prEl) {
+      prEl.textContent = task.priority || "";
+      prEl.className = `priority-badge ${task.priority || "medium"}`;
     }
 
-    detailsCloseBtn.addEventListener('click', closeModal);
+    // Dates (safe formatting)
+    const createdDateEl = document.getElementById("details-task-created");
+    const deadlineDateEl = document.getElementById("details-task-deadline");
 
-    detailsModal.addEventListener('click', (e) => {
-        if (e.target === detailsModal) {
-            closeModal();
+    const createdDate = task.createdDate ? new Date(task.createdDate) : null;
+    const deadlineDate = task.deadline ? new Date(task.deadline) : null;
+
+    if (createdDateEl) {
+      createdDateEl.textContent = createdDate
+        ? createdDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : "N/A";
+    }
+
+    if (deadlineDateEl) {
+      deadlineDateEl.textContent = deadlineDate
+        ? deadlineDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+        : "No deadline";
+    }
+
+    // Assignees
+    const assigneesEl = document.getElementById("details-task-assignees");
+    if (assigneesEl) {
+      if (task.assignedTo && task.assignedTo.length > 0) {
+        assigneesEl.textContent = task.assignedTo
+          .map((email) => usersObj[email]?.name || email)
+          .join(", ");
+      } else {
+        assigneesEl.textContent = "Unassigned";
+      }
+    }
+
+    // Buttons
+    const markBtn = document.getElementById("project-complete-btn");
+    const deleteBtn = document.getElementById("delete-task-btn");
+
+    const role = getEffectiveRole(currentUser);
+    const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
+    const isManagerLike = role === "manager" || canManageProject;
+
+    // Team members: show mark complete. Managers/leaders: show delete.
+    if (markBtn) markBtn.style.display = isManagerLike ? "none" : "inline-flex";
+    if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
+
+    // Rebind delete button safely
+    if (deleteBtn) {
+      const freshDeleteBtn = deleteBtn.cloneNode(true);
+      deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
+
+      freshDeleteBtn.addEventListener("click", async () => {
+        const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
+        if (!ok) return;
+
+        try {
+          await deleteTaskInDb(task.id);
+
+          // remove locally too
+          if (Array.isArray(window.__TASKS_NORM__)) {
+            window.__TASKS_NORM__ = window.__TASKS_NORM__.filter((t) => String(t.id) !== String(task.id));
+          }
+          if (Array.isArray(window.__TASKS__)) {
+            window.__TASKS__ = window.__TASKS__.filter((t) => String(t.task_id) !== String(task.id));
+          }
+
+          closeModal();
+          showSuccessNotification("Task deleted successfully!");
+          renderTaskBoard(currentUser, getCurrentProjectId());
+        } catch (err) {
+          console.error(err);
+          alert("Could not delete task. Check console.");
         }
-    });
+      });
+    }
 
-    document.addEventListener("click", (e) => {
-if (e.target.closest(".task-status-menu")) return;
-        const card = e.target.closest(".task-card");
-        if (!card) return;
+    // Rebind mark complete button safely
+    if (markBtn) {
+      const freshMarkBtn = markBtn.cloneNode(true);
+      markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
 
-        const taskId = card.dataset.taskId;
-        const allTasks = Array.isArray(window.__TASKS_NORM__) ? window.__TASKS_NORM__ : [];
-        const task = allTasks.find(t => String(t.id) === String(taskId));
-        if (!task) return;
+      freshMarkBtn.addEventListener("click", async () => {
+        const ok = confirm("Mark this task as complete? It will be moved to Review.");
+        if (!ok) return;
 
-        // Find assignees
-        const assignees = task.assignedTo
-            .map(email => simUsers[email] ? simUsers[email].name : "Unknown")
-            .join(", ");
+        try {
+          const tasksNorm = window.__TASKS_NORM__ || [];
+          const t = tasksNorm.find((x) => String(x.id) === String(task.id));
+          if (t) t.status = "review";
 
-        // Format dates
-        const createdDate = new Date(task.createdDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-        const deadlineDate = new Date(task.deadline).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+          if (Array.isArray(window.__TASKS__)) {
+            const dbTask = window.__TASKS__.find((x) => String(x.task_id) === String(task.id));
+            if (dbTask) dbTask.status = "review";
+          }
 
-        document.getElementById("details-task-title").textContent = task.title;
-        document.getElementById("details-task-project").textContent = task.project;
-        document.getElementById("details-task-priority").textContent = task.priority;
-        document.getElementById("details-task-priority").className = `priority-badge ${task.priority}`;
-        document.getElementById("details-task-created").textContent = createdDate;
-        document.getElementById("details-task-deadline").textContent = deadlineDate;
-        document.getElementById("details-task-description").textContent = task.description || "No description provided.";
-const assigneesEl = document.getElementById("details-task-assignees");
+          await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
 
-if (task.assignedTo && task.assignedTo.length > 0) {
-  assigneesEl.textContent = task.assignedTo
-    .map(email => simUsers[email]?.name || email)
-    .join(", ");
-} else {
-  assigneesEl.textContent = "Unassigned";
+          closeModal();
+          showSuccessNotification("Task sent to Review!");
+          renderTaskBoard(currentUser, getCurrentProjectId());
+        } catch (err) {
+          console.error(err);
+          alert("Could not update task. Check console.");
+        }
+      });
+    }
+
+    // Show modal
+    detailsModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+
+    if (window.feather) feather.replace();
+  });
 }
 
-
-        const markBtn = document.getElementById("project-complete-btn");
-        const deleteBtn = document.getElementById("delete-task-btn");
-
-        const role = getEffectiveRole(currentUser);
-        const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
-        const isManagerLike = (role === "manager") || canManageProject;
-
-        // reset BOTH every time modal opens
-        if (markBtn) markBtn.style.display = isManagerLike ? "none" : "inline-flex";
-        if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
-
-        if (deleteBtn) {
-            const freshDeleteBtn = deleteBtn.cloneNode(true);
-            deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
-
-            freshDeleteBtn.addEventListener("click", async () => {
-                const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
-                if (!ok) return;
-
-                try {
-                    await deleteTaskInDb(task.id);
-
-                    if (Array.isArray(window.__TASKS_NORM__)) {
-                        window.__TASKS_NORM__ = window.__TASKS_NORM__.filter(t => String(t.id) !== String(task.id));
-                    }
-
-                    if (Array.isArray(window.__TASKS__)) {
-                        window.__TASKS__ = window.__TASKS__.filter(t => String(t.task_id) !== String(task.id));
-                    }
-
-                    closeModal();
-                    showSuccessNotification("Task deleted successfully!");
-                    renderTaskBoard(currentUser, getCurrentProjectId());
-                } catch (err) {
-                    console.error(err);
-                    alert("Could not delete task. Check console.");
-                }
-            });
-        }
-
-        if (markBtn) {
-            const freshMarkBtn = markBtn.cloneNode(true);
-            markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
-
-            freshMarkBtn.addEventListener("click", async () => {
-                const ok = confirm("Mark this task as complete? It will be moved to Review.");
-                if (!ok) return;
-
-                try {
-                    const tasksNorm = window.__TASKS_NORM__ || [];
-                    const t = tasksNorm.find(x => String(x.id) === String(task.id));
-                    if (t) t.status = "review";
-
-                    if (Array.isArray(window.__TASKS__)) {
-                        const dbTask = window.__TASKS__.find(x => String(x.task_id) === String(task.id));
-                        if (dbTask) dbTask.status = "review";
-                    }
-
-                    await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
-
-                    closeModal();
-                    showSuccessNotification("Task sent to Review!");
-                    renderTaskBoard(currentUser, getCurrentProjectId());
-                } catch (err) {
-                    console.error(err);
-                    alert("Could not update task. Check console.");
-                }
-            });
-        }
-
-        detailsModal.style.display = "flex";
-    });
-
-
-}
 
 
 /**
@@ -2498,59 +2560,72 @@ function loadProjectsPage(currentUser) {
         };
     }
 
-    // -----------------------------
-    // Modal submit (prototype-only until your DB endpoint exists)
-    // -----------------------------
-    if (modalForm) {
-      form.onsubmit = async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+  // -----------------------------
+// Modal submit (DB create task)
+// -----------------------------
+if (modalForm && modalForm.dataset.bound !== "1") {
+  modalForm.dataset.bound = "1";
 
-  const title = document.getElementById("modal-task-title").value.trim();
-  const deadline = document.getElementById("modal-task-deadline").value;
-  const priority = document.getElementById("modal-task-priority").value;
+  modalForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const assignees = Array.from(
-    document.querySelectorAll("#modal-task-assignees input:checked")
-  ).map(cb => cb.value);
+    const title = document.getElementById("modal-task-title")?.value.trim();
+    const deadline = document.getElementById("modal-task-deadline")?.value;
+    const priority = document.getElementById("modal-task-priority")?.value || "medium";
 
-  const rawStatus = document.getElementById("modal-task-status").value;
+    const assignees = Array.from(
+      document.querySelectorAll("#modal-task-assignees input:checked")
+    ).map(cb => cb.value);
 
-  const statusMap = {
-    todo: "to_do",
-    inprogress: "in_progress",
-    review: "review",
-    completed: "completed"
-  };
+    const rawStatus = document.getElementById("modal-task-status")?.value || "todo";
 
-  const status = statusMap[rawStatus] || "to_do";
+    const statusMap = {
+      todo: "to_do",
+      inprogress: "in_progress",
+      review: "review",
+      completed: "completed"
+    };
 
-  const fd = new FormData();
-  fd.append("ajax", "create_task");
-  fd.append("task_name", title);
-  fd.append("deadline", deadline);
-  fd.append("priority", priority);
-  fd.append("status", status);
+    const status = statusMap[rawStatus] || "to_do";
 
-  assignees.forEach(a => fd.append("assignees[]", a));
-
-  const res = await fetch(
-    `projects.php?project_id=${window.__PROJECT__.project_id}`,
-    { method: "POST", body: fd }
-  );
-
-  const data = await res.json();
-
-  if (!data.success) {
-    alert(data.message || "Create failed");
-    return;
-  }
-
-  document.getElementById("assign-task-modal").style.display = "none";
-  fetchAndRenderTasks();
-};
-
+    if (!title || !deadline || assignees.length === 0) {
+      alert("Please fill out Title, Deadline and select at least 1 assignee.");
+      return;
     }
+
+    const fd = new FormData();
+    fd.append("ajax", "create_task");
+    fd.append("task_name", title);
+    fd.append("deadline", deadline);
+    fd.append("priority", priority);
+    fd.append("status", status);
+    fd.append("description", document.getElementById("modal-task-description")?.value.trim() || "");
+
+    assignees.forEach(a => fd.append("assignees[]", a));
+
+    const pid = getCurrentProjectId() || window.__PROJECT__?.project_id;
+
+    const res = await fetch(
+      `projects.php?project_id=${encodeURIComponent(pid)}`,
+      { method: "POST", body: fd }
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert(data.message || "Create failed");
+      return;
+    }
+
+    // Close modal + refresh board
+    document.getElementById("assign-task-modal").style.display = "none";
+    document.body.style.overflow = "";
+
+    fetchAndRenderTasks();
+  });
+}
+
 
 
     // Notifications (leave as-is)
@@ -2696,8 +2771,11 @@ function renderManagerDeadlines(projectTasks) {
             }
         }
 
-        // Find assignee names
-        const assignees = task.assignedTo.map(email => simUsers[email] ? simUsers[email].name.split(' ')[0] : 'N/A').join(', ');
+        const usersMap = getUsersMap();
+const assignees = (task.assignedTo || [])
+  .map(email => (usersMap[email]?.name || email).split(" ")[0])
+  .join(", ");
+
 
         return `
             <div class="deadline-item">
@@ -2764,7 +2842,8 @@ function renderTasksPerMemberChart(projectTasks) {
 
     //Aggregate task counts for each user
     userEmails.forEach(email => {
-        const user = simUsers[email];
+        const usersMap = getUsersMap();
+const user = usersMap[email];
         if (!user) return;
 
         labels.push(user.name);
@@ -3665,6 +3744,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get the "logged in" user
     const currentUser = await getCurrentUser();
     if (!currentUser) return;
+    // Make current user globally available
+window.__CURRENT_USER__ = currentUser;
+
 
     // *** ADDED: Show "Project Archive" in sidebar for managers ***
     const navArchive = document.getElementById('nav-archive');
@@ -3867,7 +3949,7 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
     window.__TASKS_NORM__ = []; // force rebuild from filtered list
 
     clearTaskColumns();
-    renderTaskBoard(getCurrentUserStatus(), getCurrentProjectId());
+    renderTaskBoard(window.__CURRENT_USER__, getCurrentProjectId());
     updateAddTaskButtonsVisibility();
     updateTaskCounts();
 })
@@ -3920,7 +4002,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 document.addEventListener('DOMContentLoaded', () => {
   setupAssignTaskForm();
-});
+}); 
 
 
 

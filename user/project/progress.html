@@ -62,6 +62,12 @@
                         <p class="progress-text" id="progress-text">You have completed x% of your assigned tasks.</p>
                     </section>
 
+
+                   
+                </div>
+
+                <!-- Right Column -->
+                <div class="progress-right">
                     <!-- Upcoming Deadlines Card -->
                     <section class="deadlines-card">
                         <h2>Upcoming Deadlines</h2>
@@ -70,65 +76,7 @@
                         </div>
                     </section>
 
-                    <!-- Your Workload Card -->
-                    <section class="workload-card">
-                        <h2>Your Workload</h2>
-                        <div class="workload-bars">
-                            <div class="workload-item">
-                                <span class="workload-label">You</span>
-                                <div class="workload-bar-bg">
-                                    <div class="workload-bar-fill" id="user-workload" style="width: 0%"></div>
-                                </div>
-                                <span class="workload-count" id="user-task-count">0 tasks</span>
-                            </div>
-                            <div class="workload-item">
-                                <span class="workload-label">Team Average</span>
-                                <div class="workload-bar-bg">
-                                    <div class="workload-bar-fill team-avg" id="team-workload" style="width: 0%"></div>
-                                </div>
-                                <span class="workload-count" id="team-task-count">0 tasks</span>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Right Column -->
-                <div class="progress-right">
-                    <!-- Urgent Tasks Card -->
-                    <section class="urgent-card">
-                        <h2>Urgent</h2>
-                        <p class="urgent-subtitle">Prioritize these at-risk and overdue tasks:</p>
-                        <div class="urgent-tasks-list" id="urgent-tasks-list">
-                            <!-- Urgent tasks will be rendered here -->
-                        </div>
-                    </section>
-
-                    <!-- Task Distribution Card -->
-                    <section class="distribution-card">
-                        <h2>Task Distribution</h2>
-                        <p class="distribution-subtitle">Your current tasks are distributed:</p>
-                        <div class="pie-chart-container">
-                            <canvas id="taskDistributionChart"></canvas>
-                        </div>
-                        <div class="distribution-legend">
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #FF8C8C;"></span>
-                                <span id="todo-count">To Do: 0</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #FFD166;"></span>
-                                <span id="inprogress-count">In Progress: 0</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #A8DADC;"></span>
-                                <span id="review-count">Review: 0</span>
-                            </div>
-                            <div class="legend-item">
-                                <span class="legend-color" style="background: #81C5D4;"></span>
-                                <span id="completed-count">Completed: 0</span>
-                            </div>
-                        </div>
-                    </section>
+                    
                 </div>
             </div>
         </main>
@@ -136,5 +84,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="../app.js"></script>
+    <script>
+        feather.replace();
+    </script>
 </body>
 </html>
