@@ -76,6 +76,7 @@ $canManageProject = $isManager || $isTeamLeaderOfThisProject;
 // close project button:
 $canCloseProject = $isManager; // only manager
 
+$allowedTaskStatuses = ['to_do', 'in_progress', 'review', 'completed'];
 
 
 // =============================
@@ -373,6 +374,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
         exit;
     }
 }
+error_log('CREATE TASK HIT: ' . json_encode($_POST));
 
 // =============================
 // CLOSE PROJECT (AJAX)
@@ -463,6 +465,222 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["ajax"] ?? "") === "delete_
         exit;
     }
 }
+// =============================
+// UPDATE TASK PRIORITY (AJAX)
+// =============================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_task_priority') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    // Only manager or team leader
+    if (!$canManageProject) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'No permission']);
+        exit;
+    }
+
+    $taskId   = (int)($_POST['task_id'] ?? 0);
+    $priority = strtolower(trim($_POST['priority'] ?? ''));
+
+    $allowedPriorities = ['low', 'medium', 'high', 'urgent'];
+
+    if ($taskId <= 0 || !in_array($priority, $allowedPriorities, true)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid input']);
+        exit;
+    }
+
+    // Ensure task belongs to THIS project
+    $stmt = $db->prepare("
+        UPDATE tasks
+        SET priority = :priority
+        WHERE task_id = :tid
+        AND project_id = :pid
+        LIMIT 1
+    ");
+
+    $stmt->execute([
+        ':priority' => $priority,
+        ':tid'      => $taskId,
+        ':pid'      => $projectId
+    ]);
+
+    if ($stmt->rowCount() < 1) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Task not found']);
+        exit;
+    }
+
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+
+// =============================
+// FETCH TASKS (SEARCH / FILTER / PAGINATION)
+// =============================
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tasks') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $search   = trim($_GET['search'] ?? '');
+    $status   = strtolower(trim($_GET['status'] ?? ''));
+    $priority = strtolower(trim($_GET['priority'] ?? ''));
+    $assignee = strtolower(trim($_GET['assignee'] ?? ''));
+    $due = $_GET['due'] ?? '';
+    $today = date('Y-m-d');
+
+
+    $page  = max(1, (int)($_GET['page'] ?? 1));
+    $limit = min(20, max(5, (int)($_GET['limit'] ?? 10)));
+    $offset = ($page - 1) * $limit;
+
+    $params = [':pid' => $projectId];
+
+    $where = [];
+    $where[] = "t.project_id = :pid";
+
+    switch ($due) {
+    case 'overdue':
+        $where[] = "t.deadline IS NOT NULL AND t.deadline < :today";
+        $params[':today'] = $today;
+        break;
+
+    case 'today':
+        $where[] = "t.deadline = :today";
+        $params[':today'] = $today;
+        break;
+
+    case 'week':
+        $where[] = "t.deadline BETWEEN :today AND DATE_ADD(:today, INTERVAL 7 DAY)";
+        $params[':today'] = $today;
+        break;
+
+    case 'none':
+        $where[] = "t.deadline IS NULL";
+        break;
+}
+
+
+    // ROLE VISIBILITY
+    if (!$canManageProject) {
+        $where[] = "
+        EXISTS (
+        SELECT 1
+        FROM task_assignments ta
+        WHERE ta.task_id = t.task_id
+        AND ta.user_id = :uid
+        )
+        ";
+
+        $params[':uid'] = $userId;
+    }
+
+    // SEARCH
+    if ($search !== '') {
+        $where[] = "(
+        LOWER(t.task_name) LIKE :search
+        OR LOWER(t.description) LIKE :search
+        )";
+
+        $params[':search'] = '%' . strtolower($search) . '%';
+    }
+
+    // FILTERS
+    if ($status !== '' && in_array($status, $allowedTaskStatuses, true)) {
+        $where[] = "t.status = :status";
+        $params[':status'] = $status;
+    }
+
+    if (in_array($priority, ['low','medium','high'], true)) {
+        $where[] = "t.priority = :priority";
+        $params[':priority'] = $priority;
+    }
+
+    if ($assignee !== '') {
+       $where[] = "
+       EXISTS (
+       SELECT 1
+       FROM task_assignments ta
+       JOIN users u ON u.user_id = ta.user_id
+       WHERE ta.task_id = t.task_id
+       AND LOWER(u.email) = :assignee
+       )
+       ";
+
+        $params[':assignee'] = $assignee;
+    }
+
+    $whereSql = implode(' AND ', $where);
+
+    $sql = "
+    SELECT
+    t.task_id,
+    t.task_name,
+    t.description,
+    t.status,
+    t.priority,
+    t.deadline,
+    t.created_date,
+    t.created_by
+  FROM tasks t
+  WHERE $whereSql
+  ORDER BY t.created_date DESC
+  LIMIT $limit OFFSET $offset
+";
+
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $taskIds = array_column($tasks, 'task_id');
+$assigneesByTask = [];
+
+if (!empty($taskIds)) {
+    $placeholders = implode(',', array_fill(0, count($taskIds), '?'));
+
+    $stmt2 = $db->prepare("
+        SELECT
+          ta.task_id,
+          u.email,
+          u.first_name,
+          u.last_name,
+          u.profile_picture
+        FROM task_assignments ta
+        JOIN users u ON u.user_id = ta.user_id
+        WHERE ta.task_id IN ($placeholders)
+    ");
+    $stmt2->execute($taskIds);
+
+    foreach ($stmt2->fetchAll(PDO::FETCH_ASSOC) as $r) {
+        $tid = (int)$r['task_id'];
+
+        $assigneesByTask[$tid][] = [
+            'email' => strtolower($r['email']),
+            'name'  => trim($r['first_name'].' '.$r['last_name']),
+            'avatarUrl' => $r['profile_picture'] ?: null
+        ];
+    }
+}
+
+// attach to tasks
+foreach ($tasks as &$t) {
+    $tid = (int)$t['task_id'];
+    $t['assignedUsers'] = $assigneesByTask[$tid] ?? [];
+    $t['assignedTo'] = array_map(
+        fn($u) => $u['email'],
+        $t['assignedUsers']
+    );
+}
+unset($t);
+
+    echo json_encode([
+        'success' => true,
+        'tasks'   => $tasks,
+        'page'    => $page,
+        'limit'   => $limit
+    ]);
+    exit;
+}
+
 
 // =============================
 // GET TASKS FOR THIS PROJECT (role-based visibility + assignee pfps)
@@ -512,6 +730,7 @@ if ($canManageProject) {
 }
 
 $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 
 
 $taskIds = array_column($tasks, 'task_id');
@@ -662,21 +881,85 @@ foreach ($users as $u) {
         </nav>
 
         <main class="main-content">
-            <header class="project-header">
-                <div class="project-header-top">
-                    <div class="breadcrumbs-title">
-                        <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb">Project</span></p>
-                        <h1 id="project-name-header">Project</h1>
-                    </div>
-                    <button class="close-project-btn" id="close-project-btn" style="display: none;">Close
-                        Project</button>
+           <header class="project-header">
+
+    <!-- TOP ROW -->
+    <div class="project-header-top">
+        <div class="breadcrumbs-title">
+            <p class="breadcrumbs">
+                Projects > <span id="project-name-breadcrumb">Project</span>
+            </p>
+            <h1 id="project-name-header">Project</h1>
+        </div>
+
+        <div class="project-header-right">
+            <button class="close-project-btn" id="close-project-btn">
+                Close Project
+            </button>
+
+            <div class="task-search-wrap">
+                <input
+                    type="text"
+                    id="task-search-input"
+                    placeholder="Search tasks..."
+                    autocomplete="off"
+                />
+            </div>
+
+            <div class="filter-group">
+                <button class="filter-toggle" id="filter-toggle">
+                    Filters
+                </button>
+
+                <div class="filter-panel" id="filter-panel" hidden>
+                    <label>
+                        <span>Status</span>
+                        <select id="filter-status">
+                            <option value="">All</option>
+                            <option value="to_do">To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="review">Review</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span>Priority</span>
+                        <select id="filter-priority">
+                            <option value="">All</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        <span>Due</span>
+                        <select id="filter-due">
+                            <option value="">Any</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="today">Due today</option>
+                            <option value="week">Due this week</option>
+                            <option value="month">Due this month</option>
+                        </select>
+                    </label>
+
+                    <button type="button" class="filter-clear" id="filter-clear">
+                        Clear filters
+                    </button>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <nav class="project-nav" id="project-nav-links"></nav>
+    <!-- NAV -->
+    <nav class="project-nav" id="project-nav-links"></nav>
+
+</header>
 
 
 
-            </header>
+
 
 
             <section class="task-board">
@@ -685,7 +968,9 @@ foreach ($users as $u) {
                     <div class="column-header todo-header">
                         <span class="task-count">0</span>
                         <h2>To Do</h2>
-                        <button class="add-task" style="display: none;"><i data-feather="plus"></i></button>
+<button class="add-task">
+    <i data-feather="plus"></i>
+</button>
                     </div>
                     <div class="task-list">
                     </div>
@@ -695,7 +980,10 @@ foreach ($users as $u) {
                     <div class="column-header inprogress-header">
                         <span class="task-count">0</span>
                         <h2>In Progress</h2>
-                        <button class="add-task" style="display: none;"><i data-feather="plus"></i></button>
+                        <button class="add-task">
+    <i data-feather="plus"></i>
+</button>
+
                     </div>
                     <div class="task-list">
                     </div>
@@ -705,7 +993,9 @@ foreach ($users as $u) {
                     <div class="column-header review-header">
                         <span class="task-count">0</span>
                         <h2>Review</h2>
-                        <button class="add-task" style="display: none;"><i data-feather="plus"></i></button>
+<button class="add-task">
+    <i data-feather="plus"></i>
+</button>
                     </div>
                     <div class="task-list">
                     </div>
@@ -715,7 +1005,9 @@ foreach ($users as $u) {
                     <div class="column-header completed-header">
                         <span class="task-count">0</span>
                         <h2>Completed</h2>
-                        <button class="add-task" style="display: none;"><i data-feather="plus"></i></button>
+<button class="add-task">
+    <i data-feather="plus"></i>
+</button>
                     </div>
                     <div class="task-list">
                     </div>
@@ -732,7 +1024,7 @@ foreach ($users as $u) {
                 <button type="button" class="close-btn" id="close-modal-btn"><i data-feather="x"></i></button>
             </div>
             <div class="modal-body">
-                <form id="modal-assign-task-form" class="create-post-form">
+                <form id="assign-task-form" class="create-post-form" onsubmit="return false;">
                     <input type="hidden" id="modal-task-status">
 
                     <div class="form-group">
