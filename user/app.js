@@ -29,14 +29,14 @@ function showSuccessNotification(message) {
 }
 
 function getUsersMap() {
-  // Prefer PHP injected users
-  if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
+    // Prefer PHP injected users
+    if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
 
-  // Fallback if you still have simUsers defined somewhere else
-  if (typeof window.simUsers === "object") return window.simUsers;
+    // Fallback if you still have simUsers defined somewhere else
+    if (typeof window.simUsers === "object") return window.simUsers;
 
-  // Final fallback
-  return {};
+    // Final fallback
+    return {};
 }
 
 
@@ -314,11 +314,11 @@ async function getCurrentUser() {
 }
 
 function getUsersSource() {
-  // Prefer users injected by PHP
-  if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
-  // fallback (if you ever define simUsers elsewhere)
-  if (typeof simUsers !== "undefined") return simUsers;
-  return {}; // safe fallback
+    // Prefer users injected by PHP
+    if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
+    // fallback (if you ever define simUsers elsewhere)
+    if (typeof simUsers !== "undefined") return simUsers;
+    return {}; // safe fallback
 }
 
 
@@ -337,10 +337,10 @@ function getCurrentUserStatus() {
 }
 
 function updateAddTaskButtonsVisibility() {
-  const canManage = !!window.__CAN_MANAGE_PROJECT__;
-  document.querySelectorAll(".add-task").forEach(btn => {
-    btn.style.display = canManage ? "" : "none";
-  });
+    const canManage = !!window.__CAN_MANAGE_PROJECT__;
+    document.querySelectorAll(".add-task").forEach(btn => {
+        btn.style.display = canManage ? "" : "none";
+    });
 }
 
 
@@ -363,13 +363,22 @@ function updateSidebarAndNav() {
     const project = window.__PROJECT__ || {};
     const role = (window.__ROLE__ || "team_member").toLowerCase();
 
-    // 1) Update header/breadcrumb
+    // 1) Update header/breadcrumb (do NOT overwrite with "Project")
     const breadcrumb = document.getElementById("project-name-breadcrumb");
     const header = document.getElementById("project-name-header");
-    const projectName = project.project_name || "Project";
 
-    if (breadcrumb) breadcrumb.textContent = projectName;
-    if (header) header.textContent = projectName;
+    // Use best available name WITHOUT flashing back to "Project"
+    const projectName =
+        (project && project.project_name) ||
+        sessionStorage.getItem("currentProjectName") ||
+        null;
+
+    if (projectName) {
+        if (breadcrumb) breadcrumb.textContent = projectName;
+        if (header) header.textContent = projectName;
+    }
+    // else: leave whatever PHP already rendered
+
 
     // 2) Read project_id from URL
     const params = new URLSearchParams(window.location.search);
@@ -379,7 +388,7 @@ function updateSidebarAndNav() {
     // 3) Decide which Progress page to use (manager/team_leader)
     const isManager = (role === "manager");
     const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
-    const progressPage = (isManager || canManageProject) ? "manager-progress.html" : "progress.html";
+    const progressPage = (isManager || canManageProject) ? "manager-progress.php" : "progress.php";
 
 
 
@@ -390,13 +399,13 @@ function updateSidebarAndNav() {
 
         const tasksActive = (path.includes("projects.php") || path.includes("projects.html")) ? "active" : "";
 
-const progressActive =
-  path.includes("progress.html") ||
-  path.includes("manager-progress.html") ||
-  path.includes("progress.html") ||
-  path.includes("manager-progress.html")
-    ? "active"
-    : "";
+        const progressActive =
+            path.includes("progress.php") ||
+                path.includes("manager-progress.") ||
+                path.includes("progress.php") ||
+                path.includes("manager-progress.php")
+                ? "active"
+                : "";
 
         const resourcesActive = path.includes("project-resources.html") ? "active" : "";
 
@@ -1344,68 +1353,127 @@ function renderNotifications() {
 }
 
 /**
- * Runs on the Progress page (progress.html) - shows only assigned tasks
+ * Runs on the Progress page (progress.php) - shows only assigned tasks
  */
 async function loadProgressPage(currentUser) {
-    const currentProjectId = getCurrentProjectId();
-    
-    if (!currentProjectId) {
-        alert('No project selected');
-        window.location.href = 'projects-overview.php';
-        return;
-    }
+  const currentProjectId = getCurrentProjectId();
 
-    // --- Fetch project data from database ---
-    try {
-        const response = await fetch(`projects.php?ajax=get_project&project_id=${encodeURIComponent(currentProjectId)}`);
-        const data = await response.json();
-        
-        if (data.success && data.project) {
-            window.__PROJECT__ = data.project;
-        } else {
-            console.error('Failed to load project:', data.message);
-            alert('Could not load project information');
-            return;
-        }
-    } catch (err) {
-        console.error('Error fetching project:', err);
-        alert('Error loading project data');
-        return;
-    }
+  if (!currentProjectId) {
+    alert("No project selected");
+    window.location.href = "projects-overview.php";
+    return;
+  }
 
-    // --- Role-based Redirect ---
-    const isManagerView = (currentUser.role === 'manager' || currentUser.role === 'team_leader');
-    const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
-
-    if (isManagerView && !isLeaderOnApollo) {
-        window.location.href = `manager-progress.html?project_id=${encodeURIComponent(currentProjectId)}`;
-        return;
-    }
-
-    updateSidebarAndNav();
-
-    const userTasks = simTasks.filter(task =>
-        task.assignedTo &&
-        task.assignedTo.includes(currentUser.email) &&
-        task.type === 'assigned' &&
-        task.projectId === currentProjectId
+  // ✅ Project is already injected by PHP, but keep this as a refresh (optional)
+  try {
+    const response = await fetch(
+      `projects.php?ajax=get_project&project_id=${encodeURIComponent(currentProjectId)}`,
+      { credentials: "include" }
     );
+    const data = await response.json();
 
-    const completedTasks = userTasks.filter(t => t.status === 'completed').length;
-    const totalTasks = userTasks.length;
-    const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    if (data.success && data.project) {
+      window.__PROJECT__ = data.project;
+    }
+  } catch (err) {
+    console.error("Error fetching project:", err);
+    // don't hard-fail; we still have __PROJECT__ from PHP
+  }
 
-    document.getElementById('task-progress-fill').style.width = progressPercent + '%';
-    document.getElementById('progress-text').textContent =
-        `You have completed ${progressPercent}% of your assigned tasks for this project.`;
+  // ✅ Role-based redirect (keep it simple)
+  if (window.__CAN_MANAGE_PROJECT__) {
+    window.location.href = `manager-progress.php?project_id=${encodeURIComponent(currentProjectId)}`;
+    return;
+  }
 
-    renderUpcomingDeadlines(userTasks);
-    renderWorkload(currentUser, currentProjectId);
-    renderUrgentTasks(userTasks, currentUser);
-    renderTaskDistributionChart(userTasks);
+  // ✅ Update breadcrumbs/nav using injected project
+  updateSidebarAndNav();
 
-    feather.replace();
+  // ✅ Pull tasks from DB (NOT simTasks)
+  let projectTasks = [];
+  try {
+    projectTasks = await fetchProjectTasksFromDb(currentProjectId);
+  } catch (err) {
+    console.error("Failed to load tasks from DB:", err);
+    projectTasks = [];
+  }
+
+  // ✅ Only tasks assigned to this user
+  const userEmail = String(currentUser.email || "").toLowerCase();
+  const userTasks = projectTasks.filter(t =>
+    Array.isArray(t.assignedTo) &&
+    t.assignedTo.map(e => String(e).toLowerCase()).includes(userEmail)
+  );
+
+  // ✅ Update Task Progress widget (only if elements exist)
+  const fillEl = document.getElementById("task-progress-fill");
+  const textEl = document.getElementById("progress-text");
+
+  const completed = userTasks.filter(t => t.status === "completed").length;
+  const total = userTasks.length;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  if (fillEl) fillEl.style.width = pct + "%";
+  if (textEl) {
+    textEl.textContent = total
+      ? `You have completed ${pct}% of your assigned tasks for this project.`
+      : `You don’t have any assigned tasks for this project yet.`;
+  }
+
+  // ✅ Update Upcoming Deadlines widget (only if element exists)
+  const listEl = document.getElementById("deadlines-list");
+  if (listEl) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const upcoming = userTasks
+      .filter(t => t.status !== "completed" && t.deadline)
+      .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+      .slice(0, 3);
+
+    if (!upcoming.length) {
+      listEl.innerHTML = `<p class="no-deadlines">No upcoming deadlines. You’re all caught up!</p>`;
+    } else {
+      listEl.innerHTML = upcoming.map(task => {
+        const d = new Date(task.deadline);
+        d.setHours(0, 0, 0, 0);
+
+        const formatted = d.toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "numeric",
+          month: "short"
+        });
+
+        let status = "on-track";
+        let statusText = "On track";
+
+        if (d < today) {
+          status = "overdue";
+          statusText = "Overdue";
+        } else {
+          const daysUntil = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+          if (daysUntil <= 2) {
+            status = "at-risk";
+            statusText = "At risk";
+          }
+        }
+
+        return `
+          <div class="deadline-item">
+            <p class="deadline-title">${task.title}</p>
+            <div class="deadline-info">
+              <span class="deadline-date">${formatted}</span>
+              <span class="deadline-status ${status}">${statusText}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+  }
+
+  if (window.feather) feather.replace();
 }
+
 
 function renderUpcomingDeadlines(userTasks) {
     const deadlinesList = document.getElementById('deadlines-list');
@@ -1593,87 +1661,87 @@ function setupCreateTopicForm(currentUser) {
 }
 
 function setupAssignTaskForm() {
-  const form = document.getElementById("assign-task-form");
-  if (!form) return;
+    const form = document.getElementById("assign-task-form");
+    if (!form) return;
 
- // ✅ Prevent double-binding (stops multiple submit handlers)
-if (form.dataset.bound === "1") return;
-form.dataset.bound = "1";
+    // ✅ Prevent double-binding (stops multiple submit handlers)
+    if (form.dataset.bound === "1") return;
+    form.dataset.bound = "1";
 
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault(); // ⛔ STOP PAGE RELOAD
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault(); // ⛔ STOP PAGE RELOAD
 
-    const titleEl = document.getElementById("modal-task-title");
-    const priorityEl = document.getElementById("modal-task-priority");
-    const deadlineEl = document.getElementById("modal-task-deadline");
+        const titleEl = document.getElementById("modal-task-title");
+        const priorityEl = document.getElementById("modal-task-priority");
+        const deadlineEl = document.getElementById("modal-task-deadline");
 
-    if (!titleEl || !priorityEl || !deadlineEl) {
-      console.error("Assign task form fields not found");
-      return;
-    }
+        if (!titleEl || !priorityEl || !deadlineEl) {
+            console.error("Assign task form fields not found");
+            return;
+        }
 
-    const taskName = titleEl.value.trim();
-    const priority = priorityEl.value;
-    const deadline = deadlineEl.value;
-    const description =
-      document.getElementById("modal-task-description")?.value.trim() || "";
+        const taskName = titleEl.value.trim();
+        const priority = priorityEl.value;
+        const deadline = deadlineEl.value;
+        const description =
+            document.getElementById("modal-task-description")?.value.trim() || "";
 
-    const assignees = Array.from(
-      document.querySelectorAll(
-        '#modal-task-assignees input[type="checkbox"]:checked'
-      )
-    ).map((cb) => cb.value);
+        const assignees = Array.from(
+            document.querySelectorAll(
+                '#modal-task-assignees input[type="checkbox"]:checked'
+            )
+        ).map((cb) => cb.value);
 
-    if (!taskName || !deadline || assignees.length === 0) {
-      alert("Please fill all required fields");
-      return;
-    }
+        if (!taskName || !deadline || assignees.length === 0) {
+            alert("Please fill all required fields");
+            return;
+        }
 
-    const formData = new FormData();
-    formData.append("ajax", "create_task");
-    formData.append("task_name", taskName);
-    formData.append("priority", priority);
-    formData.append("deadline", deadline);
-    formData.append("description", description);
+        const formData = new FormData();
+        formData.append("ajax", "create_task");
+        formData.append("task_name", taskName);
+        formData.append("priority", priority);
+        formData.append("deadline", deadline);
+        formData.append("description", description);
 
-    const rawStatus =
-      document.getElementById("modal-task-status")?.value || "todo";
+        const rawStatus =
+            document.getElementById("modal-task-status")?.value || "todo";
 
-    const statusMap = {
-      todo: "to_do",
-      inprogress: "in_progress",
-      review: "review",
-      completed: "completed",
-    };
+        const statusMap = {
+            todo: "to_do",
+            inprogress: "in_progress",
+            review: "review",
+            completed: "completed",
+        };
 
-    formData.append("status", statusMap[rawStatus] || "to_do");
+        formData.append("status", statusMap[rawStatus] || "to_do");
 
-    assignees.forEach((a) => formData.append("assignees[]", a));
+        assignees.forEach((a) => formData.append("assignees[]", a));
 
-    const res = await fetch(
-      `projects.php?project_id=${encodeURIComponent(
-        window.__PROJECT__.project_id
-      )}`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+        const res = await fetch(
+            `projects.php?project_id=${encodeURIComponent(
+                window.__PROJECT__.project_id
+            )}`,
+            {
+                method: "POST",
+                body: formData,
+            }
+        );
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (!data.success) {
-      alert(data.message || "Failed to create task");
-      return;
-    }
+        if (!data.success) {
+            alert(data.message || "Failed to create task");
+            return;
+        }
 
-    // Close modal + refresh
-    document.getElementById("assign-task-modal").style.display = "none";
-    document.body.style.overflow = "";
+        // Close modal + refresh
+        document.getElementById("assign-task-modal").style.display = "none";
+        document.body.style.overflow = "";
 
-    fetchAndRenderTasks(); // reload Kanban
-  });
+        fetchAndRenderTasks(); // reload Kanban
+    });
 }
 
 
@@ -1717,21 +1785,21 @@ function setupCreateProjectForm(currentUser) {
  */
 function createTaskCardHTML(task, currentUser) {
     function renderStatusPill(task) {
-    const statuses = {
-        todo: "To Do",
-        inprogress: "In Progress",
-        review: "Review",
-        completed: "Completed"
-    };
+        const statuses = {
+            todo: "To Do",
+            inprogress: "In Progress",
+            review: "Review",
+            completed: "Completed"
+        };
 
-    const priorities = {
-        low: "Low",
-        medium: "Medium",
-        high: "High",
-        urgent: "Urgent"
-    };
+        const priorities = {
+            low: "Low",
+            medium: "Medium",
+            high: "High",
+            urgent: "Urgent"
+        };
 
-    return `
+        return `
       <div class="task-status-menu" data-task-id="${task.id}">
         <button class="status-pill icon-only" aria-label="Task actions">
           <span class="ellipsis">⋯</span>
@@ -1764,7 +1832,7 @@ function createTaskCardHTML(task, currentUser) {
         </div>
       </div>
     `;
-}
+    }
 
     // Check for the special "Leader on Apollo" case
     const currentProjectId = getCurrentProjectId();
@@ -1782,12 +1850,12 @@ function createTaskCardHTML(task, currentUser) {
 
     const usersMap = getUsersMap();
 
-const assignees = (task.assignedTo || []).map(email => {
-  const user = usersMap[email];
-  return user
-    ? { name: user.name, avatarClass: user.avatarClass, avatarUrl: user.avatarUrl }
-    : { name: email, avatarClass: "avatar-3", avatarUrl: null }; // fallback
-}).filter(Boolean);
+    const assignees = (task.assignedTo || []).map(email => {
+        const user = usersMap[email];
+        return user
+            ? { name: user.name, avatarClass: user.avatarClass, avatarUrl: user.avatarUrl }
+            : { name: email, avatarClass: "avatar-3", avatarUrl: null }; // fallback
+    }).filter(Boolean);
 
     console.log("Task:", task);
     console.log("assignedTo: " + task.assignedTo);
@@ -1813,7 +1881,7 @@ const assignees = (task.assignedTo || []).map(email => {
     // Capitalize priority
     const priorityText = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
 
- return `
+    return `
   <div class="task-card" data-task-id="${task.id}" ${isDraggable ? 'draggable="true"' : ''}>
     <span class="priority ${task.priority}">${priorityText}</span>
     <h3 class="task-title">${task.title}</h3>
@@ -1903,9 +1971,9 @@ function renderTaskBoard(currentUser, currentProjectId) {
             description: t.description || t.task_description || "",
             priority: t.priority || 'medium',
             status: normalizeDbStatus(t.status),
-         assignedTo: Array.isArray(t.assignedUsers)
-    ? t.assignedUsers.map(u => u.email)
-    : (Array.isArray(t.assignedTo) ? t.assignedTo : []),
+            assignedTo: Array.isArray(t.assignedUsers)
+                ? t.assignedUsers.map(u => u.email)
+                : (Array.isArray(t.assignedTo) ? t.assignedTo : []),
             project: window.__PROJECT__?.project_name || '',
             projectId: currentProjectId,
             createdDate: t.created_date,
@@ -2034,84 +2102,84 @@ async function deleteTaskInDb(taskId) {
 
 function setupStatusPillActions(currentUser, currentProjectId) {
 
-   document.addEventListener("click", (e) => {
-    const pill = e.target.closest(".status-pill");
-    if (!pill) return;
+    document.addEventListener("click", (e) => {
+        const pill = e.target.closest(".status-pill");
+        if (!pill) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
-    if (!window.__CAN_MANAGE_PROJECT__) return;
+        if (!window.__CAN_MANAGE_PROJECT__) return;
 
-    // close all others
-    document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
-    document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+        // close all others
+        document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+        document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
 
-    const menu = pill.nextElementSibling;
-    const card = pill.closest(".task-card");
+        const menu = pill.nextElementSibling;
+        const card = pill.closest(".task-card");
 
-    if (menu && card) {
-        menu.hidden = false;
-        card.classList.add("menu-open");
-    }
-});
+        if (menu && card) {
+            menu.hidden = false;
+            card.classList.add("menu-open");
+        }
+    });
 
 
     // Handle move (CLICK OPTION)
     document.addEventListener("click", async (e) => {
-    const option = e.target.closest(".status-dropdown button");
-    if (!option) return;
+        const option = e.target.closest(".status-dropdown button");
+        if (!option) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
-    if (!window.__CAN_MANAGE_PROJECT__) return;
+        if (!window.__CAN_MANAGE_PROJECT__) return;
 
-    const wrapper = option.closest(".task-status-menu");
-    const taskId = wrapper.dataset.taskId;
-    const action = option.dataset.action;
-    const value = option.dataset.value;
+        const wrapper = option.closest(".task-status-menu");
+        const taskId = wrapper.dataset.taskId;
+        const action = option.dataset.action;
+        const value = option.dataset.value;
 
-    const tasks = window.__TASKS_NORM__ || [];
-    const task = tasks.find(t => String(t.id) === String(taskId));
-    if (!task) return;
+        const tasks = window.__TASKS_NORM__ || [];
+        const task = tasks.find(t => String(t.id) === String(taskId));
+        if (!task) return;
 
-    if (action === "status" && task.status !== value) {
-        const old = task.status;
-        task.status = value;
+        if (action === "status" && task.status !== value) {
+            const old = task.status;
+            task.status = value;
 
-        try {
-            await updateTaskStatusInDb(task.id, denormalizeStatus(value));
-        } catch {
-            task.status = old;
-            alert("Could not change status");
-            return;
+            try {
+                await updateTaskStatusInDb(task.id, denormalizeStatus(value));
+            } catch {
+                task.status = old;
+                alert("Could not change status");
+                return;
+            }
         }
-    }
 
-    if (action === "priority" && task.priority !== value) {
-        const old = task.priority;
-        task.priority = value;
+        if (action === "priority" && task.priority !== value) {
+            const old = task.priority;
+            task.priority = value;
 
-        try {
-            await updateTaskPriorityInDb(task.id, value);
-        } catch {
-            task.priority = old;
-            alert("Could not change priority");
-            return;
+            try {
+                await updateTaskPriorityInDb(task.id, value);
+            } catch {
+                task.priority = old;
+                alert("Could not change priority");
+                return;
+            }
         }
-    }
 
-    renderTaskBoard(currentUser, currentProjectId);
-});
+        renderTaskBoard(currentUser, currentProjectId);
+    });
 
 
-   document.addEventListener("click", (e) => {
-    if (e.target.closest(".task-status-menu")) return;
+    document.addEventListener("click", (e) => {
+        if (e.target.closest(".task-status-menu")) return;
 
-    document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
-    document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
-});
+        document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+        document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+    });
 
 }
 
@@ -2213,167 +2281,234 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
 
 
 function initTaskDetailsModal(currentUser) {
-  const detailsModal = document.getElementById("task-details-modal");
-  const detailsCloseBtn = document.getElementById("details-close-modal-btn");
+    const detailsModal = document.getElementById("task-details-modal");
+    const detailsCloseBtn = document.getElementById("details-close-modal-btn");
 
-  if (!detailsModal || !detailsCloseBtn) return;
+    if (!detailsModal || !detailsCloseBtn) return;
 
-  // Prevent multiple bindings
-  if (detailsModal.dataset.bound === "1") return;
-  detailsModal.dataset.bound = "1";
+    // Prevent multiple bindings
+    if (detailsModal.dataset.bound === "1") return;
+    detailsModal.dataset.bound = "1";
 
-  const closeModal = () => {
-    detailsModal.style.display = "none";
-    document.body.style.overflow = "";
-  };
+    const closeModal = () => {
+        detailsModal.style.display = "none";
+        document.body.style.overflow = "";
+    };
 
-  detailsCloseBtn.addEventListener("click", closeModal);
+    detailsCloseBtn.addEventListener("click", closeModal);
 
-  detailsModal.addEventListener("click", (e) => {
-    if (e.target === detailsModal) closeModal();
-  });
+    detailsModal.addEventListener("click", (e) => {
+        if (e.target === detailsModal) closeModal();
+    });
 
-  // ✅ Event delegation for clicking a task card
-  document.addEventListener("click", (e) => {
-    // If they clicked the 3-dot menu, do NOT open modal
-    if (e.target.closest(".task-status-menu")) return;
+    // ✅ Event delegation for clicking a task card
+    document.addEventListener("click", (e) => {
+        // If they clicked the 3-dot menu, do NOT open modal
+        if (e.target.closest(".task-status-menu")) return;
 
-    const card = e.target.closest(".task-card");
-    if (!card) return;
+        const card = e.target.closest(".task-card");
+        if (!card) return;
 
-    const taskId = card.dataset.taskId;
-    const allTasks = Array.isArray(window.__TASKS_NORM__) ? window.__TASKS_NORM__ : [];
-    const task = allTasks.find((t) => String(t.id) === String(taskId));
-    if (!task) return;
+        const taskId = card.dataset.taskId;
+        const allTasks = Array.isArray(window.__TASKS_NORM__) ? window.__TASKS_NORM__ : [];
+        const task = allTasks.find((t) => String(t.id) === String(taskId));
+        if (!task) return;
 
-    const usersObj = getUsersSource();
+        const usersObj = getUsersSource();
 
-    // Fill modal fields
-    document.getElementById("details-task-title").textContent = task.title || "";
-    document.getElementById("details-task-project").textContent = task.project || "";
-    document.getElementById("details-task-description").textContent =
-      task.description || "No description provided.";
+        // Fill modal fields
+        document.getElementById("details-task-title").textContent = task.title || "";
+        document.getElementById("details-task-project").textContent = task.project || "";
+        document.getElementById("details-task-description").textContent =
+            task.description || "No description provided.";
 
-    // Priority badge
-    const prEl = document.getElementById("details-task-priority");
-    if (prEl) {
-      prEl.textContent = task.priority || "";
-      prEl.className = `priority-badge ${task.priority || "medium"}`;
-    }
-
-    // Dates (safe formatting)
-    const createdDateEl = document.getElementById("details-task-created");
-    const deadlineDateEl = document.getElementById("details-task-deadline");
-
-    const createdDate = task.createdDate ? new Date(task.createdDate) : null;
-    const deadlineDate = task.deadline ? new Date(task.deadline) : null;
-
-    if (createdDateEl) {
-      createdDateEl.textContent = createdDate
-        ? createdDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-        : "N/A";
-    }
-
-    if (deadlineDateEl) {
-      deadlineDateEl.textContent = deadlineDate
-        ? deadlineDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
-        : "No deadline";
-    }
-
-    // Assignees
-    const assigneesEl = document.getElementById("details-task-assignees");
-    if (assigneesEl) {
-      if (task.assignedTo && task.assignedTo.length > 0) {
-        assigneesEl.textContent = task.assignedTo
-          .map((email) => usersObj[email]?.name || email)
-          .join(", ");
-      } else {
-        assigneesEl.textContent = "Unassigned";
-      }
-    }
-
-    // Buttons
-    const markBtn = document.getElementById("project-complete-btn");
-    const deleteBtn = document.getElementById("delete-task-btn");
-
-    const role = getEffectiveRole(currentUser);
-    const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
-    const isManagerLike = role === "manager" || canManageProject;
-
-    // Team members: show mark complete. Managers/leaders: show delete.
-    if (markBtn) markBtn.style.display = isManagerLike ? "none" : "inline-flex";
-    if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
-
-    // Rebind delete button safely
-    if (deleteBtn) {
-      const freshDeleteBtn = deleteBtn.cloneNode(true);
-      deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
-
-      freshDeleteBtn.addEventListener("click", async () => {
-        const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
-        if (!ok) return;
-
-        try {
-          await deleteTaskInDb(task.id);
-
-          // remove locally too
-          if (Array.isArray(window.__TASKS_NORM__)) {
-            window.__TASKS_NORM__ = window.__TASKS_NORM__.filter((t) => String(t.id) !== String(task.id));
-          }
-          if (Array.isArray(window.__TASKS__)) {
-            window.__TASKS__ = window.__TASKS__.filter((t) => String(t.task_id) !== String(task.id));
-          }
-
-          closeModal();
-          showSuccessNotification("Task deleted successfully!");
-          renderTaskBoard(currentUser, getCurrentProjectId());
-        } catch (err) {
-          console.error(err);
-          alert("Could not delete task. Check console.");
+        // Priority badge
+        const prEl = document.getElementById("details-task-priority");
+        if (prEl) {
+            prEl.textContent = task.priority || "";
+            prEl.className = `priority-badge ${task.priority || "medium"}`;
         }
-      });
-    }
 
-    // Rebind mark complete button safely
-    if (markBtn) {
-      const freshMarkBtn = markBtn.cloneNode(true);
-      markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
+        // Dates (safe formatting)
+        const createdDateEl = document.getElementById("details-task-created");
+        const deadlineDateEl = document.getElementById("details-task-deadline");
 
-      freshMarkBtn.addEventListener("click", async () => {
-        const ok = confirm("Mark this task as complete? It will be moved to Review.");
-        if (!ok) return;
+        const createdDate = task.createdDate ? new Date(task.createdDate) : null;
+        const deadlineDate = task.deadline ? new Date(task.deadline) : null;
 
-        try {
-          const tasksNorm = window.__TASKS_NORM__ || [];
-          const t = tasksNorm.find((x) => String(x.id) === String(task.id));
-          if (t) t.status = "review";
-
-          if (Array.isArray(window.__TASKS__)) {
-            const dbTask = window.__TASKS__.find((x) => String(x.task_id) === String(task.id));
-            if (dbTask) dbTask.status = "review";
-          }
-
-          await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
-
-          closeModal();
-          showSuccessNotification("Task sent to Review!");
-          renderTaskBoard(currentUser, getCurrentProjectId());
-        } catch (err) {
-          console.error(err);
-          alert("Could not update task. Check console.");
+        if (createdDateEl) {
+            createdDateEl.textContent = createdDate
+                ? createdDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+                : "N/A";
         }
-      });
-    }
 
-    // Show modal
-    detailsModal.style.display = "flex";
-    document.body.style.overflow = "hidden";
+        if (deadlineDateEl) {
+            deadlineDateEl.textContent = deadlineDate
+                ? deadlineDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+                : "No deadline";
+        }
 
-    if (window.feather) feather.replace();
-  });
+        // Assignees
+        const assigneesEl = document.getElementById("details-task-assignees");
+        if (assigneesEl) {
+            if (task.assignedTo && task.assignedTo.length > 0) {
+                assigneesEl.textContent = task.assignedTo
+                    .map((email) => usersObj[email]?.name || email)
+                    .join(", ");
+            } else {
+                assigneesEl.textContent = "Unassigned";
+            }
+        }
+
+        // Buttons
+        const markBtn = document.getElementById("project-complete-btn");
+        const deleteBtn = document.getElementById("delete-task-btn");
+
+        const role = getEffectiveRole(currentUser);
+        const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
+        const isManagerLike = role === "manager" || canManageProject;
+
+        // Team members: show mark complete. Managers/leaders: show delete.
+        if (markBtn) markBtn.style.display = isManagerLike ? "none" : "inline-flex";
+        if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
+
+        // Rebind delete button safely
+        if (deleteBtn) {
+            const freshDeleteBtn = deleteBtn.cloneNode(true);
+            deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
+
+            freshDeleteBtn.addEventListener("click", async () => {
+                const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
+                if (!ok) return;
+
+                try {
+                    await deleteTaskInDb(task.id);
+
+                    // remove locally too
+                    if (Array.isArray(window.__TASKS_NORM__)) {
+                        window.__TASKS_NORM__ = window.__TASKS_NORM__.filter((t) => String(t.id) !== String(task.id));
+                    }
+                    if (Array.isArray(window.__TASKS__)) {
+                        window.__TASKS__ = window.__TASKS__.filter((t) => String(t.task_id) !== String(task.id));
+                    }
+
+                    closeModal();
+                    showSuccessNotification("Task deleted successfully!");
+                    renderTaskBoard(currentUser, getCurrentProjectId());
+                } catch (err) {
+                    console.error(err);
+                    alert("Could not delete task. Check console.");
+                }
+            });
+        }
+
+        // Rebind mark complete button safely
+        if (markBtn) {
+            const freshMarkBtn = markBtn.cloneNode(true);
+            markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
+
+            freshMarkBtn.addEventListener("click", async () => {
+                const ok = confirm("Mark this task as complete? It will be moved to Review.");
+                if (!ok) return;
+
+                try {
+                    const tasksNorm = window.__TASKS_NORM__ || [];
+                    const t = tasksNorm.find((x) => String(x.id) === String(task.id));
+                    if (t) t.status = "review";
+
+                    if (Array.isArray(window.__TASKS__)) {
+                        const dbTask = window.__TASKS__.find((x) => String(x.task_id) === String(task.id));
+                        if (dbTask) dbTask.status = "review";
+                    }
+
+                    await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
+
+                    closeModal();
+                    showSuccessNotification("Task sent to Review!");
+                    renderTaskBoard(currentUser, getCurrentProjectId());
+                } catch (err) {
+                    console.error(err);
+                    alert("Could not update task. Check console.");
+                }
+            });
+        }
+
+        // Show modal
+        detailsModal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+
+        if (window.feather) feather.replace();
+    });
 }
 
+// =============================
+// Close Project (modal + DB update)
+// Works on BOTH projects.php and manager-progress.php
+// =============================
+function setupCloseProjectControls() {
+  const closeProjectBtn = document.getElementById("close-project-btn");
+  const closeProjectModal = document.getElementById("close-project-modal");
+  const closeProjectOk = document.getElementById("close-project-ok");
+  const closeProjectCancel = document.getElementById("close-project-cancel");
+  const closeProjectX = document.getElementById("close-project-x");
 
+  // If this page doesn't have the button/modal, just skip
+  if (!closeProjectBtn || !closeProjectModal || !closeProjectOk) return;
+
+  // Prevent double-binding if the function runs twice
+  if (closeProjectModal.dataset.bound === "1") return;
+  closeProjectModal.dataset.bound = "1";
+
+  function openModal() {
+    closeProjectModal.style.display = "flex";
+    if (window.feather) feather.replace();
+  }
+
+  function closeModal() {
+    closeProjectModal.style.display = "none";
+  }
+
+  closeProjectBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    openModal();
+  });
+
+  closeProjectCancel?.addEventListener("click", closeModal);
+  closeProjectX?.addEventListener("click", closeModal);
+
+  closeProjectModal.addEventListener("click", (e) => {
+    if (e.target === closeProjectModal) closeModal();
+  });
+
+  closeProjectOk.addEventListener("click", async () => {
+    try {
+      const pid = getCurrentProjectId();
+      if (!pid) throw new Error("Missing project_id in URL");
+
+      // ✅ POST BACK TO THE CURRENT PAGE (so manager-progress.php handler runs)
+      const url = `${window.location.pathname}?project_id=${encodeURIComponent(pid)}`;
+
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ ajax: "close_project" })
+      });
+
+      const raw = await res.text();
+      let data;
+      try { data = JSON.parse(raw); }
+      catch { throw new Error("Server did not return JSON: " + raw); }
+
+      if (!res.ok || !data.success) throw new Error(data.message || "Close project failed");
+
+      // success -> go overview
+      window.location.href = "projects-overview.php";
+    } catch (err) {
+      console.error(err);
+      alert("Could not close project. Check console.");
+    }
+  });
+}
 
 /**
  * *** COMPLETELY REVISED FUNCTION ***
@@ -2382,6 +2517,8 @@ function initTaskDetailsModal(currentUser) {
 function loadProjectsPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
     updateSidebarAndNav();
+    setupCloseProjectControls();
+
 
     const role = getEffectiveRole(currentUser);
     const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
@@ -2498,76 +2635,6 @@ function loadProjectsPage(currentUser) {
         });
     }
 
-   
-
-
-    // =============================
-    // Close Project (modal + DB update)
-    // =============================
-    const closeProjectBtn = document.getElementById("close-project-btn");
-    const closeProjectModal = document.getElementById("close-project-modal");
-    const closeProjectOk = document.getElementById("close-project-ok");
-    const closeProjectCancel = document.getElementById("close-project-cancel");
-    const closeProjectX = document.getElementById("close-project-x");
-
-    function openCloseProjectModal() {
-        if (!closeProjectModal) return;
-        closeProjectModal.style.display = "flex";
-        if (window.feather) feather.replace();
-    }
-
-    function closeCloseProjectModal() {
-        if (!closeProjectModal) return;
-        closeProjectModal.style.display = "none";
-    }
-
-    // open modal when button clicked
-    if (closeProjectBtn) {
-        closeProjectBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            openCloseProjectModal();
-        });
-    }
-
-    // close modal actions
-    if (closeProjectCancel) closeProjectCancel.addEventListener("click", closeCloseProjectModal);
-    if (closeProjectX) closeProjectX.addEventListener("click", closeCloseProjectModal);
-
-    // click outside closes
-    if (closeProjectModal) {
-        closeProjectModal.addEventListener("click", (e) => {
-            if (e.target === closeProjectModal) closeCloseProjectModal();
-        });
-    }
-
-    // OK = update DB then redirect
-    if (closeProjectOk) {
-        closeProjectOk.addEventListener("click", async () => {
-            try {
-                const pid = getCurrentProjectId();
-                const res = await fetch(`projects.php?project_id=${encodeURIComponent(pid)}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({ ajax: "close_project" })
-                });
-
-                const raw = await res.text();
-                let data;
-                try { data = JSON.parse(raw); }
-                catch { throw new Error("Server did not return JSON: " + raw); }
-
-                if (!res.ok || !data.success) throw new Error(data.message || "Close project failed");
-
-                // success -> go overview
-                window.location.href = "projects-overview.php";
-            } catch (err) {
-                console.error(err);
-                alert("Could not close project. Check console.");
-            }
-        });
-    }
-
-
     // -----------------------------
     // Modal close listeners
     // -----------------------------
@@ -2578,71 +2645,71 @@ function loadProjectsPage(currentUser) {
         };
     }
 
-  // -----------------------------
-// Modal submit (DB create task)
-// -----------------------------
-if (modalForm && modalForm.dataset.bound !== "1") {
-  modalForm.dataset.bound = "1";
+    // -----------------------------
+    // Modal submit (DB create task)
+    // -----------------------------
+    if (modalForm && modalForm.dataset.bound !== "1") {
+        modalForm.dataset.bound = "1";
 
-  modalForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+        modalForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-    const title = document.getElementById("modal-task-title")?.value.trim();
-    const deadline = document.getElementById("modal-task-deadline")?.value;
-    const priority = document.getElementById("modal-task-priority")?.value || "medium";
+            const title = document.getElementById("modal-task-title")?.value.trim();
+            const deadline = document.getElementById("modal-task-deadline")?.value;
+            const priority = document.getElementById("modal-task-priority")?.value || "medium";
 
-    const assignees = Array.from(
-      document.querySelectorAll("#modal-task-assignees input:checked")
-    ).map(cb => cb.value);
+            const assignees = Array.from(
+                document.querySelectorAll("#modal-task-assignees input:checked")
+            ).map(cb => cb.value);
 
-    const rawStatus = document.getElementById("modal-task-status")?.value || "todo";
+            const rawStatus = document.getElementById("modal-task-status")?.value || "todo";
 
-    const statusMap = {
-      todo: "to_do",
-      inprogress: "in_progress",
-      review: "review",
-      completed: "completed"
-    };
+            const statusMap = {
+                todo: "to_do",
+                inprogress: "in_progress",
+                review: "review",
+                completed: "completed"
+            };
 
-    const status = statusMap[rawStatus] || "to_do";
+            const status = statusMap[rawStatus] || "to_do";
 
-    if (!title || !deadline || assignees.length === 0) {
-      alert("Please fill out Title, Deadline and select at least 1 assignee.");
-      return;
+            if (!title || !deadline || assignees.length === 0) {
+                alert("Please fill out Title, Deadline and select at least 1 assignee.");
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append("ajax", "create_task");
+            fd.append("task_name", title);
+            fd.append("deadline", deadline);
+            fd.append("priority", priority);
+            fd.append("status", status);
+            fd.append("description", document.getElementById("modal-task-description")?.value.trim() || "");
+
+            assignees.forEach(a => fd.append("assignees[]", a));
+
+            const pid = getCurrentProjectId() || window.__PROJECT__?.project_id;
+
+            const res = await fetch(
+                `projects.php?project_id=${encodeURIComponent(pid)}`,
+                { method: "POST", body: fd }
+            );
+
+            const data = await res.json();
+
+            if (!data.success) {
+                alert(data.message || "Create failed");
+                return;
+            }
+
+            // Close modal + refresh board
+            document.getElementById("assign-task-modal").style.display = "none";
+            document.body.style.overflow = "";
+
+            fetchAndRenderTasks();
+        });
     }
-
-    const fd = new FormData();
-    fd.append("ajax", "create_task");
-    fd.append("task_name", title);
-    fd.append("deadline", deadline);
-    fd.append("priority", priority);
-    fd.append("status", status);
-    fd.append("description", document.getElementById("modal-task-description")?.value.trim() || "");
-
-    assignees.forEach(a => fd.append("assignees[]", a));
-
-    const pid = getCurrentProjectId() || window.__PROJECT__?.project_id;
-
-    const res = await fetch(
-      `projects.php?project_id=${encodeURIComponent(pid)}`,
-      { method: "POST", body: fd }
-    );
-
-    const data = await res.json();
-
-    if (!data.success) {
-      alert(data.message || "Create failed");
-      return;
-    }
-
-    // Close modal + refresh board
-    document.getElementById("assign-task-modal").style.display = "none";
-    document.body.style.overflow = "";
-
-    fetchAndRenderTasks();
-  });
-}
 
 
 
@@ -2654,7 +2721,7 @@ if (modalForm && modalForm.dataset.bound !== "1") {
     }
 
     feather.replace();
- 
+
 
 }
 
@@ -2726,7 +2793,7 @@ function openAssignTaskModal(status = "todo") {
  */
 async function loadManagerProgressPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
-    
+
     if (!currentProjectId) {
         alert('No project selected');
         window.location.href = 'projects-overview.php';
@@ -2737,7 +2804,7 @@ async function loadManagerProgressPage(currentUser) {
     try {
         const response = await fetch(`projects.php?ajax=get_project&project_id=${encodeURIComponent(currentProjectId)}`);
         const data = await response.json();
-        
+
         if (data.success && data.project) {
             window.__PROJECT__ = data.project;
         } else {
@@ -2750,8 +2817,9 @@ async function loadManagerProgressPage(currentUser) {
     }
 
     updateSidebarAndNav();
+    setupCloseProjectControls();
 
-const projectTasks = await fetchProjectTasksFromDb(currentProjectId);
+    const projectTasks = await fetchProjectTasksFromDb(currentProjectId);
 
     renderManagerTaskProgress(projectTasks);
     renderManagerDeadlines(projectTasks);
@@ -2811,9 +2879,9 @@ function renderManagerDeadlines(projectTasks) {
         }
 
         const usersMap = getUsersMap();
-const assignees = (task.assignedTo || [])
-  .map(email => (usersMap[email]?.name || email).split(" ")[0])
-  .join(", ");
+        const assignees = (task.assignedTo || [])
+            .map(email => (usersMap[email]?.name || email).split(" ")[0])
+            .join(", ");
 
 
         return `
@@ -2882,7 +2950,7 @@ function renderTasksPerMemberChart(projectTasks) {
     //Aggregate task counts for each user
     userEmails.forEach(email => {
         const usersMap = getUsersMap();
-const user = usersMap[email];
+        const user = usersMap[email];
         if (!user) return;
 
         labels.push(user.name);
@@ -3736,7 +3804,7 @@ function setupProjectCardNavigation() {
         const projectId = card.dataset.projectId;
         if (!projectId) return;
 
-            // 🔍 DEBUG – BEFORE navigation
+        // 🔍 DEBUG – BEFORE navigation
         console.log("Navigating to", projectId);
 
         // 🔍 DEBUG – AFTER navigation attempt
@@ -3785,7 +3853,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentUser = await getCurrentUser();
     if (!currentUser) return;
     // Make current user globally available
-window.__CURRENT_USER__ = currentUser;
+    window.__CURRENT_USER__ = currentUser;
 
 
     // *** ADDED: Show "Project Archive" in sidebar for managers ***
@@ -3899,7 +3967,7 @@ function resetAllData() {
 
     let searchTimeout = null;
 
-        function applyFilters() {
+    function applyFilters() {
         fetchAndRenderTasks({
             search: searchInput.value.trim(),
             status: statusFilter?.value || "",
@@ -3963,58 +4031,85 @@ function matchesDueFilter(deadline, filter) {
             return true;
     }
 }
- async function fetchProjectTasksFromDb(projectId) {
-  const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
-  const res = await fetch(url, { credentials: "include" });
-  const data = await res.json();
-  if (!data.success) return [];
+async function fetchProjectTasksFromDb(projectId) {
+    const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
+    const res = await fetch(url, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
 
-  // data.tasks are DB shape -> normalize to your UI shape
-  return (data.tasks || []).map(t => ({
-    id: t.task_id,
-    title: t.task_name,
-    description: t.description || "",
-    priority: t.priority || "medium",
-    status: normalizeDbStatus(t.status),     // you already have this function
-    deadline: t.deadline,
-    assignedTo: Array.isArray(t.assignedUsers)
-      ? t.assignedUsers.map(u => u.email)
-      : []
-  }));
+    // data.tasks are DB shape -> normalize to your UI shape
+    return (data.tasks || []).map(t => ({
+        id: t.task_id,
+        title: t.task_name,
+        description: t.description || "",
+        priority: t.priority || "medium",
+        status: normalizeDbStatus(t.status),     // you already have this function
+        deadline: t.deadline,
+        assignedTo: Array.isArray(t.assignedUsers)
+            ? t.assignedUsers.map(u => u.email)
+            : []
+    }));
 }
 
 function fetchAndRenderTasks({ search = "", status = "", priority = "", due = "", page = 1 } = {}) {
-    const url = new URL(window.location.href);
+  const pid = getCurrentProjectId();
 
-    url.searchParams.set("ajax", "fetch_tasks");
-    url.searchParams.set("search", search);
-    url.searchParams.set("status", status);
-    url.searchParams.set("priority", priority);
-    url.searchParams.set("due", due);
-    url.searchParams.set("page", page);
+  // Always hit projects.php for task AJAX (works from ANY page)
+  const url = new URL("projects.php", window.location.href);
+  url.searchParams.set("project_id", pid || "");
+  url.searchParams.set("ajax", "fetch_tasks");
+  url.searchParams.set("search", search);
+  url.searchParams.set("status", status);
+  url.searchParams.set("priority", priority);
+  url.searchParams.set("due", due);
+  url.searchParams.set("page", page);
 
-    fetch(url.toString())
-        .then(res => res.json())
-       .then(data => {
-    if (!data.success) return;
+  fetch(url.toString(), { credentials: "include" })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) return;
 
-    const dueValue = document.getElementById("filter-due")?.value || "";
+      const dueValue = document.getElementById("filter-due")?.value || "";
 
-    // Apply due-date filter correctly
-    window.__TASKS__ = data.tasks.filter(task =>
+      // keep your due filter logic
+      window.__TASKS__ = (data.tasks || []).filter(task =>
         matchesDueFilter(task.deadline, dueValue)
-    );
+      );
 
-    window.__TASKS_NORM__ = []; // force rebuild from filtered list
+      window.__TASKS_NORM__ = []; // force rebuild from filtered list
 
-    clearTaskColumns();
-    renderTaskBoard(window.__CURRENT_USER__, getCurrentProjectId());
-    updateAddTaskButtonsVisibility();
-    updateTaskCounts();
-})
+      // If this page has a kanban board, rerender it
+      if (document.querySelector(".task-board")) {
+        clearTaskColumns();
+        renderTaskBoard(window.__CURRENT_USER__, getCurrentProjectId());
+        updateAddTaskButtonsVisibility();
+        updateTaskCounts();
+      }
 
-        .catch(err => console.error("Task fetch error:", err));
+      // If this page is manager-progress and you want charts to reflect filters:
+      // rebuild normalized tasks and re-render manager widgets
+      if (document.body?.id === "manager-progress-page") {
+        const normalized = (window.__TASKS__ || []).map(t => ({
+          id: t.task_id,
+          title: t.task_name,
+          description: t.description || "",
+          priority: t.priority || "medium",
+          status: normalizeDbStatus(t.status),
+          deadline: t.deadline,
+          assignedTo: Array.isArray(t.assignedUsers) ? t.assignedUsers.map(u => u.email) : []
+        }));
+
+        renderManagerTaskProgress(normalized);
+        renderManagerDeadlines(normalized);
+        renderProjectResources(normalized);
+        renderTasksPerMemberChart(normalized);
+
+        if (window.feather) feather.replace();
+      }
+    })
+    .catch(err => console.error("Task fetch error:", err));
 }
+
 function clearTaskColumns() {
     document.querySelectorAll(".task-column .task-list")
         .forEach(col => col.innerHTML = "");
@@ -4058,10 +4153,13 @@ function updateTaskCounts() {
 document.addEventListener("DOMContentLoaded", () => {
   const pageId = document.body?.id;
 
-  // Only fetch/render the kanban tasks on the Projects board page
-  if (pageId === "projects-page") {
+  // Call it on BOTH pages (only does board rerender if board exists)
+  if (pageId === "projects-page" || pageId === "manager-progress-page") {
     fetchAndRenderTasks();
-    setupAssignTaskForm(); // only if your board page needs it
+  }
+
+  if (pageId === "projects-page") {
+    setupAssignTaskForm();
   }
 });
 
@@ -4069,32 +4167,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-// =============================
-// CLEAR FILTERS BUTTON
-// =============================
-const filterClearBtn = document.getElementById('filter-clear');
-const filterStatus = document.getElementById('filter-status');
-const filterPriority = document.getElementById('filter-priority');
-const filterDue = document.getElementById('filter-due');
 
-filterClearBtn?.addEventListener('click', () => {
+// =============================
+// CLEAR FILTERS BUTTON (fixed)
+// =============================
+document.addEventListener("DOMContentLoaded", () => {
+  const filterClearBtn = document.getElementById("filter-clear");
+  const filterStatus = document.getElementById("filter-status");
+  const filterPriority = document.getElementById("filter-priority");
+  const filterDue = document.getElementById("filter-due");
+  const panel = document.getElementById("filter-panel");
+  const searchInput = document.getElementById("task-search-input");
+
+  if (!filterClearBtn) return;
+
+  filterClearBtn.addEventListener("click", () => {
     // Reset dropdowns
-    if (filterStatus) filterStatus.value = '';
-    if (filterPriority) filterPriority.value = '';
-    if (filterDue) filterDue.value = '';
+    if (filterStatus) filterStatus.value = "";
+    if (filterPriority) filterPriority.value = "";
+    if (filterDue) filterDue.value = "";
 
-    // Re-fetch tasks with no filters
+    // Re-fetch tasks with no filters (keep search text if you want)
     fetchAndRenderTasks({
-        search: document.getElementById('task-search-input')?.value.trim() || '',
-        status: '',
-        priority: '',
-        due: '',
-        page: 1
+      search: searchInput?.value.trim() || "",
+      status: "",
+      priority: "",
+      due: "",
+      page: 1
     });
 
-    // Optional: close filter panel after clearing
-    const panel = document.getElementById('filter-panel');
-    if (panel) panel.hidden = true;
+    // Close filter panel (match your toggle logic)
+    if (panel) panel.style.display = "none";
+  });
 });
+
 
 

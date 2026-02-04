@@ -2,6 +2,7 @@
 session_start();
 
 require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../actions/guard_project_access.php';
 
 $database = new Database();
 $db = $database->getConnection();
@@ -25,95 +26,61 @@ if (!$userId) {
     http_response_code(401);
     exit("Not logged in (login not merged yet).");
 }
+
 // =============================
-// AJAX: GET PROJECT DATA FOR PROGRESS PAGES
+// AJAX: GET PROJECT DATA FOR PROGRESS PAGES (SECURE)
 // =============================
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_project') {
-    header('Content-Type: application/json');
-    
-    $project_id = $_GET['project_id'] ?? null;
-    
-    if (!$project_id) {
-        echo json_encode(['success' => false, 'message' => 'No project ID']);
+    header('Content-Type: application/json; charset=utf-8');
+
+    $pid = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
+    if ($pid <= 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Missing/invalid project_id']);
         exit;
     }
-    
-    try {
-        $stmt = $db->prepare("
-            SELECT p.*, 
-                   u.first_name as team_leader_first_name,
-                   u.last_name as team_leader_last_name,
-                   u.profile_picture as team_leader_avatar
-            FROM projects p
-            LEFT JOIN users u ON p.team_leader_id = u.user_id
-            WHERE p.project_id = ?
-        ");
-        $stmt->execute([$project_id]);
-        $project = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if ($project) {
-            echo json_encode([
-                'success' => true,
-                'project' => $project
-            ]);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Project not found']);
-        }
-    } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-    }
+
+    // ✅ ACCESS CHECK FIRST (prevents leaking project data)
+    $access = guardProjectAccess($db, $pid, (int)$userId);
+    $baseProject = $access['project']; // already verified safe
+
+    // attach leader display info (still safe because access passed)
+    $stmt = $db->prepare("
+        SELECT 
+            u.first_name AS team_leader_first_name,
+            u.last_name  AS team_leader_last_name,
+            u.profile_picture AS team_leader_avatar
+        FROM users u
+        WHERE u.user_id = :leader_id
+        LIMIT 1
+    ");
+    $stmt->execute([':leader_id' => $baseProject['team_leader_id']]);
+    $leader = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    echo json_encode([
+        'success' => true,
+        'project' => array_merge($baseProject, $leader),
+        'canManageProject' => $access['canManageProject'],
+        'canCloseProject'  => $access['canCloseProject'],
+    ]);
     exit;
 }
 
 $projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
-
 if ($projectId <= 0) {
+    http_response_code(400);
     exit("Missing/invalid project_id in the URL.");
 }
 
+// SINGLE SOURCE OF TRUTH
+$access = guardProjectAccess($db, $projectId, (int)$userId);
 
-//memeber validation
-$stmt = $db->prepare("
-  SELECT 
-    p.project_id,
-    p.project_name,
-    p.description,
-    p.status,
-    p.deadline,
-    p.team_leader_id,
-    CASE WHEN p.team_leader_id = :uid THEN 1 ELSE 0 END AS is_team_leader,
-    CASE WHEN pm.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_member
-  FROM projects p
-  LEFT JOIN project_members pm
-    ON pm.project_id = p.project_id
-   AND pm.user_id = :uid
-   AND pm.left_at IS NULL
-  WHERE p.project_id = :pid
-    AND (
-      p.created_by = :uid
-      OR p.team_leader_id = :uid
-      OR pm.user_id IS NOT NULL
-    )
-  LIMIT 1
-");
-$stmt->execute([':pid' => $projectId, ':uid' => $userId]);
-$project = $stmt->fetch(PDO::FETCH_ASSOC);
+$project = $access['project'];
+$isManager = $access['isManager'];
+$isTeamLeaderOfThisProject = $access['isTeamLeaderOfThisProject'];
+$canManageProject = $access['canManageProject'];
+$canCloseProject  = $access['canCloseProject'];
 
-if (!$project) {
-    http_response_code(403);
-    exit("You don't have access to this project.");
-}
-
-
-$roleLower = strtolower((string)$role);
-$isManager = ($roleLower === 'manager');
-$isTeamLeaderOfThisProject = ((int)$project['is_team_leader'] === 1);
-
-// This is the key:
-$canManageProject = $isManager || $isTeamLeaderOfThisProject;
-
-// close project button:
-$canCloseProject = $isManager; // only manager
 
 $allowedTaskStatuses = ['to_do', 'in_progress', 'review', 'completed'];
 
@@ -422,8 +389,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'close_p
     header('Content-Type: application/json; charset=utf-8');
 
     // Only manager can close (change if you want team_leader too)
-    $roleLower = strtolower((string)$role);
-    if (!in_array($roleLower, ['manager'], true)) {
+    if (!$canCloseProject) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'No permission']);
         exit;
@@ -456,7 +422,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["ajax"] ?? "") === "delete_
     header("Content-Type: application/json; charset=UTF-8");
 
     $taskId = isset($_POST["task_id"]) ? (int)$_POST["task_id"] : 0;
-    $projectId = isset($_GET["project_id"]) ? (int)$_GET["project_id"] : 0;
 
     if ($taskId <= 0 || $projectId <= 0) {
         http_response_code(400);
@@ -578,25 +543,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tas
     $where[] = "t.project_id = :pid";
 
     switch ($due) {
-    case 'overdue':
-        $where[] = "t.deadline IS NOT NULL AND t.deadline < :today";
-        $params[':today'] = $today;
-        break;
+        case 'overdue':
+            $where[] = "t.deadline IS NOT NULL AND t.deadline < :today";
+            $params[':today'] = $today;
+            break;
 
-    case 'today':
-        $where[] = "t.deadline = :today";
-        $params[':today'] = $today;
-        break;
+        case 'today':
+            $where[] = "t.deadline = :today";
+            $params[':today'] = $today;
+            break;
 
-    case 'week':
-        $where[] = "t.deadline BETWEEN :today AND DATE_ADD(:today, INTERVAL 7 DAY)";
-        $params[':today'] = $today;
-        break;
+        case 'week':
+            $where[] = "t.deadline BETWEEN :today AND DATE_ADD(:today, INTERVAL 7 DAY)";
+            $params[':today'] = $today;
+            break;
 
-    case 'none':
-        $where[] = "t.deadline IS NULL";
-        break;
-}
+        case 'none':
+            $where[] = "t.deadline IS NULL";
+            break;
+    }
 
 
     // ROLE VISIBILITY
@@ -629,13 +594,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tas
         $params[':status'] = $status;
     }
 
-    if (in_array($priority, ['low','medium','high'], true)) {
+    if (in_array($priority, ['low', 'medium', 'high'], true)) {
         $where[] = "t.priority = :priority";
         $params[':priority'] = $priority;
     }
 
     if ($assignee !== '') {
-       $where[] = "
+        $where[] = "
        EXISTS (
        SELECT 1
        FROM task_assignments ta
@@ -671,12 +636,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tas
     $stmt->execute($params);
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $taskIds = array_column($tasks, 'task_id');
-$assigneesByTask = [];
+    $assigneesByTask = [];
 
-if (!empty($taskIds)) {
-    $placeholders = implode(',', array_fill(0, count($taskIds), '?'));
+    if (!empty($taskIds)) {
+        $placeholders = implode(',', array_fill(0, count($taskIds), '?'));
 
-    $stmt2 = $db->prepare("
+        $stmt2 = $db->prepare("
         SELECT
           ta.task_id,
           u.email,
@@ -687,29 +652,29 @@ if (!empty($taskIds)) {
         JOIN users u ON u.user_id = ta.user_id
         WHERE ta.task_id IN ($placeholders)
     ");
-    $stmt2->execute($taskIds);
+        $stmt2->execute($taskIds);
 
-    foreach ($stmt2->fetchAll(PDO::FETCH_ASSOC) as $r) {
-        $tid = (int)$r['task_id'];
+        foreach ($stmt2->fetchAll(PDO::FETCH_ASSOC) as $r) {
+            $tid = (int)$r['task_id'];
 
-        $assigneesByTask[$tid][] = [
-            'email' => strtolower($r['email']),
-            'name'  => trim($r['first_name'].' '.$r['last_name']),
-            'avatarUrl' => $r['profile_picture'] ?: null
-        ];
+            $assigneesByTask[$tid][] = [
+                'email' => strtolower($r['email']),
+                'name'  => trim($r['first_name'] . ' ' . $r['last_name']),
+                'avatarUrl' => $r['profile_picture'] ?: null
+            ];
+        }
     }
-}
 
-// attach to tasks
-foreach ($tasks as &$t) {
-    $tid = (int)$t['task_id'];
-    $t['assignedUsers'] = $assigneesByTask[$tid] ?? [];
-    $t['assignedTo'] = array_map(
-        fn($u) => $u['email'],
-        $t['assignedUsers']
-    );
-}
-unset($t);
+    // attach to tasks
+    foreach ($tasks as &$t) {
+        $tid = (int)$t['task_id'];
+        $t['assignedUsers'] = $assigneesByTask[$tid] ?? [];
+        $t['assignedTo'] = array_map(
+            fn($u) => $u['email'],
+            $t['assignedUsers']
+        );
+    }
+    unset($t);
 
     echo json_encode([
         'success' => true,
@@ -827,9 +792,6 @@ foreach ($tasks as &$t) {
 unset($t);
 
 
-
-
-
 // Fetch users from DB
 $stmt = $db->prepare("
   SELECT user_id, email, first_name, last_name, role, profile_picture
@@ -890,6 +852,7 @@ foreach ($users as $u) {
     window.__ROLE__ = <?= json_encode($role) ?>;
     window.__IS_TEAM_LEADER_PROJECT__ = <?= json_encode($isTeamLeaderOfThisProject) ?>;
     window.__CAN_MANAGE_PROJECT__ = <?= json_encode($canManageProject) ?>;
+    window.__CAN_CLOSE_PROJECT__ = <?= json_encode($canCloseProject) ?>; // ✅ manager-only
 </script>
 
 <script>
@@ -919,81 +882,84 @@ foreach ($users as $u) {
         </nav>
 
         <main class="main-content">
-           <header class="project-header">
+            <header class="project-header">
 
-    <!-- TOP ROW -->
-    <div class="project-header-top">
-        <div class="breadcrumbs-title">
-            <p class="breadcrumbs">
-                Projects > <span id="project-name-breadcrumb">Project</span>
-            </p>
-            <h1 id="project-name-header">Project</h1>
-        </div>
+                <!-- TOP ROW -->
+                <div class="project-header-top">
+                    <div class="breadcrumbs-title">
+                        <p class="breadcrumbs">
+                            Projects > <span id="project-name-breadcrumb"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></span>
+                        </p>
+                        <h1 id="project-name-header"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></h1>
 
-        <div class="project-header-right">
-            <button class="close-project-btn" id="close-project-btn">
-                Close Project
-            </button>
+                    </div>
 
-            <div class="task-search-wrap">
-                <input
-                    type="text"
-                    id="task-search-input"
-                    placeholder="Search tasks..."
-                    autocomplete="off"
-                />
-            </div>
+                    <div class="project-header-right">
+                        <?php if ($canCloseProject): ?>
+                            <button class="close-project-btn" id="close-project-btn">
+                                Close Project
+                            </button>
+                        <?php endif; ?>
 
-            <div class="filter-group">
-                <button class="filter-toggle" id="filter-toggle">
-                    Filters
-                </button>
+                        <div class="task-search-wrap">
 
-                <div class="filter-panel" id="filter-panel" hidden>
-                    <label>
-                        <span>Status</span>
-                        <select id="filter-status">
-                            <option value="">All</option>
-                            <option value="to_do">To Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="review">Review</option>
-                            <option value="completed">Completed</option>
-                        </select>
-                    </label>
+                            <input
+                                type="text"
+                                id="task-search-input"
+                                placeholder="Search tasks..."
+                                autocomplete="off" />
+                        </div>
 
-                    <label>
-                        <span>Priority</span>
-                        <select id="filter-priority">
-                            <option value="">All</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </label>
+                        <div class="filter-group">
+                            <button class="filter-toggle" id="filter-toggle">
+                                Filters
+                            </button>
 
-                    <label>
-                        <span>Due</span>
-                        <select id="filter-due">
-                            <option value="">Any</option>
-                            <option value="overdue">Overdue</option>
-                            <option value="today">Due today</option>
-                            <option value="week">Due this week</option>
-                            <option value="month">Due this month</option>
-                        </select>
-                    </label>
+                            <div class="filter-panel" id="filter-panel" hidden>
+                                <label>
+                                    <span>Status</span>
+                                    <select id="filter-status">
+                                        <option value="">All</option>
+                                        <option value="to_do">To Do</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="review">Review</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </label>
 
-                    <button type="button" class="filter-clear" id="filter-clear">
-                        Clear filters
-                    </button>
+                                <label>
+                                    <span>Priority</span>
+                                    <select id="filter-priority">
+                                        <option value="">All</option>
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                    </select>
+                                </label>
+
+                                <label>
+                                    <span>Due</span>
+                                    <select id="filter-due">
+                                        <option value="">Any</option>
+                                        <option value="overdue">Overdue</option>
+                                        <option value="today">Due today</option>
+                                        <option value="week">Due this week</option>
+                                        <option value="month">Due this month</option>
+                                    </select>
+                                </label>
+
+                                <button type="button" class="filter-clear" id="filter-clear">
+                                    Clear filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- NAV -->
-    <nav class="project-nav" id="project-nav-links"></nav>
+                <!-- NAV -->
+                <nav class="project-nav" id="project-nav-links"></nav>
 
-</header>
+            </header>
 
 
 
@@ -1006,9 +972,9 @@ foreach ($users as $u) {
                     <div class="column-header todo-header">
                         <span class="task-count">0</span>
                         <h2>To Do</h2>
-<button class="add-task">
-    <i data-feather="plus"></i>
-</button>
+                        <button class="add-task">
+                            <i data-feather="plus"></i>
+                        </button>
                     </div>
                     <div class="task-list">
                     </div>
@@ -1019,8 +985,8 @@ foreach ($users as $u) {
                         <span class="task-count">0</span>
                         <h2>In Progress</h2>
                         <button class="add-task">
-    <i data-feather="plus"></i>
-</button>
+                            <i data-feather="plus"></i>
+                        </button>
 
                     </div>
                     <div class="task-list">
@@ -1031,9 +997,9 @@ foreach ($users as $u) {
                     <div class="column-header review-header">
                         <span class="task-count">0</span>
                         <h2>Review</h2>
-<button class="add-task">
-    <i data-feather="plus"></i>
-</button>
+                        <button class="add-task">
+                            <i data-feather="plus"></i>
+                        </button>
                     </div>
                     <div class="task-list">
                     </div>
@@ -1043,9 +1009,9 @@ foreach ($users as $u) {
                     <div class="column-header completed-header">
                         <span class="task-count">0</span>
                         <h2>Completed</h2>
-<button class="add-task">
-    <i data-feather="plus"></i>
-</button>
+                        <button class="add-task">
+                            <i data-feather="plus"></i>
+                        </button>
                     </div>
                     <div class="task-list">
                     </div>
