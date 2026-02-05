@@ -181,9 +181,6 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
     <div class="resource-content">
       <div class="resource-header">
         <h2>Project Resources</h2>
-        <button class="upload-btn" id="upload-btn" style="display:none;">
-          <i data-feather="upload-cloud"></i> Upload File
-        </button>
       </div>
 
       <div class="resource-grid">
