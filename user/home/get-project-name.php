@@ -1,5 +1,6 @@
 <?php
 header('Content-Type: application/json');
+session_start();
 require_once('../../config/database.php');
 $database = new Database();
 $conn = $database->getConnection();
@@ -9,7 +10,13 @@ if (!$conn) {
     exit;
 }
 
-$managerId = isset($_GET['team_leader_id']) ? intval($_GET['team_leader_id']) : 0;
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Not authenticated']);
+    exit;
+}
+
+$managerId = (int) $_SESSION['user_id'];
 
 try {
     $sql = "SELECT *

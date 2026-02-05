@@ -58,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['role'] = $user['role'];
         
         // Determine redirect based on role
-        $redirect = ($user['role'] === 'manager')
-            ? 'user/home/home.html?user=' . urlencode($user['email'])
+        $redirect = ($user['role'] === 'manager' || $user['role'] === 'team_leader')
+            ? 'user/home/home.php?user=' . urlencode($user['email'])
             : 'user/project/projects-overview.php';
         
         echo json_encode([
