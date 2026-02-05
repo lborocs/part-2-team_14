@@ -29,6 +29,17 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
         $database = new Database();
         $pdo = $database->getConnection();
 
+        function isProjectLeaderOrManager($pdo, $projectId, $userId) {
+            $sql = "SELECT created_by, team_leader_id FROM projects WHERE project_id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$projectId]);
+            $project = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$project) return false;
+
+            return ($project['created_by'] == $userId || $project['team_leader_id'] == $userId);
+        }
+
         // LIST FILES & PROJECT DETAILS
         if ($action === 'list') {
             $sql = "
@@ -81,6 +92,12 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
 
         // DELETE FILE
         if ($action === 'delete') {
+            // Check permission
+            if (!isProjectLeaderOrManager($pdo, $projectId, $userId)) {
+                echo json_encode(['success' => false, 'message' => 'Only your team leader or manager can delete project resources.']);
+                exit;
+            }
+
             $resourceId = $_POST['resource_id'] ?? null;
             if (!$resourceId) {
                 echo json_encode(['success' => false, 'message' => 'No resource specified']);
@@ -113,6 +130,12 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
 
         // UPLOAD FILE
         if ($action === 'upload') {
+            // Check permission
+            if (!isProjectLeaderOrManager($pdo, $projectId, $userId)) {
+                echo json_encode(['success' => false, 'message' => 'Only your team leader or manager can upload project resources.']);
+                exit;
+            }
+
             if (!isset($_FILES['resource_file']) || $_FILES['resource_file']['error'] !== UPLOAD_ERR_OK) {
                 echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error']);
                 exit;
