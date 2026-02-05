@@ -253,15 +253,19 @@
 
 /* the scroll container */
 .projects-grid-scroll {
-  max-height: calc((var(--card-height) * 2) + var(--grid-gap));
-  overflow-y: visible;
-  overflow-x: hidden;
-  padding-right: 6px;
-  /* space so scrollbar doesn't overlap content */
+  /* REMOVE the max-height that creates the clipping */
+  max-height: none;
 
-  padding-top: 10px;         /* ✅ add space for hover lift */
-  margin-top: -10px; 
+  /* Allow shadows to show outside the container */
+  overflow: visible;
+
+  /* keep your spacing */
+  padding-right: 6px;
+
+  padding-top: 10px;
+  margin-top: -10px;
 }
+
 
 .projects-grid {
   display: grid;

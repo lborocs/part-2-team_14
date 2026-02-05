@@ -2,12 +2,30 @@
 /* ============================
    BOOTSTRAP & DATABASE
    ============================ */
+// Start session
+session_start();
+
 // Load database configuration
 require_once __DIR__ . "/../../config/database.php";
 
 // Create DB instance & PDO connection
 $database = new Database();
 $pdo = $database->getConnection();
+
+/* ============================
+   ACCESS CONTROL
+   ============================ */
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../../login.html');
+    exit();
+}
+
+// Check if user is a manager
+if ($_SESSION['role'] !== 'manager') {
+    http_response_code(403);
+    die('Access denied. This page is only available to managers.');
+}
 
 /* =============================
    FILTER OPTIONS (Specialties + Projects)
@@ -303,6 +321,7 @@ if ($isAjax) {
 
 </head>
 <body>
+    <?php include '../to-do/todo_widget.php'; ?>
 
     <div class="dashboard-container">
 
@@ -313,8 +332,8 @@ if ($isAjax) {
                     <img src="../logo.png" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <li class="active-parent">
                         <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
                     </li>
@@ -624,6 +643,34 @@ if ($isAjax) {
                     </button>
                 </div>
             </div>
+            <!-- Floating Todo Widget -->
+<div class="floating-todo-widget" id="floating-todo-widget">
+  <button class="todo-fab" id="todo-fab" aria-label="Toggle personal todos">
+    <i data-feather="check-square"></i>
+    <span class="todo-badge" id="todo-badge">0</span>
+  </button>
+
+  <div class="todo-panel" id="todo-panel" hidden>
+    <div class="todo-panel-header">
+      <h3>My To-Dos</h3>
+      <button class="todo-close-btn" id="todo-close-btn" aria-label="Close">
+        <i data-feather="x"></i>
+      </button>
+    </div>
+
+    <div class="todo-panel-content">
+      <div class="todo-panel-list" id="floating-todo-list">
+        <!-- Populated by JavaScript -->
+      </div>
+      
+      <div class="todo-panel-footer">
+        <a href="../create-todo.html" class="todo-add-btn">
+          <i data-feather="plus"></i> Add New To-Do
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
         </main>
 
     </div>

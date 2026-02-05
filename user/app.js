@@ -179,43 +179,6 @@ function saveProjects() {
     localStorage.setItem('simProjects', JSON.stringify(simProjects));
 }
 
-// *** ADDED: MOCK ARCHIVED PROJECTS DATA ***
-const simArchivedProjects = [
-    {
-        name: 'Project Alpha',
-        teamLeader: 'Alice Brown',
-        avatarClass: 'avatar-brown',
-        description: 'UI Design',
-        createdDate: '20 Jun 2025',
-        closedDate: '15 Oct 2025'
-    },
-    {
-        name: 'Project Beta',
-        teamLeader: 'Levi Jones',
-        avatarClass: 'avatar-orange',
-        description: 'Testing',
-        createdDate: '5 March 2025',
-        closedDate: '1 May 2025'
-    },
-    {
-        name: 'Project 12',
-        teamLeader: 'Bill Smith',
-        avatarClass: 'avatar-green',
-        description: 'Requirements',
-        createdDate: '6 March 2025',
-        closedDate: '29 April 2025'
-    },
-    {
-        name: 'Project 13',
-        teamLeader: 'Eva Smith',
-        avatarClass: 'avatar-green',
-        description: 'Stakeholder Engagement',
-        createdDate: '27 November 2024',
-        closedDate: '10 April 2025'
-    }
-];
-// *** END ADDED DATA ***
-
 // Personal to-do items (created by users themselves)
 const initialPersonalTodos = [
     // Steve Adams (user@make-it-all.co.uk)
@@ -407,12 +370,12 @@ function updateSidebarAndNav() {
                 ? "active"
                 : "";
 
-        const resourcesActive = path.includes("project-resources.html") ? "active" : "";
+        const resourcesActive = path.includes("project-resources.php") ? "active" : "";
 
         navLinks.innerHTML = `
       <a href="projects.php?project_id=${encodeURIComponent(projectId)}" class="${tasksActive}">Tasks</a>
       <a href="${progressPage}?project_id=${encodeURIComponent(projectId)}" class="${progressActive}">Progress</a>
-      <a href="project-resources.html?project_id=${encodeURIComponent(projectId)}" class="${resourcesActive}">Resources</a>
+      <a href="project-resources.php?project_id=${encodeURIComponent(projectId)}" class="${resourcesActive}">Resources</a>
     `;
     }
 
@@ -956,7 +919,7 @@ function loadAllTopicsPage(currentUser) {
 }
 
 /**
- * Runs on the Home page (home/home.html)
+ * Runs on the Home page (home/home.php)
  */
 function loadHomePage(currentUser) {
     // Update page label based on role
@@ -1743,7 +1706,6 @@ function setupAssignTaskForm() {
         fetchAndRenderTasks(); // reload Kanban
     });
 }
-
 
 
 /**
@@ -2731,8 +2693,13 @@ function loadProjectsPage(currentUser) {
 
     feather.replace();
 
-
+    // Initial render of task board
+    renderTaskBoard(currentUser, currentProjectId);
+    setupBoardDnDOnce(currentUser, currentProjectId);
+    initTaskDetailsModal(currentUser);
+    updateAddTaskButtonsVisibility();
 }
+
 
 function openAssignTaskModal(status = "todo") {
     const modal = document.getElementById("assign-task-modal");
@@ -2791,6 +2758,7 @@ function openAssignTaskModal(status = "todo") {
     document.body.style.overflow = "hidden";
     feather.replace();
 }
+
 
 function initManagerMemberProgressList() {
     const listEl = document.getElementById("member-progress-list");
@@ -2877,7 +2845,6 @@ function initManagerMemberProgressList() {
         render(filtered);
     });
 }
-
 
 /**
  * Runs on the Manager Progress page (manager-progress-page)
@@ -3130,7 +3097,7 @@ function renderTasksPerMemberChart(projectTasks) {
 }
 
 /**
- * Runs on the Project Resources page (project-resources.html)
+ * Runs on the Project Resources page (project-resources.php)
  */
 function loadProjectResourcesPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
@@ -3253,47 +3220,10 @@ function setupCreateTodoForm(currentUser) {
         savePersonalTodos();
 
         sessionStorage.setItem('taskCreated', 'Personal to-do added!');
-        window.location.href = `home.html?user=${currentUser.email}`;
+        window.location.href = `home.php?user=${currentUser.email}`;
     });
 }
 
-
-// *** ADDED: New function to load Project Archive page ***
-function loadProjectArchivePage(currentUser) {
-    const gridContainer = document.getElementById('archive-grid-container');
-    if (!gridContainer) return;
-
-    // Generate HTML for each card from mock data
-    gridContainer.innerHTML = simArchivedProjects.map(project => {
-        return `
-            <div class="archive-card">
-                <h2>${project.name}</h2>
-                <ul>
-                    <li>
-                        <strong>Team Leader:</strong>
-                        <span>${project.teamLeader}</span>
-                        <span class="team-leader-avatar ${project.avatarClass}">
-                            ${project.teamLeader.split(' ').map(n => n[0]).join('')}
-                        </span>
-                    </li>
-                    <li>
-                        <strong>Description:</strong>
-                        <span>${project.description}</span>
-                    </li>
-                    <li>
-                        <strong>Date Created:</strong>
-                        <span>${project.createdDate}</span>
-                    </li>
-                    <li>
-                        <strong>Date Closed:</strong>
-                        <span>${project.closedDate}</span>
-                    </li>
-                </ul>
-            </div>
-        `;
-    }).join('');
-}
-// *** END ADDED FUNCTION ***
 
 function sortProjects() {
     const sortSelect = document.getElementById('sortProjects');
@@ -4351,12 +4281,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.__CURRENT_USER__ = currentUser;
 
 
-    // *** ADDED: Show "Project Archive" in sidebar for managers ***
-    const navArchive = document.getElementById('nav-archive');
-    if (navArchive && currentUser.role === 'manager') {
-        navArchive.style.display = 'block';
-    }
-    // *** END ADDED CODE-- fixing conficts-Simi ***
+    // Store user in window object for floating widget
+    window.__USER__ = currentUser;
+    window.__CURRENT_USER__ = currentUser; // Also set for task board rendering
 
     // Run page-specific logic based on body ID
     const pageId = document.body.id;
@@ -4418,11 +4345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (pageId === 'projects-page') {
         // Project Kanban Board
         loadProjectsPage(currentUser);
-    } else if (pageId === 'project-archive-page') {
-        // *** ADDED: Load logic for new archive page ***
-        loadProjectArchivePage(currentUser);
-    }
-    else if (pageId === "projects-overview-page") {
+    } else if (pageId === "projects-overview-page") {
         sortProjects();
         archivedJump();
         setupArchivedToggle();
@@ -4430,8 +4353,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupProjectsOverviewSearch();
         setupProjectCardNavigation();
     }
-
-
+    fetchAndRenderTasks();
+    setupAssignTaskForm();
     // Finally, activate all Feather icons
     feather.replace();
 });
@@ -4526,6 +4449,26 @@ function matchesDueFilter(deadline, filter) {
             return true;
     }
 }
+async function fetchProjectTasksFromDb(projectId) {
+    const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
+    const res = await fetch(url, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
+
+    // data.tasks are DB shape -> normalize to your UI shape
+    return (data.tasks || []).map(t => ({
+        id: t.task_id,
+        title: t.task_name,
+        description: t.description || "",
+        priority: t.priority || "medium",
+        status: normalizeDbStatus(t.status),     // you already have this function
+        deadline: t.deadline,
+        assignedTo: Array.isArray(t.assignedUsers)
+            ? t.assignedUsers.map(u => u.email)
+            : []
+    }));
+}
+
 async function fetchProjectTasksFromDb(projectId) {
     const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
     const res = await fetch(url, { credentials: "include" });
@@ -4665,6 +4608,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
+/**
+ * Helper: Get current user email from various sources
+ */
+function getCurrentUserEmail() {
+  // Try from window object first (set by PHP)
+  if (window.__USER__?.email) return window.__USER__.email;
+  
+  // Try from URL parameter
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('user')) return params.get('user');
+  
+  // Default fallback (you might need to adjust this)
+  return 'user@make-it-all.co.uk';
+}
 
 
 
