@@ -3188,7 +3188,7 @@ async function loadProjectResourcesPage(currentUser) {
         contacts.push({
             name: `${project.manager_first_name} ${project.manager_last_name}`,
             role: 'Project Manager',
-            avatar: project.manager_avatar
+            avatar: project.manager_avatar || '/default-avatar.png'
         });
     }
 
@@ -3196,20 +3196,14 @@ async function loadProjectResourcesPage(currentUser) {
         contacts.push({
             name: `${project.team_leader_first_name} ${project.team_leader_last_name}`,
             role: 'Team Leader',
-            avatar: project.team_leader_avatar
+            avatar: project.team_leader_avatar || '/default-avatar.png'
         });
     }
 
     contactsList.innerHTML = contacts.map(c => `
         <div class="contact-item">
             <div class="avatar">
-                ${
-                    c.avatar
-                        ? `<img src="<?php echo htmlspecialchars($profile_picture); ?>" alt="${c.name}">`
-                        : `<span class="avatar-fallback">
-                            ${c.name.split(' ').map(n => n[0]).join('')}
-                        </span>`
-                }
+                ${c.avatar ? `<img src="${c.avatar}" alt="${c.name}">` : `<span class="avatar-fallback">${c.name.split(' ').map(n => n[0]).join('')}</span>`}
             </div>
             <div class="contact-info">
                 <span class="contact-name">${c.name}</span>

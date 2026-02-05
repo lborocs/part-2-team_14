@@ -41,17 +41,19 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
                     creator.first_name AS manager_first_name,
                     creator.last_name  AS manager_last_name,
                     creator.profile_picture AS manager_avatar,
+                    creator.user_id AS manager_id,
 
                     leader.first_name  AS team_leader_first_name,
                     leader.last_name   AS team_leader_last_name,
-                    leader.profile_picture   AS team_leader_avatar
+                    leader.profile_picture   AS team_leader_avatar,
+                    leader.user_id AS leader_id
 
                 FROM projects p
                 LEFT JOIN users creator ON p.created_by = creator.user_id
                 LEFT JOIN users leader  ON p.team_leader_id = leader.user_id
                 WHERE p.project_id = ?
             ";
-                        $stmt = $pdo->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->execute([$projectId]);
             $project = $stmt->fetch(PDO::FETCH_ASSOC);
 
