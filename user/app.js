@@ -825,21 +825,11 @@ function setupCreateProjectPage(currentUser) {
  * Runs on the Settings page (settings.php)
  */
 function loadSettingsPage(currentUser) {
-    // 1. Populate user data
     document.getElementById('profile-name').value = currentUser.name;
     document.getElementById('profile-email').value = currentUser.email;
-
-    // Format the role (capitalise and replace underscroll)
     const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
-
-    // 2. Add form submit listeners (prototype alerts)
-    document.getElementById('profile-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        // In a real app, you'd save this new name
-        const newName = document.getElementById('profile-name').value;
-        alert(`Profile updated! (Name changed to ${newName})`);
-    });
+    document.getElementById('profile-picture').src = currentUser.profile_picture || "default-avatar.png";
 
     document.getElementById('password-form').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -851,18 +841,17 @@ function loadSettingsPage(currentUser) {
         alert('Notification preferences saved!');
     });
 
-    // 3. Add Sign Out logic
+    // Sign Out logic
     document.getElementById('sign-out-btn').addEventListener('click', (e) => {
         e.preventDefault();
 
         // Clear the simulated session
-        // This clears the posts you created, etc.
         localStorage.clear();
         sessionStorage.clear();
 
         alert('Signing out...');
 
-        // Redirect to the login page (assuming it's index.html)
+        // Redirect to the login page
         window.location.href = '../index.html';
     });
 }

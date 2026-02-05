@@ -25,6 +25,7 @@ if (!$isLoggedIn) {
   $currentUserId = $_SESSION['user_id'];
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -38,7 +39,6 @@ if (!$isLoggedIn) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
-
 <body id="settings-page"> <div class="dashboard-container">
     <?php include 'to-do/todo_widget.php'; ?>
         <nav class="sidebar">
@@ -73,19 +73,28 @@ if (!$isLoggedIn) {
                     <!-- Profile Details -->
                     <form id="profile-form" class="settings-card">
                         <h2>Profile Information</h2>
-                        <div class="form-group">
-                            <label for="profile-name">Full Name</label>
-                            <input type="text" id="profile-name" value="Loading..." readonly disabled>
+                        <div class="profile-content">
+                            <div class="profile-fields">
+                                <div class="form-group">
+                                    <label for="profile-name">Full Name</label>
+                                    <input type="text" id="profile-name" value="Loading..." readonly disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-email">Email Address</label>
+                                    <input type="email" id="profile-email" value="Loading..." readonly disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-role">Role</label>
+                                    <input type="text" id="profile-role" value="Loading..." readonly disabled>
+                                </div>
+                                <button type="submit" class="create-post-btn">Save Profile</button>
+                            </div>
+
+                            <div class="profile-avatar">
+                                <img id="profile-picture" src="default-avatar.png" alt="Profile Picture">
+                                <button type="submit" class="create-post-btn">Upload Image</button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" value="Loading..." readonly disabled>
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-role">Role</label>
-                            <input type="text" id="profile-role" value="Loading..." readonly disabled>
-                        </div>
-                        <button type="submit" class="create-post-btn">Save Profile</button>
                     </form>
 
                     <form id="password-form" class="settings-card">
