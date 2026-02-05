@@ -16,8 +16,8 @@
     margin-bottom: 25px;
 }
 
-#project-name-header, #project-name-breadcrumb {
-text-transform: capitalize;
+#project-name-header #project-name-breadcrumb {
+text-transform: capitalize !important;
 }
 
 .resource-header h2 {
@@ -50,9 +50,14 @@ text-transform: capitalize;
 }
 
 .resource-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 25px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: auto;
+  gap: 20px;
+}
+
+.resource-files-card {
+  grid-column: 1 / -1;
 }
 
 .resource-card {
