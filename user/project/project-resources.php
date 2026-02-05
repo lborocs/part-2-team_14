@@ -29,7 +29,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
         $database = new Database();
         $pdo = $database->getConnection();
 
-        function isProjectLeaderOrManager($pdo, $projectId, $userId) {
+        function canUploadDelete($pdo, $projectId, $userId) {
             $sql = "SELECT created_by, team_leader_id FROM projects WHERE project_id = ?";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$projectId]);
@@ -93,7 +93,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
         // DELETE FILE
         if ($action === 'delete') {
             // Check permission
-            if (!isProjectLeaderOrManager($pdo, $projectId, $userId)) {
+            if (!canUploadDelete($pdo, $projectId, $userId)) {
                 echo json_encode(['success' => false, 'message' => 'Only your team leader or manager can delete project resources.']);
                 exit;
             }
@@ -131,7 +131,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
         // UPLOAD FILE
         if ($action === 'upload') {
             // Check permission
-            if (!isProjectLeaderOrManager($pdo, $projectId, $userId)) {
+            if (!canUploadDelete($pdo, $projectId, $userId)) {
                 echo json_encode(['success' => false, 'message' => 'Only your team leader or manager can upload project resources.']);
                 exit;
             }

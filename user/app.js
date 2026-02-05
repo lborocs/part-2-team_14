@@ -3167,7 +3167,7 @@ async function loadProjectResourcesPage(currentUser) {
 
     const project = data.project;
 
-    // --- Fill in project details ---
+    // Fill in project details
     document.getElementById('project-created-date').textContent =
         new Date(project.created_at).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -3178,7 +3178,7 @@ async function loadProjectResourcesPage(currentUser) {
     document.getElementById('project-description').textContent =
         project.description || 'No description provided for this project.';
 
-    // --- Build project contacts ---
+    // Build project contacts
     const contactsList = document.getElementById('project-contacts-list');
     contactsList.innerHTML = '';
 
