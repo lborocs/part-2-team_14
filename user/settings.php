@@ -1,28 +1,51 @@
 <?php
 session_start();
- 
+
 require_once '../config/database.php';
- 
+
 $database = new Database();
 $db = $database->getConnection();
- 
+
 if (!$db) {
   die("Database connection failed.");
 }
- 
-//DEV BYPASS
+
+// DEV BYPASS
 $isLoggedIn = isset($_SESSION['role'], $_SESSION['email'], $_SESSION['user_id']);
- 
+
 if (!$isLoggedIn) {
-  // you're viewing without login -> force safe defaults
   $role = 'manager';
   $isManager = true;
- 
   $currentUserId = 1; // TEMP fallback
 } else {
   $role = $_SESSION['role'];
   $isManager = ($role === 'manager');
   $currentUserId = $_SESSION['user_id'];
+}
+
+// Get current user's profile picture from database
+$stmt = $db->prepare("SELECT profile_picture FROM users WHERE user_id = ?");
+$stmt->execute([$currentUserId]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+$profile_picture = $user['profile_picture'];
+
+// Update profile picture in database
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (isset($input['profile_picture'])) {
+        $profile_picture = $input['profile_picture'];
+
+        $stmt = $db->prepare("UPDATE users SET profile_picture = ? WHERE user_id = ?");
+        if ($stmt->execute([$profile_picture, $currentUserId])) {
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'DB update failed']);
+        }
+    } else {
+        echo json_encode(['success' => false, 'error' => 'No profile picture provided']);
+    }
+    exit;
 }
 ?>
 
@@ -91,8 +114,12 @@ if (!$isLoggedIn) {
                             </div>
 
                             <div class="profile-avatar">
-                                <img id="profile-picture" src="default-avatar.png" alt="Profile Picture">
-                                <button type="submit" class="create-post-btn">Upload Image</button>
+                                <img id="profile-picture" src="<?php echo htmlspecialchars($profile_picture); ?>" alt="Profile Picture">
+                                <input type="file" id="profile-image-input" accept="image/*" style="display:none;">
+                                <div class="avatar-buttons">
+                                    <button type="button" class="create-post-btn" id="upload-image-btn">Upload Icon</button>
+                                    <button type="button" class="create-post-btn" id="delete-image-btn">Delete Icon</button>
+                                </div>
                             </div>
                         </div>
                     </form>

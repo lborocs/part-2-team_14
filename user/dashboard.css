@@ -1563,3 +1563,19 @@ body {
     object-fit: cover;
     border: 2px solid #ddd;
 }
+
+.avatar-buttons {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+#delete-image-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+}
+
+#delete-image-btn:hover {
+    background-color: #c0392b;
+}

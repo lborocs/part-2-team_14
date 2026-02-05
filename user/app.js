@@ -829,16 +829,98 @@ function loadSettingsPage(currentUser) {
     document.getElementById('profile-email').value = currentUser.email;
     const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
-    document.getElementById('profile-picture').src = currentUser.profile_picture || "default-avatar.png";
 
+    // Upload a new profile picture
+    const uploadBtn = document.getElementById("upload-image-btn");
+    const fileInput = document.getElementById("profile-image-input");
+    const profileImg = document.getElementById("profile-picture");
+
+    uploadBtn.addEventListener("click", () => {
+        fileInput.click();
+    });
+
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // Update the image on the page
+        const reader = new FileReader();
+        reader.onload = e => {
+            profileImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // Use file name as the database path
+        const simulatedPath = `/${file.name}`;
+
+        fetch("settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile_picture: simulatedPath })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture updated in DB!");
+            } else {
+                console.error("Failed to update profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
+    });
+
+    // Delete current profile picture
+    const deleteBtn = document.getElementById("delete-image-btn");
+
+    deleteBtn.addEventListener("click", () => {
+        const defaultPath = "/default-avatar.png";
+        profileImg.src = defaultPath;
+
+        fetch("settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile_picture: defaultPath })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture reset to default in DB!");
+            } else {
+                console.error("Failed to reset profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
+    });
+
+    // Update password
     document.getElementById('password-form').addEventListener('submit', (e) => {
         e.preventDefault();
         alert('Password updated! (This is a demo)');
     });
 
+    // Update notification preferences
     document.getElementById('notifications-form').addEventListener('submit', (e) => {
         e.preventDefault();
         alert('Notification preferences saved!');
+    });
+
+    const express = require("express");
+    const multer = require("multer");
+    const path = require("path");
+
+    const upload = multer({ dest: "uploads/" }); // temp storage
+    const app = express();
+
+    app.post("/api/update-profile-picture", upload.single("profileImage"), (req, res) => {
+        const file = req.file;
+        if (!file) return res.json({ success: false });
+
+        // Here you would:
+        // 1. Move/rename the file
+        // 2. Update the database with the new filename/path
+        // 3. Return success
+        console.log(file); // contains file info
+        res.json({ success: true });
     });
 
     // Sign Out logic
