@@ -2,12 +2,30 @@
 /* ============================
    BOOTSTRAP & DATABASE
    ============================ */
+// Start session
+session_start();
+
 // Load database configuration
 require_once __DIR__ . "/../../config/database.php";
 
 // Create DB instance & PDO connection
 $database = new Database();
 $pdo = $database->getConnection();
+
+/* ============================
+   ACCESS CONTROL
+   ============================ */
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../../login.html');
+    exit();
+}
+
+// Check if user is a manager
+if ($_SESSION['role'] !== 'manager') {
+    http_response_code(403);
+    die('Access denied. This page is only available to managers.');
+}
 
 /* =============================
    FILTER OPTIONS (Specialties + Projects)

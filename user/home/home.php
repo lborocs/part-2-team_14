@@ -23,6 +23,7 @@
                 <ul class="nav-main">
                     <li class="active-parent"><a href="home.php"><i data-feather="home"></i>Home</a></li>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge
                             Base</a></li>
                 </ul>
