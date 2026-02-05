@@ -1,3 +1,122 @@
+<?php
+session_start();
+require_once __DIR__ . "/../../config/database.php";
+
+// Handle API requests
+if (isset($_GET['action']) || isset($_POST['action'])) {
+    header('Content-Type: application/json');
+
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+        exit;
+    }
+
+    if (!isset($_SESSION['current_project_id'])) {
+        echo json_encode(['success' => false, 'message' => 'No project selected']);
+        exit;
+    }
+
+    $action = $_GET['action'] ?? $_POST['action'] ?? '';
+    $userId = $_SESSION['user_id'];
+    $projectId = $_SESSION['current_project_id'];
+
+    try {
+        $database = new Database();
+        $pdo = $database->getConnection();
+
+        // LIST FILES
+        if ($action === 'list') {
+            $sql = "SELECT resource_id, file_name, file_type, file_size, file_path,
+                           description, DATE_FORMAT(uploaded_at, '%b %d, %Y') as uploaded_at
+                    FROM project_resources
+                    WHERE project_id = ?
+                    ORDER BY uploaded_at DESC";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$projectId]);
+            $resources = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode(['success' => true, 'resources' => $resources]);
+            exit;
+        }
+
+        // UPLOAD FILE
+        if ($action === 'upload') {
+            if (!isset($_FILES['resource_file']) || $_FILES['resource_file']['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error']);
+                exit;
+            }
+
+            $file = $_FILES['resource_file'];
+            $description = $_POST['description'] ?? '';
+
+            // Validate file size (10MB max)
+            $maxSize = 10 * 1024 * 1024; // 10MB in bytes
+            if ($file['size'] > $maxSize) {
+                echo json_encode(['success' => false, 'message' => 'File too large (max 10MB)']);
+                exit;
+            }
+
+            // Validate file type
+            $allowedTypes = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'png', 'jpg', 'jpeg', 'txt'];
+            $fileExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+            if (!in_array($fileExt, $allowedTypes)) {
+                echo json_encode(['success' => false, 'message' => 'File type not allowed']);
+                exit;
+            }
+
+            // Generate unique filename
+            $newFileName = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $file['name']);
+            $uploadDir = __DIR__ . '/../../uploads/resources/';
+            $uploadPath = $uploadDir . $newFileName;
+
+            // Create directory if it doesn't exist
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            // Move uploaded file
+            if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+                echo json_encode(['success' => false, 'message' => 'Failed to save file']);
+                exit;
+            }
+
+            // Insert into database
+            $sql = "INSERT INTO project_resources
+                    (file_name, file_type, file_size, file_path, project_id, uploaded_by, description)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                $file['name'],
+                $fileExt,
+                $file['size'],
+                'uploads/resources/' . $newFileName,
+                $projectId,
+                $userId,
+                $description
+            ]);
+
+            echo json_encode([
+                'success' => true,
+                'resource' => [
+                    'resource_id' => $pdo->lastInsertId(),
+                    'file_name' => $file['name'],
+                    'file_type' => $fileExt,
+                    'file_size' => $file['size']
+                ]
+            ]);
+            exit;
+        }
+
+        echo json_encode(['success' => false, 'message' => 'Invalid action']);
+        exit;
+
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+        exit;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
