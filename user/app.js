@@ -28,6 +28,18 @@ function showSuccessNotification(message) {
     }, 3000);
 }
 
+function getUsersMap() {
+    // Prefer PHP injected users
+    if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
+
+    // Fallback if you still have simUsers defined somewhere else
+    if (typeof window.simUsers === "object") return window.simUsers;
+
+    // Final fallback
+    return {};
+}
+
+
 // Initial hardcoded posts
 const initialPosts = [
     // Software Issues
@@ -263,6 +275,15 @@ async function getCurrentUser() {
         return null;
     }
 }
+
+function getUsersSource() {
+    // Prefer users injected by PHP
+    if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
+    // fallback (if you ever define simUsers elsewhere)
+    if (typeof simUsers !== "undefined") return simUsers;
+    return {}; // safe fallback
+}
+
 
 function getCurrentUserStatus() {
     if (window.__CAN_MANAGE_PROJECT__) {
@@ -2740,8 +2761,13 @@ function loadProjectsPage(currentUser) {
 
     feather.replace();
 
-
+    // Initial render of task board
+    renderTaskBoard(currentUser, currentProjectId);
+    setupBoardDnDOnce(currentUser, currentProjectId);
+    initTaskDetailsModal(currentUser);
+    updateAddTaskButtonsVisibility();
 }
+
 
 function openAssignTaskModal(status = "todo") {
     const modal = document.getElementById("assign-task-modal");
@@ -3914,6 +3940,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Store user in window object for floating widget
     window.__USER__ = currentUser;
+    window.__CURRENT_USER__ = currentUser; // Also set for task board rendering
 
     // Run page-specific logic based on body ID
     const pageId = document.body.id;
