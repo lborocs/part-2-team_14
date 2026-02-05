@@ -256,7 +256,8 @@ function savePersonalTodos() {
  */
 async function getCurrentUser() {
     try {
-        const response = await fetch('../../actions/login_sync.php', {
+        const actionsBase = window.__ACTIONS_BASE__ || '../../actions/';
+        const response = await fetch(actionsBase + 'login_sync.php', {
             credentials: 'include'
         });
 
@@ -902,25 +903,6 @@ function loadSettingsPage(currentUser) {
     document.getElementById('notifications-form').addEventListener('submit', (e) => {
         e.preventDefault();
         alert('Notification preferences saved!');
-    });
-
-    const express = require("express");
-    const multer = require("multer");
-    const path = require("path");
-
-    const upload = multer({ dest: "uploads/" }); // temp storage
-    const app = express();
-
-    app.post("/api/update-profile-picture", upload.single("profileImage"), (req, res) => {
-        const file = req.file;
-        if (!file) return res.json({ success: false });
-
-        // Here you would:
-        // 1. Move/rename the file
-        // 2. Update the database with the new filename/path
-        // 3. Return success
-        console.log(file); // contains file info
-        res.json({ success: true });
     });
 
     // Sign Out logic

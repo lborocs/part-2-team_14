@@ -167,6 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </main>
     </div>
 
+    <script>window.__ACTIONS_BASE__ = '../actions/';</script>
     <script src="app.js"></script>
 </body>
 </html>
