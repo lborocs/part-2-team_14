@@ -39,7 +39,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                     <h1 style="margin: 0;">Welcome Back!</h1>
                     <div id="manager-actions" style="display: none;">
-                        <a href="create-project.html" class="create-post-btn">
+                        <a href="create-project.php" class="create-post-btn">
                             <i data-feather="folder-plus"></i> Create Project
                         </a>
                     </div>
