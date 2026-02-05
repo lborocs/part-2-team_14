@@ -11,14 +11,11 @@
 /* Make Team Progress card look like Upcoming Deadlines card */
 .member-progress-card{
   background: #fff;
-  border-radius: 12px; /* match deadlines-card */
-  padding: 30px;       /* match deadlines-card */
-  margin-bottom: 30px; /* match deadlines-card spacing */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* match deadlines-card */
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-
-
-
 
 /* Left + Right columns behave like normal grid columns */
 .manager-progress-left,
@@ -34,17 +31,21 @@
 }
 
 .member-progress-card h2{
-  font-size: 22px;     
-  font-weight: 600;     
-  margin: 0 0 20px 0;   
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
 }
 
-
-/* Header layout: stack title then search */
-.member-progress-header {
-  display: block;
+/* Header layout: title left, search right */
+.member-progress-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 14px;
 }
+
+
 
 /* Search bar wrapper matches your "Search tasks..." look */
 .member-progress-search-wrap {
@@ -55,8 +56,9 @@
   border-radius: 14px;
   padding: 12px 14px;
   background: #fff;
-  width: 100%;
-  max-width: 420px; /* optional */
+  width: 360px;      
+  max-width: 45%;     
+  margin-left: auto
 }
 
 .member-progress-search-wrap i {
@@ -82,22 +84,36 @@
 
 /* Make the list scrollable */
 .member-progress-list{
-  max-height: 360px;     /* ~3 rows visible */
+  max-height: 160px;
   overflow-y: auto;
   padding-right: 8px;
 }
 
+.member-progress-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 
-/* Compact row (no avatar) */
-.member-progress-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   border: 1px solid #eee;
   border-radius: 14px;
   background: #fff;
   margin-bottom: 12px;
+}
+
+/* Left side: name + completed text */
+.member-name-wrap{
+  min-width: 200px;   /* adjust if names are long */
+  flex: 0 0 auto;
+}
+
+/* Right side: progress bar + % */
+.member-bar-wrap{
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* Name + subtitle */
@@ -130,10 +146,9 @@
 
 .member-bar-fill{
   height: 100%;
-  background: #FBC02D;  
+  background: #FBC02D;
   border-radius: 999px;
 }
-
 
 /* Percent right side */
 .member-percent {
@@ -144,8 +159,6 @@
   text-align: right;
 }
 
-
-
 /* Responsive (same as your progress page) */
 @media (max-width: 1200px) {
     .manager-progress-layout {
@@ -153,8 +166,411 @@
     }
 }
 
-.deadlines-list{
-  max-height: 240px;   /* tweak until about 3 items show */
+/* ========================================
+   DEADLINES CARD - 3 COLUMNS ONLY
+   ======================================== */
+
+.deadlines-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.deadlines-card h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.deadlines-columns {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 16px;
+  padding: 12px 16px;   
+  margin-bottom: 6px;
+  border-bottom: 2px solid #f0f0f0;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  align-items: left;
+}
+
+
+/* Scrollable list */
+.deadlines-list {
+  max-height: 130px;
   overflow-y: auto;
-  padding-right: 6px;  /* prevents scrollbar covering content */
+  padding-right: 10px;
+}
+
+.deadline-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 16px;
+  align-items: left;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+
+.deadline-row:hover {
+  background: #fafafa;
+  transform: translateX(2px);
+}
+
+.deadline-row:active {
+  background: #f0f0f0;
+}
+
+/* Column styling */
+.col-task {
+  font-weight: 600;
+  font-size: 15px;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.col-due {
+  font-size: 14px;
+  color: #666;
+}
+
+.col-activity {
+  font-size: 14px;
+  color: #999;
+}
+
+/* ONE scroll container (header + rows together) */
+.deadlines-scroll{
+  max-height: 180px;     
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;  
+}
+
+/* stop the inner list from scrolling */
+.deadlines-list{
+  max-height: none;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.deadlines-columns,
+.deadline-row{
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  column-gap: 16px;
+  align-items: center;
+}
+
+/* make rows smaller so 3 fit */
+.deadline-row{
+  padding: 4px 16px;
+}
+
+/* hover back */
+.deadline-row:hover{
+  background: #fafafa;
+  transform: translateX(2px);
+}
+
+
+/* ========================================
+   TASK DETAIL MODAL - Matching progress.css
+   ======================================== */
+
+#deadline-task-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.task-detail-modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+  position: relative;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.task-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.task-detail-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+  flex: 1;
+  padding-right: 20px;
+}
+
+.task-detail-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.task-menu-btn,
+.modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.task-menu-btn:hover,
+.modal-close-btn:hover {
+  background: #f5f5f5;
+}
+
+.task-menu-btn svg,
+.modal-close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Dropdown menu */
+.task-actions-menu {
+  position: absolute;
+  top: 60px;
+  right: 60px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  min-width: 220px;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.menu-section {
+  padding: 8px 0;
+}
+
+.menu-section + .menu-section {
+  border-top: 1px solid #f0f0f0;
+}
+
+.menu-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px 4px;
+}
+
+.menu-item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #111;
+  border-radius: 6px;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.menu-item:hover {
+  background: #f5f5f5;
+}
+
+.menu-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+.menu-item-danger {
+  color: #ef4444;
+}
+
+.menu-item-danger:hover {
+  background: #fef2f2;
+}
+
+.task-detail-body {
+  padding: 24px 28px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.task-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.task-detail-row:last-child {
+  border-bottom: none;
+}
+
+.task-detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.task-detail-value {
+  font-size: 15px;
+  color: #111;
+  font-weight: 500;
+  text-align: right;
+}
+
+/* Status and Priority badges */
+.status-badge,
+.priority-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Status badge colors (match Tasks page columns) */
+.status-todo {
+  background: #FDE8E8;
+  color: #D14343;
+}
+
+.status-progress {
+  background: #FFF3C4;
+  color: #B58100;
+}
+
+.status-review {
+  background: #E6F7EF;
+  color: #2F8F5B;
+}
+
+.status-completed {
+  background: #E8F1FF;
+  color: #3A6EDC;
+}
+
+/* Priority badge colors (match Tasks page priority pills) */
+.priority-low {
+  background: #E6F7EF;
+  color: #2F8F5B;
+}
+
+.priority-medium {
+  background: #FFF3C4;
+  color: #B58100;
+}
+
+.priority-high {
+  background: #FDE8E8;
+  color: #D14343;
+}
+
+
+/* Success notification */
+.success-notification {
+  position: fixed;
+  top: -100px;
+  right: 24px;
+  background: #34a853;
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10001;
+  transition: top 0.3s ease;
+}
+
+.success-notification.show {
+  top: 24px;
+}
+
+.success-notification svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Manager Notes (read-only) */
+.task-detail-row-notes {
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.task-detail-row-notes .task-detail-value {
+  max-width: 320px;
+  white-space: pre-wrap;
+  line-height: 1.45;
+  text-align: right;
+  color: #111;
 }

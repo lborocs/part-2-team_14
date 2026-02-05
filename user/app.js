@@ -1477,6 +1477,7 @@ async function loadProgressPage(currentUser) {
 
 function renderUpcomingDeadlines(userTasks) {
     const deadlinesList = document.getElementById('deadlines-list');
+
     const today = new Date("2025-10-25T12:00:00"); // Hardcode date for demo consistency
     today.setHours(0, 0, 0, 0);
 
@@ -1785,21 +1786,20 @@ function setupCreateProjectForm(currentUser) {
  */
 function createTaskCardHTML(task, currentUser) {
     function renderStatusPill(task) {
-        const statuses = {
-            todo: "To Do",
-            inprogress: "In Progress",
-            review: "Review",
-            completed: "Completed"
-        };
+    const statuses = {
+        todo: "To Do",
+        inprogress: "In Progress",
+        review: "Review",
+        completed: "Completed"
+    };
 
-        const priorities = {
-            low: "Low",
-            medium: "Medium",
-            high: "High",
-            urgent: "Urgent"
-        };
+    const priorities = {
+        low: "Low",
+        medium: "Medium",
+        high: "High",
+    };
 
-        return `
+    return `
       <div class="task-status-menu" data-task-id="${task.id}">
         <button class="status-pill icon-only" aria-label="Task actions">
           <span class="ellipsis">⋯</span>
@@ -1807,33 +1807,34 @@ function createTaskCardHTML(task, currentUser) {
 
         <div class="status-dropdown" hidden>
           <div class="dropdown-section">
-            <div class="dropdown-label">Change status</div>
+            <div class="dropdown-label">STATUS</div>
             ${Object.entries(statuses)
                 .filter(([k]) => k !== task.status)
                 .map(([k, v]) =>
-                    `<button data-action="status" data-value="${k}">
-                        Move to ${v}
-                     </button>`
+                    `<button data-action="status" data-value="${k}">${v}</button>`
                 ).join("")}
           </div>
 
           <div class="dropdown-divider"></div>
 
           <div class="dropdown-section">
-            <div class="dropdown-label">Change priority</div>
+            <div class="dropdown-label">PRIORITY</div>
             ${Object.entries(priorities)
                 .filter(([k]) => k !== task.priority)
                 .map(([k, v]) =>
-                    `<button data-action="priority" data-value="${k}">
-                        Set priority: ${v}
-                     </button>`
+                    `<button data-action="priority" data-value="${k}">${v}</button>`
                 ).join("")}
+          </div>
+
+          <div class="dropdown-divider"></div>
+
+          <div class="dropdown-section">
+            <button data-action="delete">Delete Task</button>
           </div>
         </div>
       </div>
     `;
-    }
-
+}
     // Check for the special "Leader on Apollo" case
     const currentProjectId = getCurrentProjectId();
 
@@ -1881,18 +1882,30 @@ function createTaskCardHTML(task, currentUser) {
     // Capitalize priority
     const priorityText = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
 
+    // Format deadline for display
+    const deadlineDate = task.deadline ? new Date(task.deadline) : null;
+    const formattedDeadline = deadlineDate
+        ? deadlineDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+        : 'No deadline';
+
     return `
   <div class="task-card" data-task-id="${task.id}" ${isDraggable ? 'draggable="true"' : ''}>
     <span class="priority ${task.priority}">${priorityText}</span>
     <h3 class="task-title">${task.title}</h3>
-    ${task.description ? `<p class="task-desc">${task.description}</p>` : ''}
 
     ${isManagerView ? renderStatusPill(task) : ""}
 
-    <div class="task-assignees">
-      ${assigneesHtml}
-      ${moreAssignees}
-    </div>
+    <div class="task-footer">
+  <div class="task-due-date">
+    ${formattedDeadline}
+  </div>
+
+  <div class="task-assignees">
+    ${assigneesHtml}
+    ${moreAssignees}
+  </div>
+</div>
+
   </div>
 `;
 
@@ -2078,26 +2091,55 @@ async function updateTaskPriorityInDb(taskId, priority) {
 
 async function deleteTaskInDb(taskId) {
     const pid = getCurrentProjectId();
-
-    const res = await fetch(`projects.php?project_id=${encodeURIComponent(pid)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-            ajax: "delete_task",
-            task_id: taskId
-        })
-    });
-
-    const raw = await res.text();
-    let data;
-    try { data = JSON.parse(raw); }
-    catch { throw new Error("Server did not return JSON: " + raw); }
-
-    if (!res.ok || !data.success) {
-        throw new Error(data.message || `Delete failed (${res.status})`);
+    if (!pid) {
+        throw new Error("No project ID available");
     }
 
-    return data;
+    try {
+        const res = await fetch(`projects.php?project_id=${encodeURIComponent(pid)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                ajax: "delete_task",
+                task_id: taskId
+            })
+        });
+
+        // Check if response is ok first
+        if (!res.ok) {
+            throw new Error(`Server error: ${res.status}`);
+        }
+
+        const raw = await res.text();
+        
+        // Check if response is empty or not JSON
+        if (!raw || raw.trim() === '') {
+            // If empty response but status was ok, consider it success
+            return { success: true };
+        }
+
+        let data;
+        try { 
+            data = JSON.parse(raw); 
+        } catch (parseError) {
+            console.error("JSON parse error. Raw response:", raw);
+            // If we can't parse but got 200 OK, assume success
+            if (res.status === 200) {
+                return { success: true };
+            }
+            throw new Error("Server did not return valid JSON: " + raw.substring(0, 100));
+        }
+
+        if (!data.success) {
+            throw new Error(data.message || `Delete failed (${res.status})`);
+        }
+
+        return data;
+        
+    } catch (err) {
+        console.error("Delete task error:", err);
+        throw err;
+    }
 }
 
 function setupStatusPillActions(currentUser, currentProjectId) {
@@ -2125,53 +2167,93 @@ function setupStatusPillActions(currentUser, currentProjectId) {
     });
 
 
-    // Handle move (CLICK OPTION)
-    document.addEventListener("click", async (e) => {
-        const option = e.target.closest(".status-dropdown button");
-        if (!option) return;
+   // Handle dropdown actions (status, priority, delete)
+document.addEventListener("click", async (e) => {
+    const option = e.target.closest(".status-dropdown button");
+    if (!option) return;
 
-        e.preventDefault();
-        e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
 
-        if (!window.__CAN_MANAGE_PROJECT__) return;
+    if (!window.__CAN_MANAGE_PROJECT__) return;
 
-        const wrapper = option.closest(".task-status-menu");
-        const taskId = wrapper.dataset.taskId;
-        const action = option.dataset.action;
-        const value = option.dataset.value;
+    const wrapper = option.closest(".task-status-menu");
+    const taskId = wrapper?.dataset.taskId;
+    if (!taskId) return;
 
-        const tasks = window.__TASKS_NORM__ || [];
-        const task = tasks.find(t => String(t.id) === String(taskId));
-        if (!task) return;
+    const action = option.dataset.action;
+    const value = option.dataset.value;
 
-        if (action === "status" && task.status !== value) {
-            const old = task.status;
-            task.status = value;
+    const tasks = window.__TASKS_NORM__ || [];
+    const task = tasks.find(t => String(t.id) === String(taskId));
+    if (!task) return;
 
-            try {
-                await updateTaskStatusInDb(task.id, denormalizeStatus(value));
-            } catch {
-                task.status = old;
-                alert("Could not change status");
-                return;
+    const currentUser = window.__CURRENT_USER__;
+    const currentProjectId = getCurrentProjectId();
+
+    // Handle DELETE action
+    if (action === "delete") {
+        const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
+        if (!ok) return;
+
+        try {
+            // Close the dropdown first
+            document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+            document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+
+            await deleteTaskInDb(task.id);
+
+            // Remove locally
+            if (Array.isArray(window.__TASKS_NORM__)) {
+                window.__TASKS_NORM__ = window.__TASKS_NORM__.filter(t => String(t.id) !== String(taskId));
             }
-        }
-
-        if (action === "priority" && task.priority !== value) {
-            const old = task.priority;
-            task.priority = value;
-
-            try {
-                await updateTaskPriorityInDb(task.id, value);
-            } catch {
-                task.priority = old;
-                alert("Could not change priority");
-                return;
+            if (Array.isArray(window.__TASKS__)) {
+                window.__TASKS__ = window.__TASKS__.filter(t => String(t.task_id) !== String(taskId));
             }
-        }
 
-        renderTaskBoard(currentUser, currentProjectId);
-    });
+            showSuccessNotification("Task deleted successfully!");
+            renderTaskBoard(currentUser, currentProjectId);
+        } catch (err) {
+            console.error("Delete error:", err);
+            alert("Could not delete task. Please try again.");
+        }
+        return;
+    }
+
+    // Handle STATUS change
+    if (action === "status" && task.status !== value) {
+        const old = task.status;
+        task.status = value;
+
+        try {
+            await updateTaskStatusInDb(task.id, denormalizeStatus(value));
+            showSuccessNotification("Task status updated!");
+        } catch (err) {
+            task.status = old;
+            console.error("Status update error:", err);
+            alert("Could not change status");
+            return;
+        }
+    }
+
+    // Handle PRIORITY change
+    if (action === "priority" && task.priority !== value) {
+        const old = task.priority;
+        task.priority = value;
+
+        try {
+            await updateTaskPriorityInDb(task.id, value);
+            showSuccessNotification("Task priority updated!");
+        } catch (err) {
+            task.priority = old;
+            console.error("Priority update error:", err);
+            alert("Could not change priority");
+            return;
+        }
+    }
+
+    renderTaskBoard(currentUser, currentProjectId);
+});
 
 
     document.addEventListener("click", (e) => {
@@ -2368,8 +2450,16 @@ function initTaskDetailsModal(currentUser) {
         const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
         const isManagerLike = role === "manager" || canManageProject;
 
-        // Team members: show mark complete. Managers/leaders: show delete.
-        if (markBtn) markBtn.style.display = isManagerLike ? "none" : "inline-flex";
+        // Managers/leaders: can delete. Regular employees: can only mark complete from todo/inprogress.
+if (isManagerLike) {
+    if (markBtn) markBtn.style.display = "none";
+    if (deleteBtn) deleteBtn.style.display = "inline-flex";
+} else {
+    const canMarkComplete = task.status === "todo" || task.status === "inprogress";
+    if (markBtn) markBtn.style.display = canMarkComplete ? "inline-flex" : "none";
+    if (deleteBtn) deleteBtn.style.display = "none";
+}
+
         if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
 
         // Rebind delete button safely
@@ -2408,6 +2498,12 @@ function initTaskDetailsModal(currentUser) {
             markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
 
             freshMarkBtn.addEventListener("click", async () => {
+                // Safety: regular employees can only mark complete from todo/inprogress
+if (!isManagerLike && !(task.status === "todo" || task.status === "inprogress")) {
+    alert("You can only mark a task complete if it is in To Do or In Progress.");
+    return;
+}
+
                 const ok = confirm("Mark this task as complete? It will be moved to Review.");
                 if (!ok) return;
 
@@ -2902,8 +2998,9 @@ async function loadManagerProgressPage(currentUser) {
     setupCloseProjectControls();
 
     const projectTasks = await fetchProjectTasksFromDb(currentProjectId);
+    console.log("Manager progress tasks:", projectTasks.length, projectTasks);
 
-    renderManagerDeadlines(projectTasks);
+    //renderManagerDeadlines(projectTasks);
     initManagerMemberProgressList(); // renders the left list via ajax=member_progress
 
     feather.replace();
@@ -2927,6 +3024,7 @@ function renderManagerTaskProgress(projectTasks) {
  */
 function renderManagerDeadlines(projectTasks) {
     const deadlinesList = document.getElementById('deadlines-list');
+
     const today = new Date("2025-10-25T12:00:00"); // Hardcode date for demo consistency
     today.setHours(0, 0, 0, 0);
 
@@ -4075,12 +4173,21 @@ function resetAllData() {
 
     if (!filterToggle || !filterPanel) return;
 
-    filterToggle.addEventListener('click', () => {
+    filterToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
         filterPanel.style.display =
             filterPanel.style.display === 'flex' ? 'none' : 'flex';
     });
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!filterPanel.contains(e.target) && !filterToggle.contains(e.target)) {
+            filterPanel.style.display = 'none';
+        }
+    });
 })();
-function matchesDueFilter(deadline, filter) {
+
+function matchesDueFilter(deadline, filter, status) {
     if (!filter) return true;           // no filter
     if (!deadline) return false;        // no date → never matches
 
@@ -4096,6 +4203,7 @@ function matchesDueFilter(deadline, filter) {
 
     switch (filter) {
         case "overdue":
+            // Overdue tasks that aren't completed
             return diffDays < 0;
 
         case "today":
@@ -4111,6 +4219,7 @@ function matchesDueFilter(deadline, filter) {
             return true;
     }
 }
+
 async function fetchProjectTasksFromDb(projectId) {
     const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
     const res = await fetch(url, { credentials: "include" });
@@ -4132,6 +4241,8 @@ async function fetchProjectTasksFromDb(projectId) {
 }
 
 function fetchAndRenderTasks({ search = "", status = "", priority = "", due = "", page = 1 } = {}) {
+    console.log("fetchAndRenderTasks running on:", document.body?.id);
+
     const pid = getCurrentProjectId();
 
     // Always hit projects.php for task AJAX (works from ANY page)
@@ -4151,10 +4262,15 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
 
             const dueValue = document.getElementById("filter-due")?.value || "";
 
-            // keep your due filter logic
-            window.__TASKS__ = (data.tasks || []).filter(task =>
-                matchesDueFilter(task.deadline, dueValue)
-            );
+            window.__TASKS__ = (data.tasks || []).filter(task => {
+                const matches = matchesDueFilter(task.deadline, dueValue);
+                // If overdue filter is active, exclude completed tasks
+                if (dueValue === "overdue" && normalizeDbStatus(task.status) === "completed") {
+                    return false;
+                }
+                return matches;
+            });
+
 
             window.__TASKS_NORM__ = []; // force rebuild from filtered list
 
@@ -4168,7 +4284,7 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
 
             // If this page is manager-progress and you want charts to reflect filters:
             // rebuild normalized tasks and re-render manager widgets
-            if (document.body?.id === "manager-progress-page") {
+            /*if (document.body?.id === "manager-progress-page") {
                 const normalized = (window.__TASKS__ || []).map(t => ({
                     id: t.task_id,
                     title: t.task_name,
@@ -4179,12 +4295,17 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
                     assignedTo: Array.isArray(t.assignedUsers) ? t.assignedUsers.map(u => u.email) : []
                 }));
 
-                // ✅ Only deadlines refresh from task filters
                 renderManagerDeadlines(normalized);
 
                 // Optional: if you want the Team Progress list to refresh after filtering,
                 // you'd need to pass filters into ajax=member_progress too (not doing that now).
                 if (window.feather) feather.replace();
+            }*/
+
+            // IMPORTANT: manager-progress page uses loadManagerProgressPage() to render.
+            // Don't overwrite #deadlines-list from here (it causes flicker/blank).
+            if (document.body?.id === "manager-progress-page") {
+                return;
             }
 
         })
@@ -4231,21 +4352,15 @@ function updateTaskCounts() {
 
     column.appendChild(card);
 }*/
+
+
 document.addEventListener("DOMContentLoaded", () => {
     const pageId = document.body?.id;
 
-    // Call it on BOTH pages (only does board rerender if board exists)
-    if (pageId === "projects-page" || pageId === "manager-progress-page") {
-        fetchAndRenderTasks();
-    }
-
     if (pageId === "projects-page") {
+        fetchAndRenderTasks();
         setupAssignTaskForm();
     }
-    if (document.body.id === "manager-progress-page") {
-        initManagerMemberProgressList();
-    }
-
 });
 
 
@@ -4284,7 +4399,21 @@ document.addEventListener("DOMContentLoaded", () => {
         // Close filter panel (match your toggle logic)
         if (panel) panel.style.display = "none";
     });
+
+    // Close filter panel when clicking outside
+    document.addEventListener('click', (e) => {
+        const filterPanel = document.getElementById('filter-panel');
+        const filterToggle = document.getElementById('filter-toggle');
+
+        if (!filterPanel || !filterToggle) return;
+
+        // If click is outside both the panel and toggle button
+        if (!filterPanel.contains(e.target) && !filterToggle.contains(e.target)) {
+            filterPanel.style.display = 'none';
+        }
+    });
 });
+
 
 
 
