@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 <?php 
 // Update the nav bar if the current user is a manager
 if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
     <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
 <?php endif; ?>
+=======
+<?php
+
+?>
+>>>>>>> 0f26fa13af21ac47a12df24f27164b557d562712
 <!DOCTYPE html>
 <html lang="en">
 <head>
