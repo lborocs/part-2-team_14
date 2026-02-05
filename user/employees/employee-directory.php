@@ -333,7 +333,7 @@ if ($isAjax) {
                 </div>
                 <ul class="nav-main">
                     <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <li class="active-parent">
                         <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
                     </li>
