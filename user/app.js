@@ -370,12 +370,12 @@ function updateSidebarAndNav() {
                 ? "active"
                 : "";
 
-        const resourcesActive = path.includes("project-resources.html") ? "active" : "";
+        const resourcesActive = path.includes("project-resources.php") ? "active" : "";
 
         navLinks.innerHTML = `
       <a href="projects.php?project_id=${encodeURIComponent(projectId)}" class="${tasksActive}">Tasks</a>
       <a href="${progressPage}?project_id=${encodeURIComponent(projectId)}" class="${progressActive}">Progress</a>
-      <a href="project-resources.html?project_id=${encodeURIComponent(projectId)}" class="${resourcesActive}">Resources</a>
+      <a href="project-resources.php?project_id=${encodeURIComponent(projectId)}" class="${resourcesActive}">Resources</a>
     `;
     }
 
