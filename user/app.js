@@ -822,7 +822,7 @@ function setupCreateProjectPage(currentUser) {
 
 
 /**
- * Runs on the Settings page (settings.html)
+ * Runs on the Settings page (settings.php)
  */
 function loadSettingsPage(currentUser) {
     // 1. Populate user data
