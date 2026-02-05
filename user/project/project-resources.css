@@ -16,7 +16,7 @@
     margin-bottom: 25px;
 }
 
-#project-name-header #project-name-breadcrumb {
+#project-name-header, #project-name-breadcrumb {
 text-transform: capitalize !important;
 }
 
