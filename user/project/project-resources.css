@@ -49,13 +49,17 @@ text-transform: capitalize !important;
     height: 20px;
 }
 
-#delete-file-btn {
+.delete-file-btn {
     background: #fff;
     color: #1E1E1E;
     border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    font-size: 20px;
 }
 
-#delete-file-btn:hover {
+.delete-file-btn:hover {
     background: #F8F9FA;
 }
 

@@ -79,6 +79,38 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
             exit;
         }
 
+        // DELETE FILE
+        if ($action === 'delete') {
+            $resourceId = $_POST['resource_id'] ?? null;
+            if (!$resourceId) {
+                echo json_encode(['success' => false, 'message' => 'No resource specified']);
+                exit;
+            }
+
+            // Get file path
+            $stmt = $pdo->prepare("SELECT file_path FROM project_resources WHERE resource_id = ? AND project_id = ?");
+            $stmt->execute([$resourceId, $projectId]);
+            $file = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$file) {
+                echo json_encode(['success' => false, 'message' => 'File not found']);
+                exit;
+            }
+
+            // Delete from database
+            $stmt = $pdo->prepare("DELETE FROM project_resources WHERE resource_id = ? AND project_id = ?");
+            $stmt->execute([$resourceId, $projectId]);
+
+            // Delete the actual file from server
+            $fullPath = __DIR__ . '/../../' . $file['file_path'];
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+
+            echo json_encode(['success' => true]);
+            exit;
+        }
+
         // UPLOAD FILE
         if ($action === 'upload') {
             if (!isset($_FILES['resource_file']) || $_FILES['resource_file']['error'] !== UPLOAD_ERR_OK) {
@@ -357,7 +389,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
 
     rows.forEach(r => {
       const ext = (r.file_type || '').toLowerCase();
-      const downloadHref = `../../${r.file_path}`; // file_path is uploads/resources/...
+      const downloadHref = `../../${r.file_path}`;
 
       const row = document.createElement('div');
       row.className = 'file-row';
@@ -377,17 +409,43 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
         </div>
 
         <div class="file-actions">
-            <a class="file-download" href="${downloadHref}" target="_blank" rel="noopener">
-                <i data-feather="download"></i> Download
-            </a>
-            <button type="button" class="create-post-btn" id="delete-file-btn">✖</button>
+          <a class="file-download" href="${downloadHref}" target="_blank" rel="noopener">
+            <i data-feather="download"></i> Download
+          </a>
+          <button type="button" class="delete-file-btn" data-resource-id="${r.resource_id}">✖</button>
         </div>
       `;
       list.appendChild(row);
     });
 
     feather.replace();
+
+    // Attach delete listeners **after DOM is rendered**
+    document.querySelectorAll('.delete-file-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const resourceId = btn.dataset.resourceId;
+        if (!confirm('Are you sure you want to delete this file?')) return;
+
+        setStatus('Deleting...', 'info');
+        try {
+          const fd = new FormData();
+          fd.append('action', 'delete');
+          fd.append('resource_id', resourceId);
+
+          const res = await fetch('project-resources.php', { method: 'POST', body: fd });
+          const text = await res.text();
+          const data = JSON.parse(text);
+
+          if (!data.success) throw new Error(data.message || 'Delete failed');
+          setStatus('File deleted successfully.', 'ok');
+          await refresh();
+        } catch (e) {
+          setStatus(e.message || 'Delete failed', 'error');
+        }
+      });
+    });
   }
+
 
   async function refresh() {
     try {
