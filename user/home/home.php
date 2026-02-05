@@ -21,17 +21,16 @@
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li class="active-parent"><a href="home.html"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
-                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i
-                                data-feather="archive"></i>Project Archive</a></li>
+                    <li class="active-parent"><a href="home.php"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge
                             Base</a></li>
                 </ul>
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                    <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>
         </nav>

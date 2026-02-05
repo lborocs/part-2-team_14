@@ -13,7 +13,8 @@ echo json_encode([
         'user_id' => $_SESSION['user_id'],
         'email' => $_SESSION['email'],
         'name' => $_SESSION['name'],
-        'role' => $_SESSION['role']
+        'role' => $_SESSION['role'],
+        'profile_picture'=> $_SESSION['profile_picture']
     ]
 ]);
 ?>

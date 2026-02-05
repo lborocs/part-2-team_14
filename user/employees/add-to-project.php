@@ -170,6 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body id="create-project-page">
+    <?php include '../to-do/todo_widget.php'; ?>
     <div class="dashboard-container">
         <nav class="sidebar">
             <div class="nav-top">
@@ -177,7 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <li class="active-parent"><a href="employee-directory.php"><i data-feather="users"></i>Employees</a></li>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
@@ -185,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                    <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>
         </nav>
