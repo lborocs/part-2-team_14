@@ -2,6 +2,12 @@
 session_start();
 require_once __DIR__ . "/../../config/database.php";
 
+if (isset($_GET['project_id'])) {
+    $_SESSION['current_project_id'] = (int) $_GET['project_id'];
+}
+
+$projectId = $_SESSION['current_project_id'] ?? null;
+
 // Handle API requests
 if (isset($_GET['action']) || isset($_POST['action'])) {
     header('Content-Type: application/json');
@@ -11,21 +17,49 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
         exit;
     }
 
-    if (!isset($_SESSION['current_project_id'])) {
+    if (!$projectId) {
         echo json_encode(['success' => false, 'message' => 'No project selected']);
         exit;
     }
 
     $action = $_GET['action'] ?? $_POST['action'] ?? '';
     $userId = $_SESSION['user_id'];
-    $projectId = $_SESSION['current_project_id'];
 
     try {
         $database = new Database();
         $pdo = $database->getConnection();
 
-        // LIST FILES
+        // LIST FILES & PROJECT DETAILS
         if ($action === 'list') {
+            $sql = "
+                SELECT 
+                    p.created_at,
+                    p.description,
+                    p.created_by,
+                    p.team_leader_id,
+
+                    creator.first_name AS manager_first_name,
+                    creator.last_name  AS manager_last_name,
+                    creator.profile_picture AS manager_avatar,
+
+                    leader.first_name  AS team_leader_first_name,
+                    leader.last_name   AS team_leader_last_name,
+                    leader.profile_picture   AS team_leader_avatar
+
+                FROM projects p
+                LEFT JOIN users creator ON p.created_by = creator.user_id
+                LEFT JOIN users leader  ON p.team_leader_id = leader.user_id
+                WHERE p.project_id = ?
+            ";
+                        $stmt = $pdo->prepare($sql);
+            $stmt->execute([$projectId]);
+            $project = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$project) {
+                echo json_encode(['success' => false, 'message' => 'Project not found.']);
+                exit;
+            }
+
             $sql = "SELECT resource_id, file_name, file_type, file_size, file_path,
                            description, DATE_FORMAT(uploaded_at, '%b %d, %Y') as uploaded_at
                     FROM project_resources
@@ -35,7 +69,11 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
             $stmt->execute([$projectId]);
             $resources = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            echo json_encode(['success' => true, 'resources' => $resources]);
+            echo json_encode([
+                'success' => true,
+                'project' => $project,
+                'resources' => $resources
+            ]);
             exit;
         }
 
