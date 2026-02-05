@@ -87,8 +87,19 @@
   </div>
 </div>
 
+<?php
+// Compute relative path from the including page to this to-do directory
+$includerDir = dirname($_SERVER['SCRIPT_FILENAME']);
+$todoDir = __DIR__;
+if (realpath($includerDir) === realpath(dirname($todoDir))) {
+    $todoFetchBase = 'to-do/';
+} else {
+    $todoFetchBase = '../to-do/';
+}
+?>
 <script>
 (function() {
+    const TODO_BASE = '<?= $todoFetchBase ?>';
     const fab = document.getElementById('todo-fab');
     const panel = document.getElementById('todo-panel');
     const closeBtn = document.getElementById('todo-close-btn');
@@ -111,7 +122,7 @@
     // TOGGLE STATUS
     async function toggleTaskStatus(todoId, currentStatus) {
         try {
-            const response = await fetch('../to-do/update_todo_status.php', {
+            const response = await fetch(TODO_BASE + 'update_todo_status.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -139,7 +150,7 @@
         if(!confirm("Delete this task?")) return;
 
         try {
-            const response = await fetch('../to-do/delete_todo.php', {
+            const response = await fetch(TODO_BASE + 'delete_todo.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -163,7 +174,7 @@
 
     async function loadTodos() {
         try {
-            const response = await fetch('../to-do/get_personal_todos.php');
+            const response = await fetch(TODO_BASE + 'get_personal_todos.php');
             const data = await response.json();
             
             // Check if it's an error object
@@ -218,7 +229,7 @@
 
     async function updateBadge() {
         try {
-            const response = await fetch('../to-do/count_incomplete_todos.php');
+            const response = await fetch(TODO_BASE + 'count_incomplete_todos.php');
             const data = await response.json();
             
             if (data.error) {
@@ -266,7 +277,7 @@
         }
         
         try {
-            const response = await fetch('../to-do/create_personal_todo.php', {
+            const response = await fetch(TODO_BASE + 'create_personal_todo.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

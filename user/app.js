@@ -256,7 +256,8 @@ function savePersonalTodos() {
  */
 async function getCurrentUser() {
     try {
-        const response = await fetch('../../actions/login_sync.php', {
+        const actionsBase = window.__ACTIONS_BASE__ || '../../actions/';
+        const response = await fetch(actionsBase + 'login_sync.php', {
             credentials: 'include'
         });
 
@@ -822,47 +823,99 @@ function setupCreateProjectPage(currentUser) {
 
 
 /**
- * Runs on the Settings page (settings.html)
+ * Runs on the Settings page (settings.php)
  */
 function loadSettingsPage(currentUser) {
-    // 1. Populate user data
     document.getElementById('profile-name').value = currentUser.name;
     document.getElementById('profile-email').value = currentUser.email;
-
-    // Format the role (capitalise and replace underscroll)
     const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
 
-    // 2. Add form submit listeners (prototype alerts)
-    document.getElementById('profile-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        // In a real app, you'd save this new name
-        const newName = document.getElementById('profile-name').value;
-        alert(`Profile updated! (Name changed to ${newName})`);
+    // Upload a new profile picture
+    const uploadBtn = document.getElementById("upload-image-btn");
+    const fileInput = document.getElementById("profile-image-input");
+    const profileImg = document.getElementById("profile-picture");
+
+    uploadBtn.addEventListener("click", () => {
+        fileInput.click();
     });
 
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // Update the image on the page
+        const reader = new FileReader();
+        reader.onload = e => {
+            profileImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // Use file name as the database path
+        const simulatedPath = `/${file.name}`;
+
+        fetch("settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile_picture: simulatedPath })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture updated in DB!");
+            } else {
+                console.error("Failed to update profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
+    });
+
+    // Delete current profile picture
+    const deleteBtn = document.getElementById("delete-image-btn");
+
+    deleteBtn.addEventListener("click", () => {
+        const defaultPath = "/default-avatar.png";
+        profileImg.src = defaultPath;
+
+        fetch("settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile_picture: defaultPath })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture reset to default in DB!");
+            } else {
+                console.error("Failed to reset profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
+    });
+
+    // Update password
     document.getElementById('password-form').addEventListener('submit', (e) => {
         e.preventDefault();
         alert('Password updated! (This is a demo)');
     });
 
+    // Update notification preferences
     document.getElementById('notifications-form').addEventListener('submit', (e) => {
         e.preventDefault();
         alert('Notification preferences saved!');
     });
 
-    // 3. Add Sign Out logic
+    // Sign Out logic
     document.getElementById('sign-out-btn').addEventListener('click', (e) => {
         e.preventDefault();
 
         // Clear the simulated session
-        // This clears the posts you created, etc.
         localStorage.clear();
         sessionStorage.clear();
 
         alert('Signing out...');
 
-        // Redirect to the login page (assuming it's index.html)
+        // Redirect to the login page
         window.location.href = '../index.html';
     });
 }
