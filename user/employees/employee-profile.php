@@ -27,6 +27,7 @@ if (!$employee) {
 <html>
 <head>
     <title><?= htmlspecialchars($employee['first_name']) ?> Profile</title>
+    <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body>
     <h1>

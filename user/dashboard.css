@@ -86,6 +86,13 @@ body {
     font-weight: 700;
 }
 
+/* Active state for nav-footer items (e.g., Settings) */
+.sidebar .nav-footer ul>li.active-parent>a {
+    background: #FBC02D;
+    color: black;
+    font-weight: 700;
+}
+
 /* Sub-navigation */
 .nav-sub {
     margin: 5px 0 10px 20px;

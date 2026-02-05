@@ -157,6 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body id="create-project-page">
+    <?php include '../to-do/todo_widget.php'; ?>
     <div class="dashboard-container">
         <nav class="sidebar">
             <div class="nav-top">
@@ -164,9 +165,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li class="active-parent"><a href="home.html"><i data-feather="home"></i>Home</a></li>
+                    <li class="active-parent"><a href="home.php"><i data-feather="home"></i>Home</a></li>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
-                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
                 </ul>
             </div>
@@ -250,6 +250,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="../app.js"></script>
+    <script>feather.replace();</script>
 </body>
 
 </html>

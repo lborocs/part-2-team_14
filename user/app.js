@@ -167,43 +167,6 @@ function saveProjects() {
     localStorage.setItem('simProjects', JSON.stringify(simProjects));
 }
 
-// *** ADDED: MOCK ARCHIVED PROJECTS DATA ***
-const simArchivedProjects = [
-    {
-        name: 'Project Alpha',
-        teamLeader: 'Alice Brown',
-        avatarClass: 'avatar-brown',
-        description: 'UI Design',
-        createdDate: '20 Jun 2025',
-        closedDate: '15 Oct 2025'
-    },
-    {
-        name: 'Project Beta',
-        teamLeader: 'Levi Jones',
-        avatarClass: 'avatar-orange',
-        description: 'Testing',
-        createdDate: '5 March 2025',
-        closedDate: '1 May 2025'
-    },
-    {
-        name: 'Project 12',
-        teamLeader: 'Bill Smith',
-        avatarClass: 'avatar-green',
-        description: 'Requirements',
-        createdDate: '6 March 2025',
-        closedDate: '29 April 2025'
-    },
-    {
-        name: 'Project 13',
-        teamLeader: 'Eva Smith',
-        avatarClass: 'avatar-green',
-        description: 'Stakeholder Engagement',
-        createdDate: '27 November 2024',
-        closedDate: '10 April 2025'
-    }
-];
-// *** END ADDED DATA ***
-
 // Personal to-do items (created by users themselves)
 const initialPersonalTodos = [
     // Steve Adams (user@make-it-all.co.uk)
@@ -342,13 +305,22 @@ function updateSidebarAndNav() {
     const project = window.__PROJECT__ || {};
     const role = (window.__ROLE__ || "team_member").toLowerCase();
 
-    // 1) Update header/breadcrumb
+    // 1) Update header/breadcrumb (do NOT overwrite with "Project")
     const breadcrumb = document.getElementById("project-name-breadcrumb");
     const header = document.getElementById("project-name-header");
-    const projectName = project.project_name || "Project";
 
-    if (breadcrumb) breadcrumb.textContent = projectName;
-    if (header) header.textContent = projectName;
+    // Use best available name WITHOUT flashing back to "Project"
+    const projectName =
+        (project && project.project_name) ||
+        sessionStorage.getItem("currentProjectName") ||
+        null;
+
+    if (projectName) {
+        if (breadcrumb) breadcrumb.textContent = projectName;
+        if (header) header.textContent = projectName;
+    }
+    // else: leave whatever PHP already rendered
+
 
     // 2) Read project_id from URL
     const params = new URLSearchParams(window.location.search);
@@ -358,7 +330,8 @@ function updateSidebarAndNav() {
     // 3) Decide which Progress page to use (manager/team_leader)
     const isManager = (role === "manager");
     const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
-    const progressPage = (isManager || canManageProject) ? "manager-progress.html" : "progress.html";
+    const progressPage = (isManager || canManageProject) ? "manager-progress.php" : "progress.php";
+
 
 
     // 4) Build nav links
@@ -366,9 +339,16 @@ function updateSidebarAndNav() {
     if (navLinks) {
         const path = window.location.pathname.toLowerCase();
 
-        const tasksActive = path.includes("projects.php") ? "active" : "";
+        const tasksActive = (path.includes("projects.php") || path.includes("projects.html")) ? "active" : "";
+
         const progressActive =
-            path.includes("progress.php") || path.includes("manager-progress.html") ? "active" : "";
+            path.includes("progress.php") ||
+                path.includes("manager-progress.") ||
+                path.includes("progress.php") ||
+                path.includes("manager-progress.php")
+                ? "active"
+                : "";
+
         const resourcesActive = path.includes("project-resources.html") ? "active" : "";
 
         navLinks.innerHTML = `
@@ -918,7 +898,7 @@ function loadAllTopicsPage(currentUser) {
 }
 
 /**
- * Runs on the Home page (home/home.html)
+ * Runs on the Home page (home/home.php)
  */
 function loadHomePage(currentUser) {
     // Update page label based on role
@@ -1315,58 +1295,128 @@ function renderNotifications() {
 }
 
 /**
- * Runs on the Progress page (progress.html) - shows only assigned tasks
+ * Runs on the Progress page (progress.php) - shows only assigned tasks
  */
-function loadProgressPage(currentUser) {
+async function loadProgressPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
 
-    // --- NEW: Role-based Redirect ---
-    // Check if user is a manager/leader
-    const isManagerView = (currentUser.role === 'manager' || currentUser.role === 'team_leader');
-    // Check for the special "Leader on Apollo" exception
-    const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
-
-    if (isManagerView && !isLeaderOnApollo) {
-        // This is a manager/leader, redirect them to the manager progress page
-        window.location.href = `manager-progress.html?project_id=${encodeURIComponent(currentProjectId)}`;
-        return; // Stop loading this page
+    if (!currentProjectId) {
+        alert("No project selected");
+        window.location.href = "projects-overview.php";
+        return;
     }
-    // --- End Redirect ---
 
-    // If we are here, it's a team member (or the special exception)
+    // ✅ Project is already injected by PHP, but keep this as a refresh (optional)
+    try {
+        const response = await fetch(
+            `projects.php?ajax=get_project&project_id=${encodeURIComponent(currentProjectId)}`,
+            { credentials: "include" }
+        );
+        const data = await response.json();
+
+        if (data.success && data.project) {
+            window.__PROJECT__ = data.project;
+        }
+    } catch (err) {
+        console.error("Error fetching project:", err);
+        // don't hard-fail; we still have __PROJECT__ from PHP
+    }
+
+    // ✅ Role-based redirect (keep it simple)
+    if (window.__CAN_MANAGE_PROJECT__) {
+        window.location.href = `manager-progress.php?project_id=${encodeURIComponent(currentProjectId)}`;
+        return;
+    }
+
+    // ✅ Update breadcrumbs/nav using injected project
     updateSidebarAndNav();
 
-    // Only use assigned tasks for this user AND this project
-    const userTasks = simTasks.filter(task =>
-        task.assignedTo &&
-        task.assignedTo.includes(currentUser.email) &&
-        task.type === 'assigned' &&
-        task.projectId === currentProjectId // <-- NEW FILTER
+    // ✅ Pull tasks from DB (NOT simTasks)
+    let projectTasks = [];
+    try {
+        projectTasks = await fetchProjectTasksFromDb(currentProjectId);
+    } catch (err) {
+        console.error("Failed to load tasks from DB:", err);
+        projectTasks = [];
+    }
+
+    // ✅ Only tasks assigned to this user
+    const userEmail = String(currentUser.email || "").toLowerCase();
+    const userTasks = projectTasks.filter(t =>
+        Array.isArray(t.assignedTo) &&
+        t.assignedTo.map(e => String(e).toLowerCase()).includes(userEmail)
     );
 
-    // Calculate task progress
-    const completedTasks = userTasks.filter(t => t.status === 'completed').length;
-    const totalTasks = userTasks.length;
-    const progressPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    // ✅ Update Task Progress widget (only if elements exist)
+    const fillEl = document.getElementById("task-progress-fill");
+    const textEl = document.getElementById("progress-text");
 
-    document.getElementById('task-progress-fill').style.width = progressPercent + '%';
-    document.getElementById('progress-text').textContent =
-        `You have completed ${progressPercent}% of your assigned tasks for this project.`;
+    const completed = userTasks.filter(t => t.status === "completed").length;
+    const total = userTasks.length;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-    // Render upcoming deadlines (from this project's tasks)
-    renderUpcomingDeadlines(userTasks);
+    if (fillEl) fillEl.style.width = pct + "%";
+    if (textEl) {
+        textEl.textContent = total
+            ? `You have completed ${pct}% of your assigned tasks for this project.`
+            : `You don’t have any assigned tasks for this project yet.`;
+    }
 
-    // Render workload (pass project ID)
-    renderWorkload(currentUser, currentProjectId);
+    // ✅ Update Upcoming Deadlines widget (only if element exists)
+    const listEl = document.getElementById("deadlines-list");
+    if (listEl) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-    // Render urgent tasks (from this project's tasks)
-    renderUrgentTasks(userTasks, currentUser);
+        const upcoming = userTasks
+            .filter(t => t.status !== "completed" && t.deadline)
+            .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
+            .slice(0, 3);
 
-    // Render task distribution chart (from this project's tasks)
-    renderTaskDistributionChart(userTasks);
+        if (!upcoming.length) {
+            listEl.innerHTML = `<p class="no-deadlines">No upcoming deadlines. You’re all caught up!</p>`;
+        } else {
+            listEl.innerHTML = upcoming.map(task => {
+                const d = new Date(task.deadline);
+                d.setHours(0, 0, 0, 0);
 
-    feather.replace();
+                const formatted = d.toLocaleDateString("en-GB", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short"
+                });
+
+                let status = "on-track";
+                let statusText = "On track";
+
+                if (d < today) {
+                    status = "overdue";
+                    statusText = "Overdue";
+                } else {
+                    const daysUntil = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+                    if (daysUntil <= 2) {
+                        status = "at-risk";
+                        statusText = "At risk";
+                    }
+                }
+
+                return `
+          <div class="deadline-item">
+            <p class="deadline-title">${task.title}</p>
+            <div class="deadline-info">
+              <span class="deadline-date">${formatted}</span>
+              <span class="deadline-status ${status}">${statusText}</span>
+            </div>
+          </div>
+        `;
+            }).join("");
+        }
+    }
+
+    if (window.feather) feather.replace();
 }
+
+
 
 function renderUpcomingDeadlines(userTasks) {
     const deadlinesList = document.getElementById('deadlines-list');
@@ -1557,74 +1607,88 @@ function setupCreateTopicForm(currentUser) {
  * Runs on the standalone Assign Task page (assign-task.html)
  */
 function setupAssignTaskForm() {
-     
-  const form = document.getElementById('assign-task-form');
-  if (!form) return;
+    const form = document.getElementById("assign-task-form");
+    if (!form) return;
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault(); // ⛔ STOP PAGE RELOAD
+    // ✅ Prevent double-binding (stops multiple submit handlers)
+    if (form.dataset.bound === "1") return;
+    form.dataset.bound = "1";
 
-    const titleEl = document.getElementById('modal-task-title');
-    const priorityEl = document.getElementById('modal-task-priority');
-    const deadlineEl = document.getElementById('modal-task-deadline');
 
-    if (!titleEl || !priorityEl || !deadlineEl) {
-      console.error('Assign task form fields not found');
-      return;
-    }
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault(); // ⛔ STOP PAGE RELOAD
 
-    const taskName = titleEl.value.trim();
-    const priority = priorityEl.value;
-    const deadline = deadlineEl.value;
-    const description =
-      document.getElementById('modal-task-description')?.value.trim() || '';
+        const titleEl = document.getElementById("modal-task-title");
+        const priorityEl = document.getElementById("modal-task-priority");
+        const deadlineEl = document.getElementById("modal-task-deadline");
 
-    const assignees = Array.from(
-      document.querySelectorAll('#modal-task-assignees input[type="checkbox"]:checked')
-    ).map(cb => cb.value);
+        if (!titleEl || !priorityEl || !deadlineEl) {
+            console.error("Assign task form fields not found");
+            return;
+        }
 
-    if (!taskName || !deadline || assignees.length === 0) {
-      alert('Please fill all required fields');
-      return;
-    }
+        const taskName = titleEl.value.trim();
+        const priority = priorityEl.value;
+        const deadline = deadlineEl.value;
+        const description =
+            document.getElementById("modal-task-description")?.value.trim() || "";
 
-    const formData = new FormData();
-    formData.append('ajax', 'create_task');
-    formData.append('task_name', taskName);
-    formData.append('priority', priority);
-    formData.append('deadline', deadline);
-    formData.append('description', description);
-const rawStatus = document.getElementById("modal-task-status")?.value || "todo";
+        const assignees = Array.from(
+            document.querySelectorAll(
+                '#modal-task-assignees input[type="checkbox"]:checked'
+            )
+        ).map((cb) => cb.value);
 
-const statusMap = {
-  todo: "to_do",
-  inprogress: "in_progress",
-  review: "review",
-  completed: "completed"
-};
+        if (!taskName || !deadline || assignees.length === 0) {
+            alert("Please fill all required fields");
+            return;
+        }
 
-formData.append("status", statusMap[rawStatus] || "to_do");
-    assignees.forEach(a => formData.append('assignees[]', a));
+        const formData = new FormData();
+        formData.append("ajax", "create_task");
+        formData.append("task_name", taskName);
+        formData.append("priority", priority);
+        formData.append("deadline", deadline);
+        formData.append("description", description);
 
-    const res = await fetch(
-      `projects.php?project_id=${encodeURIComponent(window.__PROJECT__.project_id)}`,
-      {
-        method: 'POST',
-        body: formData
-      }
-    );
+        const rawStatus =
+            document.getElementById("modal-task-status")?.value || "todo";
 
-    const data = await res.json();
+        const statusMap = {
+            todo: "to_do",
+            inprogress: "in_progress",
+            review: "review",
+            completed: "completed",
+        };
 
-    if (!data.success) {
-      alert(data.message || 'Failed to create task');
-      return;
-    }
+        formData.append("status", statusMap[rawStatus] || "to_do");
 
-    document.getElementById('assign-task-modal').style.display = 'none';
-    fetchAndRenderTasks(); // reload Kanban
-  });
-} 
+        assignees.forEach((a) => formData.append("assignees[]", a));
+
+        const res = await fetch(
+            `projects.php?project_id=${encodeURIComponent(
+                window.__PROJECT__.project_id
+            )}`,
+            {
+                method: "POST",
+                body: formData,
+            }
+        );
+
+        const data = await res.json();
+
+        if (!data.success) {
+            alert(data.message || "Failed to create task");
+            return;
+        }
+
+        // Close modal + refresh
+        document.getElementById("assign-task-modal").style.display = "none";
+        document.body.style.overflow = "";
+
+        fetchAndRenderTasks(); // reload Kanban
+    });
+}
 
 
 /**
@@ -1729,11 +1793,15 @@ function createTaskCardHTML(task, currentUser) {
     const isDraggable = isManagerView && !isLeaderOnApollo;
     const showMoveBtn = isManagerView && !isLeaderOnApollo;
 
-    // Find assignee names
-    const assignees = task.assignedTo.map(email => {
-        const user = simUsers[email];
-        return user ? { name: user.name, avatarClass: user.avatarClass, avatarUrl: user.avatarUrl } : null;
+    const usersMap = getUsersMap();
+
+    const assignees = (task.assignedTo || []).map(email => {
+        const user = usersMap[email];
+        return user
+            ? { name: user.name, avatarClass: user.avatarClass, avatarUrl: user.avatarUrl }
+            : { name: email, avatarClass: "avatar-3", avatarUrl: null }; // fallback
     }).filter(Boolean);
+
     console.log("Task:", task);
     console.log("assignedTo: " + task.assignedTo);
 
@@ -1849,8 +1917,8 @@ function renderTaskBoard(currentUser, currentProjectId) {
             priority: t.priority || 'medium',
             status: normalizeDbStatus(t.status),
             assignedTo: Array.isArray(t.assignedUsers)
-    ? t.assignedUsers.map(u => u.email)
-    : (t.assignedTo || []),
+                ? t.assignedUsers.map(u => u.email)
+                : (Array.isArray(t.assignedTo) ? t.assignedTo : []),
             project: window.__PROJECT__?.project_name || '',
             projectId: currentProjectId,
             createdDate: t.created_date,
@@ -2161,74 +2229,98 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
  * NEW: Initializes click listeners for task cards to show details
  */
 function initTaskDetailsModal(currentUser) {
-    const detailsModal = document.getElementById('task-details-modal');
-    const detailsCloseBtn = document.getElementById('details-close-modal-btn');
+    const detailsModal = document.getElementById("task-details-modal");
+    const detailsCloseBtn = document.getElementById("details-close-modal-btn");
 
     if (!detailsModal || !detailsCloseBtn) return;
 
+    // Prevent multiple bindings
     if (detailsModal.dataset.bound === "1") return;
     detailsModal.dataset.bound = "1";
 
     const closeModal = () => {
-        detailsModal.style.display = 'none';
-    }
+        detailsModal.style.display = "none";
+        document.body.style.overflow = "";
+    };
 
-    detailsCloseBtn.addEventListener('click', closeModal);
+    detailsCloseBtn.addEventListener("click", closeModal);
 
-    detailsModal.addEventListener('click', (e) => {
-        if (e.target === detailsModal) {
-            closeModal();
-        }
+    detailsModal.addEventListener("click", (e) => {
+        if (e.target === detailsModal) closeModal();
     });
 
+    // ✅ Event delegation for clicking a task card
     document.addEventListener("click", (e) => {
-if (e.target.closest(".task-status-menu")) return;
+        // If they clicked the 3-dot menu, do NOT open modal
+        if (e.target.closest(".task-status-menu")) return;
+
         const card = e.target.closest(".task-card");
         if (!card) return;
 
         const taskId = card.dataset.taskId;
         const allTasks = Array.isArray(window.__TASKS_NORM__) ? window.__TASKS_NORM__ : [];
-        const task = allTasks.find(t => String(t.id) === String(taskId));
+        const task = allTasks.find((t) => String(t.id) === String(taskId));
         if (!task) return;
 
-        // Find assignees
-        const assignees = task.assignedTo
-            .map(email => simUsers[email] ? simUsers[email].name : "Unknown")
-            .join(", ");
+        const usersObj = getUsersSource();
 
-        // Format dates
-        const createdDate = new Date(task.createdDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-        const deadlineDate = new Date(task.deadline).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+        // Fill modal fields
+        document.getElementById("details-task-title").textContent = task.title || "";
+        document.getElementById("details-task-project").textContent = task.project || "";
+        document.getElementById("details-task-description").textContent =
+            task.description || "No description provided.";
 
-        document.getElementById("details-task-title").textContent = task.title;
-        document.getElementById("details-task-project").textContent = task.project;
-        document.getElementById("details-task-priority").textContent = task.priority;
-        document.getElementById("details-task-priority").className = `priority-badge ${task.priority}`;
-        document.getElementById("details-task-created").textContent = createdDate;
-        document.getElementById("details-task-deadline").textContent = deadlineDate;
-        document.getElementById("details-task-description").textContent = task.description || "No description provided.";
-const assigneesEl = document.getElementById("details-task-assignees");
+        // Priority badge
+        const prEl = document.getElementById("details-task-priority");
+        if (prEl) {
+            prEl.textContent = task.priority || "";
+            prEl.className = `priority-badge ${task.priority || "medium"}`;
+        }
 
-if (task.assignedTo && task.assignedTo.length > 0) {
-  assigneesEl.textContent = task.assignedTo
-    .map(email => simUsers[email]?.name || email)
-    .join(", ");
-} else {
-  assigneesEl.textContent = "Unassigned";
-}
+        // Dates (safe formatting)
+        const createdDateEl = document.getElementById("details-task-created");
+        const deadlineDateEl = document.getElementById("details-task-deadline");
 
+        const createdDate = task.createdDate ? new Date(task.createdDate) : null;
+        const deadlineDate = task.deadline ? new Date(task.deadline) : null;
 
+        if (createdDateEl) {
+            createdDateEl.textContent = createdDate
+                ? createdDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+                : "N/A";
+        }
+
+        if (deadlineDateEl) {
+            deadlineDateEl.textContent = deadlineDate
+                ? deadlineDate.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
+                : "No deadline";
+        }
+
+        // Assignees
+        const assigneesEl = document.getElementById("details-task-assignees");
+        if (assigneesEl) {
+            if (task.assignedTo && task.assignedTo.length > 0) {
+                assigneesEl.textContent = task.assignedTo
+                    .map((email) => usersObj[email]?.name || email)
+                    .join(", ");
+            } else {
+                assigneesEl.textContent = "Unassigned";
+            }
+        }
+
+        // Buttons
         const markBtn = document.getElementById("project-complete-btn");
         const deleteBtn = document.getElementById("delete-task-btn");
 
         const role = getEffectiveRole(currentUser);
         const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
-        const isManagerLike = (role === "manager") || canManageProject;
+        const isManagerLike = role === "manager" || canManageProject;
 
-        // reset BOTH every time modal opens
+        // Team members: show mark complete. Managers/leaders: show delete.
         if (markBtn) markBtn.style.display = isManagerLike ? "none" : "inline-flex";
         if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
 
+        // Rebind delete button safely
         if (deleteBtn) {
             const freshDeleteBtn = deleteBtn.cloneNode(true);
             deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
@@ -2240,12 +2332,12 @@ if (task.assignedTo && task.assignedTo.length > 0) {
                 try {
                     await deleteTaskInDb(task.id);
 
+                    // remove locally too
                     if (Array.isArray(window.__TASKS_NORM__)) {
-                        window.__TASKS_NORM__ = window.__TASKS_NORM__.filter(t => String(t.id) !== String(task.id));
+                        window.__TASKS_NORM__ = window.__TASKS_NORM__.filter((t) => String(t.id) !== String(task.id));
                     }
-
                     if (Array.isArray(window.__TASKS__)) {
-                        window.__TASKS__ = window.__TASKS__.filter(t => String(t.task_id) !== String(task.id));
+                        window.__TASKS__ = window.__TASKS__.filter((t) => String(t.task_id) !== String(task.id));
                     }
 
                     closeModal();
@@ -2258,6 +2350,7 @@ if (task.assignedTo && task.assignedTo.length > 0) {
             });
         }
 
+        // Rebind mark complete button safely
         if (markBtn) {
             const freshMarkBtn = markBtn.cloneNode(true);
             markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
@@ -2268,11 +2361,11 @@ if (task.assignedTo && task.assignedTo.length > 0) {
 
                 try {
                     const tasksNorm = window.__TASKS_NORM__ || [];
-                    const t = tasksNorm.find(x => String(x.id) === String(task.id));
+                    const t = tasksNorm.find((x) => String(x.id) === String(task.id));
                     if (t) t.status = "review";
 
                     if (Array.isArray(window.__TASKS__)) {
-                        const dbTask = window.__TASKS__.find(x => String(x.task_id) === String(task.id));
+                        const dbTask = window.__TASKS__.find((x) => String(x.task_id) === String(task.id));
                         if (dbTask) dbTask.status = "review";
                     }
 
@@ -2288,12 +2381,82 @@ if (task.assignedTo && task.assignedTo.length > 0) {
             });
         }
 
+        // Show modal
         detailsModal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+
+        if (window.feather) feather.replace();
     });
-
-
 }
 
+// =============================
+// Close Project (modal + DB update)
+// Works on BOTH projects.php and manager-progress.php
+// =============================
+function setupCloseProjectControls() {
+    const closeProjectBtn = document.getElementById("close-project-btn");
+    const closeProjectModal = document.getElementById("close-project-modal");
+    const closeProjectOk = document.getElementById("close-project-ok");
+    const closeProjectCancel = document.getElementById("close-project-cancel");
+    const closeProjectX = document.getElementById("close-project-x");
+
+    // If this page doesn't have the button/modal, just skip
+    if (!closeProjectBtn || !closeProjectModal || !closeProjectOk) return;
+
+    // Prevent double-binding if the function runs twice
+    if (closeProjectModal.dataset.bound === "1") return;
+    closeProjectModal.dataset.bound = "1";
+
+    function openModal() {
+        closeProjectModal.style.display = "flex";
+        if (window.feather) feather.replace();
+    }
+
+    function closeModal() {
+        closeProjectModal.style.display = "none";
+    }
+
+    closeProjectBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        openModal();
+    });
+
+    closeProjectCancel?.addEventListener("click", closeModal);
+    closeProjectX?.addEventListener("click", closeModal);
+
+    closeProjectModal.addEventListener("click", (e) => {
+        if (e.target === closeProjectModal) closeModal();
+    });
+
+    closeProjectOk.addEventListener("click", async () => {
+        try {
+            const pid = getCurrentProjectId();
+            if (!pid) throw new Error("Missing project_id in URL");
+
+            // ✅ POST BACK TO THE CURRENT PAGE (so manager-progress.php handler runs)
+            const url = `${window.location.pathname}?project_id=${encodeURIComponent(pid)}`;
+
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ ajax: "close_project" })
+            });
+
+            const raw = await res.text();
+            let data;
+            try { data = JSON.parse(raw); }
+            catch { throw new Error("Server did not return JSON: " + raw); }
+
+            if (!res.ok || !data.success) throw new Error(data.message || "Close project failed");
+
+            // success -> go overview
+            window.location.href = "projects-overview.php";
+        } catch (err) {
+            console.error(err);
+            alert("Could not close project. Check console.");
+        }
+    });
+}
 
 /**
  * *** COMPLETELY REVISED FUNCTION ***
@@ -2302,6 +2465,8 @@ if (task.assignedTo && task.assignedTo.length > 0) {
 function loadProjectsPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
     updateSidebarAndNav();
+    setupCloseProjectControls();
+
 
     const role = getEffectiveRole(currentUser);
     const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
@@ -2499,58 +2664,71 @@ function loadProjectsPage(currentUser) {
     }
 
     // -----------------------------
-    // Modal submit (prototype-only until your DB endpoint exists)
+    // Modal submit (DB create task)
     // -----------------------------
-    if (modalForm) {
-      form.onsubmit = async (e) => {
-  e.preventDefault();
-  e.stopPropagation();
+    if (modalForm && modalForm.dataset.bound !== "1") {
+        modalForm.dataset.bound = "1";
 
-  const title = document.getElementById("modal-task-title").value.trim();
-  const deadline = document.getElementById("modal-task-deadline").value;
-  const priority = document.getElementById("modal-task-priority").value;
+        modalForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
 
-  const assignees = Array.from(
-    document.querySelectorAll("#modal-task-assignees input:checked")
-  ).map(cb => cb.value);
+            const title = document.getElementById("modal-task-title")?.value.trim();
+            const deadline = document.getElementById("modal-task-deadline")?.value;
+            const priority = document.getElementById("modal-task-priority")?.value || "medium";
 
-  const rawStatus = document.getElementById("modal-task-status").value;
+            const assignees = Array.from(
+                document.querySelectorAll("#modal-task-assignees input:checked")
+            ).map(cb => cb.value);
 
-  const statusMap = {
-    todo: "to_do",
-    inprogress: "in_progress",
-    review: "review",
-    completed: "completed"
-  };
+            const rawStatus = document.getElementById("modal-task-status")?.value || "todo";
 
-  const status = statusMap[rawStatus] || "to_do";
+            const statusMap = {
+                todo: "to_do",
+                inprogress: "in_progress",
+                review: "review",
+                completed: "completed"
+            };
 
-  const fd = new FormData();
-  fd.append("ajax", "create_task");
-  fd.append("task_name", title);
-  fd.append("deadline", deadline);
-  fd.append("priority", priority);
-  fd.append("status", status);
+            const status = statusMap[rawStatus] || "to_do";
 
-  assignees.forEach(a => fd.append("assignees[]", a));
+            if (!title || !deadline || assignees.length === 0) {
+                alert("Please fill out Title, Deadline and select at least 1 assignee.");
+                return;
+            }
 
-  const res = await fetch(
-    `projects.php?project_id=${window.__PROJECT__.project_id}`,
-    { method: "POST", body: fd }
-  );
+            const fd = new FormData();
+            fd.append("ajax", "create_task");
+            fd.append("task_name", title);
+            fd.append("deadline", deadline);
+            fd.append("priority", priority);
+            fd.append("status", status);
+            fd.append("description", document.getElementById("modal-task-description")?.value.trim() || "");
 
-  const data = await res.json();
+            assignees.forEach(a => fd.append("assignees[]", a));
 
-  if (!data.success) {
-    alert(data.message || "Create failed");
-    return;
-  }
+            const pid = getCurrentProjectId() || window.__PROJECT__?.project_id;
 
-  document.getElementById("assign-task-modal").style.display = "none";
-  fetchAndRenderTasks();
-};
+            const res = await fetch(
+                `projects.php?project_id=${encodeURIComponent(pid)}`,
+                { method: "POST", body: fd }
+            );
 
+            const data = await res.json();
+
+            if (!data.success) {
+                alert(data.message || "Create failed");
+                return;
+            }
+
+            // Close modal + refresh board
+            document.getElementById("assign-task-modal").style.display = "none";
+            document.body.style.overflow = "";
+
+            fetchAndRenderTasks();
+        });
     }
+
 
 
     // Notifications (leave as-is)
@@ -2561,7 +2739,7 @@ function loadProjectsPage(currentUser) {
     }
 
     feather.replace();
- 
+
 
 }
 
@@ -2623,26 +2801,128 @@ function openAssignTaskModal(status = "todo") {
     feather.replace();
 }
 
-// ===============================================
-// === NEW FUNCTIONS FOR MANAGER PROGRESS PAGE ===
-// ===============================================
 
+function initManagerMemberProgressList() {
+    const listEl = document.getElementById("member-progress-list");
+    const searchEl = document.getElementById("member-progress-search");
+    const hintEl = document.getElementById("member-progress-hint");
+    if (!listEl || !searchEl) return;
+
+    const pid = new URLSearchParams(window.location.search).get("project_id");
+    if (!pid) return;
+
+    let people = [];
+
+    function render(filtered) {
+        listEl.innerHTML = "";
+
+        if (!filtered.length) {
+            hintEl && (hintEl.style.display = "block");
+            return;
+        }
+        hintEl && (hintEl.style.display = "none");
+
+        filtered.forEach(p => {
+            const row = document.createElement("div");
+            row.className = "member-progress-row";
+
+            const nameWrap = document.createElement("div");
+            nameWrap.className = "member-name-wrap";
+
+            const name = document.createElement("div");
+            name.className = "member-name";
+            name.textContent = p.name;
+
+            const sub = document.createElement("div");
+            sub.className = "member-sub";
+            sub.textContent = `${p.completed_tasks}/${p.total_tasks} completed`;
+
+            nameWrap.appendChild(name);
+            nameWrap.appendChild(sub);
+
+            const barWrap = document.createElement("div");
+            barWrap.className = "member-bar-wrap";
+
+            const bar = document.createElement("div");
+            bar.className = "member-bar";
+
+            const fill = document.createElement("div");
+            fill.className = "member-bar-fill";
+            fill.style.width = `${p.percent}%`;
+
+            bar.appendChild(fill);
+
+            const pct = document.createElement("div");
+            pct.className = "member-percent";
+            pct.textContent = `${p.percent}%`;
+
+            barWrap.appendChild(bar);
+            barWrap.appendChild(pct);
+
+            row.appendChild(nameWrap);
+            row.appendChild(barWrap);
+
+            listEl.appendChild(row);
+
+        });
+    }
+
+    fetch(`manager-progress.php?project_id=${encodeURIComponent(pid)}&ajax=member_progress`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data || !data.success) return;
+            people = data.people || [];
+            render(people);
+        })
+        .catch(() => { });
+
+    searchEl.addEventListener("input", () => {
+        const q = searchEl.value.trim().toLowerCase();
+        if (!q) return render(people);
+
+        const filtered = people.filter(p =>
+            (p.name || "").toLowerCase().includes(q) ||
+            (p.email || "").toLowerCase().includes(q)
+        );
+        render(filtered);
+    });
+}
 
 /**
  * Runs on the Manager Progress page (manager-progress-page)
  */
-function loadManagerProgressPage(currentUser) {
+async function loadManagerProgressPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
+
+    if (!currentProjectId) {
+        alert('No project selected');
+        window.location.href = 'projects-overview.php';
+        return;
+    }
+
+    // --- Fetch project data from database ---
+    try {
+        const response = await fetch(`projects.php?ajax=get_project&project_id=${encodeURIComponent(currentProjectId)}`);
+        const data = await response.json();
+
+        if (data.success && data.project) {
+            window.__PROJECT__ = data.project;
+        } else {
+            console.error('Failed to load project:', data.message);
+            return;
+        }
+    } catch (err) {
+        console.error('Error fetching project:', err);
+        return;
+    }
+
     updateSidebarAndNav();
+    setupCloseProjectControls();
 
-    // Get all tasks for this specific project
-    const projectTasks = simTasks.filter(task => task.projectId === currentProjectId);
+    const projectTasks = await fetchProjectTasksFromDb(currentProjectId);
 
-    // Render all components
-    renderManagerTaskProgress(projectTasks);
     renderManagerDeadlines(projectTasks);
-    renderProjectResources(projectTasks);
-    renderTasksPerMemberChart(projectTasks);
+    initManagerMemberProgressList(); // renders the left list via ajax=member_progress
 
     feather.replace();
 }
@@ -2696,8 +2976,10 @@ function renderManagerDeadlines(projectTasks) {
             }
         }
 
-        // Find assignee names
-        const assignees = task.assignedTo.map(email => simUsers[email] ? simUsers[email].name.split(' ')[0] : 'N/A').join(', ');
+const usersMap = getUsersMap();
+        const assignees = (task.assignedTo || [])
+            .map(email => (usersMap[email]?.name || email).split(" ")[0])
+            .join(", ");
 
         return `
             <div class="deadline-item">
@@ -2855,7 +3137,7 @@ function renderTasksPerMemberChart(projectTasks) {
 }
 
 /**
- * Runs on the Project Resources page (project-resources.html)
+ * Runs on the Project Resources page (project-resources.php)
  */
 function loadProjectResourcesPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
@@ -2978,47 +3260,10 @@ function setupCreateTodoForm(currentUser) {
         savePersonalTodos();
 
         sessionStorage.setItem('taskCreated', 'Personal to-do added!');
-        window.location.href = `home.html?user=${currentUser.email}`;
+        window.location.href = `home.php?user=${currentUser.email}`;
     });
 }
 
-
-// *** ADDED: New function to load Project Archive page ***
-function loadProjectArchivePage(currentUser) {
-    const gridContainer = document.getElementById('archive-grid-container');
-    if (!gridContainer) return;
-
-    // Generate HTML for each card from mock data
-    gridContainer.innerHTML = simArchivedProjects.map(project => {
-        return `
-            <div class="archive-card">
-                <h2>${project.name}</h2>
-                <ul>
-                    <li>
-                        <strong>Team Leader:</strong>
-                        <span>${project.teamLeader}</span>
-                        <span class="team-leader-avatar ${project.avatarClass}">
-                            ${project.teamLeader.split(' ').map(n => n[0]).join('')}
-                        </span>
-                    </li>
-                    <li>
-                        <strong>Description:</strong>
-                        <span>${project.description}</span>
-                    </li>
-                    <li>
-                        <strong>Date Created:</strong>
-                        <span>${project.createdDate}</span>
-                    </li>
-                    <li>
-                        <strong>Date Closed:</strong>
-                        <span>${project.closedDate}</span>
-                    </li>
-                </ul>
-            </div>
-        `;
-    }).join('');
-}
-// *** END ADDED FUNCTION ***
 
 function sortProjects() {
     const sortSelect = document.getElementById('sortProjects');
@@ -3625,6 +3870,7 @@ function setupProjectCardNavigation() {
         setTimeout(() => console.log("Still here"), 0);
 
         // Go to DB-backed project page
+         sessionStorage.setItem("currentProjectName", card.dataset.name || "Project");
         window.location.href = `projects.php?project_id=${encodeURIComponent(projectId)}`;
     });
 }
@@ -3667,14 +3913,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!currentUser) return;
 
     // Store user in window object for floating widget
-    window.__USER__ = currentUser; 
-
-    // *** ADDED: Show "Project Archive" in sidebar for managers ***
-    const navArchive = document.getElementById('nav-archive');
-    if (navArchive && currentUser.role === 'manager') {
-        navArchive.style.display = 'block';
-    }
-    // *** END ADDED CODE-- fixing conficts-Simi ***
+    window.__USER__ = currentUser;
 
     // Run page-specific logic based on body ID
     const pageId = document.body.id;
@@ -3736,11 +3975,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (pageId === 'projects-page') {
         // Project Kanban Board
         loadProjectsPage(currentUser);
-    } else if (pageId === 'project-archive-page') {
-        // *** ADDED: Load logic for new archive page ***
-        loadProjectArchivePage(currentUser);
-    }
-    else if (pageId === "projects-overview-page") {
+    } else if (pageId === "projects-overview-page") {
         sortProjects();
         archivedJump();
         setupArchivedToggle();
@@ -3750,8 +3985,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     fetchAndRenderTasks();
     setupAssignTaskForm();
-
-    initFloatingTodoWidget();
     // Finally, activate all Feather icons
     feather.replace();
 });
@@ -3847,9 +4080,32 @@ function matchesDueFilter(deadline, filter) {
     }
 }
 
-function fetchAndRenderTasks({ search = "", status = "", priority = "", due = "", page = 1 } = {}) {
-    const url = new URL(window.location.href);
+async function fetchProjectTasksFromDb(projectId) {
+    const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
+    const res = await fetch(url, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
 
+    // data.tasks are DB shape -> normalize to your UI shape
+    return (data.tasks || []).map(t => ({
+        id: t.task_id,
+        title: t.task_name,
+        description: t.description || "",
+        priority: t.priority || "medium",
+        status: normalizeDbStatus(t.status),     // you already have this function
+        deadline: t.deadline,
+        assignedTo: Array.isArray(t.assignedUsers)
+            ? t.assignedUsers.map(u => u.email)
+            : []
+    }));
+}
+
+function fetchAndRenderTasks({ search = "", status = "", priority = "", due = "", page = 1 } = {}) {
+    const pid = getCurrentProjectId();
+
+    // Always hit projects.php for task AJAX (works from ANY page)
+    const url = new URL("projects.php", window.location.href);
+    url.searchParams.set("project_id", pid || "");
     url.searchParams.set("ajax", "fetch_tasks");
     url.searchParams.set("search", search);
     url.searchParams.set("status", status);
@@ -3857,28 +4113,54 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
     url.searchParams.set("due", due);
     url.searchParams.set("page", page);
 
-    fetch(url.toString())
+    fetch(url.toString(), { credentials: "include" })
         .then(res => res.json())
-       .then(data => {
-    if (!data.success) return;
+        .then(data => {
+            if (!data.success) return;
 
-    const dueValue = document.getElementById("filter-due")?.value || "";
+            const dueValue = document.getElementById("filter-due")?.value || "";
 
-    // Apply due-date filter correctly
-    window.__TASKS__ = data.tasks.filter(task =>
-        matchesDueFilter(task.deadline, dueValue)
-    );
+            // keep your due filter logic
+            window.__TASKS__ = (data.tasks || []).filter(task =>
+                matchesDueFilter(task.deadline, dueValue)
+            );
 
-    window.__TASKS_NORM__ = []; // force rebuild from filtered list
+            window.__TASKS_NORM__ = []; // force rebuild from filtered list
 
-    clearTaskColumns();
-    renderTaskBoard(getCurrentUserStatus(), getCurrentProjectId());
-    updateAddTaskButtonsVisibility();
-    updateTaskCounts();
-})
+            // If this page has a kanban board, rerender it
+            if (document.querySelector(".task-board")) {
+                clearTaskColumns();
+                renderTaskBoard(window.__CURRENT_USER__, getCurrentProjectId());
+                updateAddTaskButtonsVisibility();
+                updateTaskCounts();
+            }
 
+            // If this page is manager-progress and you want charts to reflect filters:
+            // rebuild normalized tasks and re-render manager widgets
+            if (document.body?.id === "manager-progress-page") {
+                const normalized = (window.__TASKS__ || []).map(t => ({
+                    id: t.task_id,
+                    title: t.task_name,
+                    description: t.description || "",
+                    priority: t.priority || "medium",
+                    status: normalizeDbStatus(t.status),
+                    deadline: t.deadline,
+                    assignedTo: Array.isArray(t.assignedUsers) ? t.assignedUsers.map(u => u.email) : []
+                }));
+
+                // ✅ Only deadlines refresh from task filters
+                renderManagerDeadlines(normalized);
+
+                // Optional: if you want the Team Progress list to refresh after filtering,
+                // you'd need to pass filters into ajax=member_progress too (not doing that now).
+                if (window.feather) feather.replace();
+            }
+
+        })
         .catch(err => console.error("Task fetch error:", err));
 }
+
+
 function clearTaskColumns() {
     document.querySelectorAll(".task-column .task-list")
         .forEach(col => col.innerHTML = "");
@@ -3919,7 +4201,22 @@ function updateTaskCounts() {
 
     column.appendChild(card);
 }*/
+document.addEventListener("DOMContentLoaded", () => {
+    const pageId = document.body?.id;
 
+    // Call it on BOTH pages (only does board rerender if board exists)
+    if (pageId === "projects-page" || pageId === "manager-progress-page") {
+        fetchAndRenderTasks();
+    }
+
+    if (pageId === "projects-page") {
+        setupAssignTaskForm();
+    }
+    if (document.body.id === "manager-progress-page") {
+        initManagerMemberProgressList();
+    }
+
+});
 
 
 
@@ -3939,31 +4236,36 @@ function getCurrentUserEmail() {
 }
 
 // =============================
-// CLEAR FILTERS BUTTON
+// CLEAR FILTERS BUTTON (fixed)
 // =============================
-const filterClearBtn = document.getElementById('filter-clear');
-const filterStatus = document.getElementById('filter-status');
-const filterPriority = document.getElementById('filter-priority');
-const filterDue = document.getElementById('filter-due');
+document.addEventListener("DOMContentLoaded", () => {
+    const filterClearBtn = document.getElementById("filter-clear");
+    const filterStatus = document.getElementById("filter-status");
+    const filterPriority = document.getElementById("filter-priority");
+    const filterDue = document.getElementById("filter-due");
+    const panel = document.getElementById("filter-panel");
+    const searchInput = document.getElementById("task-search-input");
 
-filterClearBtn?.addEventListener('click', () => {
-    // Reset dropdowns
-    if (filterStatus) filterStatus.value = '';
-    if (filterPriority) filterPriority.value = '';
-    if (filterDue) filterDue.value = '';
+    if (!filterClearBtn) return;
 
-    // Re-fetch tasks with no filters
-    fetchAndRenderTasks({
-        search: document.getElementById('task-search-input')?.value.trim() || '',
-        status: '',
-        priority: '',
-        due: '',
-        page: 1
+    filterClearBtn.addEventListener("click", () => {
+        // Reset dropdowns
+        if (filterStatus) filterStatus.value = "";
+        if (filterPriority) filterPriority.value = "";
+        if (filterDue) filterDue.value = "";
+
+        // Re-fetch tasks with no filters (keep search text if you want)
+        fetchAndRenderTasks({
+            search: searchInput?.value.trim() || "",
+            status: "",
+            priority: "",
+            due: "",
+            page: 1
+        });
+
+        // Close filter panel (match your toggle logic)
+        if (panel) panel.style.display = "none";
     });
-
-    // Optional: close filter panel after clearing
-    const panel = document.getElementById('filter-panel');
-    if (panel) panel.hidden = true;
 });
 
 

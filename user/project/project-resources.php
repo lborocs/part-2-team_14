@@ -1,162 +1,280 @@
-<?php
-header('Content-Type: application/json; charset=utf-8');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Make-It-All - Project Resources</title>
 
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+  <link rel="stylesheet" href="../dashboard.css" />
+  <link rel="stylesheet" href="progress.css" />
+  <link rel="stylesheet" href="project-resources.css" />
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-  http_response_code(204);
-  exit;
-}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-require_once __DIR__ . '/../../config/database.php';
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body id="project-resources-page">
+<?php include '../to-do/todo_widget.php'; ?>
+<div class="dashboard-container">
+  <nav class="sidebar">
+    <div class="nav-top">
+      <div class="logo-container">
+        <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon" />
+      </div>
+      <ul class="nav-main">
+        <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+        <li class="active-parent">
+          <a href="projects-overview.php"><i data-feather="folder"></i>Projects</a>
+          <ul class="nav-sub" id="project-sidebar-list"></ul>
+        </li>
+        <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
+      </ul>
+    </div>
+    <div class="nav-footer">
+      <ul>
+        <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+      </ul>
+    </div>
+  </nav>
 
-/*
-|--------------------------------------------------------------------------
-| I HARD CODED IT FOR NOW
-|--------------------------------------------------------------------------
-| 
-*/
-$HARDCODED_PROJECT_ID  = 1;
-$HARDCODED_UPLOADED_BY = 1;
+  <main class="main-content">
+    <header class="project-header">
+      <div class="project-header-top">
+        <div class="breadcrumbs-title">
+          <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb">Project</span></p>
+          <h1 id="project-name-header">Project</h1>
+        </div>
+        <button class="close-project-btn" id="close-project-btn" style="display:none;">Close Project</button>
+      </div>
 
-/*
-|--------------------------------------------------------------------------
-| Upload rules
-|--------------------------------------------------------------------------
-*/
-$ALLOWED_EXT = ['pdf','doc','docx','xls','xlsx','png','jpg','jpeg','txt'];
-$MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
-$UPLOAD_DIR = __DIR__ . '/../../uploads/resources'; // projectRoot/uploads/resources
+      <nav class="project-nav" id="project-nav-links">
+        <a href="#" class="active">Tasks</a>
+        <a href="progress.html">Progress</a>
+        <a href="#">Resources</a>
+      </nav>
+    </header>
 
-function fail(string $msg, int $code = 400): void {
-  http_response_code($code);
-  echo json_encode(['success' => false, 'message' => $msg]);
-  exit;
-}
+    <div class="resource-content">
+      <div class="resource-header">
+        <h2>Project Resources</h2>
+        <button class="upload-btn" id="upload-btn" style="display:none;">
+          <i data-feather="upload-cloud"></i> Upload File
+        </button>
+      </div>
 
-function safe_name(string $name): string {
-  $base = pathinfo($name, PATHINFO_FILENAME);
-  $base = preg_replace('/[^a-zA-Z0-9 _-]/', '', $base);
-  $base = trim(preg_replace('/\s+/', '_', $base));
-  return $base !== '' ? $base : 'file';
-}
+      <div class="resource-grid">
+        <div class="resource-card">
+          <h3>Project Contacts</h3>
+          <div class="contact-list" id="project-contacts-list"></div>
+        </div>
 
-try {
-  $db = new Database();
-  $conn = $db->getConnection();
-  if (!$conn) fail('Database connection failed', 500);
-} catch (Exception $e) {
-  fail('Database init failed: ' . $e->getMessage(), 500);
-}
+        <div class="resource-card">
+          <h3>Project Details</h3>
+          <ul class="details-list">
+            <li>
+              <strong>Created:</strong>
+              <span id="project-created-date">Loading...</span>
+            </li>
+            <li>
+              <strong>Description:</strong>
+              <p id="project-description">Loading project details...</p>
+            </li>
+          </ul>
+        </div>
 
-$action = $_GET['action'] ?? ($_POST['action'] ?? '');
+        <!-- NEW: Uploaded Files -->
+        <div class="resource-card resource-files-card">
+          <h3>Uploaded Files</h3>
 
-/*
-|--------------------------------------------------------------------------
-| LIST (GET) 
-|--------------------------------------------------------------------------
-*/
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'list') {
-  try {
-    $stmt = $conn->prepare("
-      SELECT resource_id, file_name, file_type, file_size, file_path,
-             project_id, uploaded_by, description, uploaded_at
-      FROM project_resources
-      WHERE project_id = :pid
-      ORDER BY uploaded_at DESC
-    ");
-    $stmt->execute([':pid' => $HARDCODED_PROJECT_ID]);
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+          <div class="files-toolbar" id="files-toolbar">
+            <input type="file" id="resource-file-input" class="file-hidden-input" />
 
-    echo json_encode([
-      'success' => true,
-      'project_id' => $HARDCODED_PROJECT_ID,
-      'resources' => $rows
-    ]);
-    exit;
-  } catch (Exception $e) {
-    fail('List failed: ' . $e->getMessage(), 500);
+            <button class="file-choose-btn" id="file-choose-btn" type="button">
+              <i data-feather="paperclip"></i> Choose file
+            </button>
+
+            <span class="file-chosen-name" id="file-chosen-name">No file chosen</span>
+
+            <input
+              type="text"
+              id="resource-desc"
+              class="file-desc"
+              placeholder="Description (optional)"
+            />
+
+            <button class="file-upload-btn" id="resource-upload-btn" type="button">
+              <i data-feather="upload"></i> Upload
+            </button>
+          </div>
+
+          <div class="file-hint">Allowed: pdf, doc/docx, xls/xlsx, png/jpg/jpeg, txt (max 10MB)</div>
+          <div class="files-status" id="files-status" aria-live="polite"></div>
+
+          <div class="files-list" id="files-list"></div>
+          <div class="files-empty" id="files-empty">No files uploaded yet.</div>
+        </div>
+        <!-- END NEW -->
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../app.js"></script>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+
+  function setStatus(msg, type) {
+    const el = $('files-status');
+    el.textContent = msg || '';
+    el.className = 'files-status ' + (type ? ('is-' + type) : '');
   }
-}
 
-/*
-|--------------------------------------------------------------------------
-| UPLOAD (POST)
-|--------------------------------------------------------------------------
-*/
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload') {
-  if (!isset($_FILES['resource_file'])) fail('No file uploaded (resource_file missing)');
-
-  $f = $_FILES['resource_file'];
-
-  if ($f['error'] !== UPLOAD_ERR_OK) fail('Upload error code: ' . $f['error']);
-  if ($f['size'] > $MAX_SIZE_BYTES) fail('File too large (max 10MB)');
-
-  $originalName = $f['name'];
-  $tmpPath = $f['tmp_name'];
-
-  $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-  if ($ext === '' || !in_array($ext, $ALLOWED_EXT, true)) {
-    fail('Invalid file type. Allowed: ' . implode(', ', $ALLOWED_EXT));
+  function formatBytes(bytes) {
+    const b = Number(bytes || 0);
+    if (b < 1024) return b + ' B';
+    const kb = b / 1024;
+    if (kb < 1024) return kb.toFixed(1) + ' KB';
+    const mb = kb / 1024;
+    if (mb < 1024) return mb.toFixed(1) + ' MB';
+    return (mb / 1024).toFixed(1) + ' GB';
   }
 
-  if (!is_dir($UPLOAD_DIR)) {
-    if (!mkdir($UPLOAD_DIR, 0775, true)) fail('Failed to create upload folder', 500);
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
   }
 
-  $uniqueName = safe_name($originalName) . '_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-  $destPath = rtrim($UPLOAD_DIR, '/\\') . DIRECTORY_SEPARATOR . $uniqueName;
-
-  if (!move_uploaded_file($tmpPath, $destPath)) fail('Failed to save file', 500);
-
-  // store relative path in DB
-  $dbFilePath = 'uploads/resources/' . $uniqueName;
-
-  $description = isset($_POST['description']) ? trim($_POST['description']) : '';
-
-  try {
-    $stmt = $conn->prepare("
-      INSERT INTO project_resources
-        (file_name, file_type, file_size, file_path, project_id, uploaded_by, description, uploaded_at)
-      VALUES
-        (:file_name, :file_type, :file_size, :file_path, :project_id, :uploaded_by, :description, NOW())
-    ");
-
-    $stmt->execute([
-      ':file_name'   => $originalName,
-      ':file_type'   => $ext,
-      ':file_size'   => (int)$f['size'],
-      ':file_path'   => $dbFilePath,
-      ':project_id'  => $HARDCODED_PROJECT_ID,
-      ':uploaded_by' => $HARDCODED_UPLOADED_BY,
-      ':description' => $description
-    ]);
-
-    $newId = $conn->lastInsertId();
-
-    echo json_encode([
-      'success' => true,
-      'message' => 'Uploaded',
-      'resource' => [
-        'resource_id' => $newId,
-        'file_name' => $originalName,
-        'file_type' => $ext,
-        'file_size' => (int)$f['size'],
-        'file_path' => $dbFilePath,
-        'project_id' => $HARDCODED_PROJECT_ID,
-        'uploaded_by' => $HARDCODED_UPLOADED_BY,
-        'description' => $description,
-        'uploaded_at' => date('Y-m-d H:i:s')
-      ]
-    ]);
-    exit;
-
-  } catch (Exception $e) {
-    if (file_exists($destPath)) @unlink($destPath);
-    fail('DB insert failed: ' . $e->getMessage(), 500);
+  function iconForType(ext) {
+    ext = (ext || '').toLowerCase();
+    if (['png','jpg','jpeg'].includes(ext)) return 'image';
+    if (ext === 'pdf') return 'file-text';
+    if (['doc','docx'].includes(ext)) return 'file';
+    if (['xls','xlsx'].includes(ext)) return 'grid';
+    if (ext === 'txt') return 'align-left';
+    return 'paperclip';
   }
-}
 
-fail('Invalid route. Use GET ?action=list or POST ?action=upload', 404);
+  async function listFiles() {
+    const res = await fetch('project-resources.php?action=list', {
+      headers: { 'Accept': 'application/json' }
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error(text); }
+    if (!res.ok || data.success === false) throw new Error(data.message || 'Failed to load files');
+    return data.resources || [];
+  }
+
+  async function uploadFile(file, description) {
+    const fd = new FormData();
+    fd.append('action', 'upload');
+    fd.append('description', description || '');
+    fd.append('resource_file', file);
+
+    const res = await fetch('project-resources.php?action=upload', { method: 'POST', body: fd });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { throw new Error(text); }
+    if (!res.ok || data.success === false) throw new Error(data.message || 'Upload failed');
+    return data.resource;
+  }
+
+  function render(rows) {
+    const list = $('files-list');
+    const empty = $('files-empty');
+
+    list.innerHTML = '';
+
+    if (!rows || rows.length === 0) {
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    rows.forEach(r => {
+      const ext = (r.file_type || '').toLowerCase();
+      const downloadHref = `../../${r.file_path}`; // file_path is uploads/resources/...
+
+      const row = document.createElement('div');
+      row.className = 'file-row';
+      row.innerHTML = `
+        <div class="file-left">
+          <div class="file-ico"><i data-feather="${iconForType(ext)}"></i></div>
+          <div class="file-meta">
+            <div class="file-name">${escapeHtml(r.file_name)}</div>
+            <div class="file-sub">
+              <span class="file-pill">${ext ? ext.toUpperCase() : 'FILE'}</span>
+              <span class="file-dot">•</span>
+              <span>${formatBytes(r.file_size)}</span>
+              ${r.uploaded_at ? `<span class="file-dot">•</span><span>${escapeHtml(r.uploaded_at)}</span>` : ''}
+            </div>
+            ${r.description ? `<div class="file-desc-text">${escapeHtml(r.description)}</div>` : ''}
+          </div>
+        </div>
+
+        <a class="file-download" href="${downloadHref}" target="_blank" rel="noopener">
+          <i data-feather="download"></i> Download
+        </a>
+      `;
+      list.appendChild(row);
+    });
+
+    feather.replace();
+  }
+
+  async function refresh() {
+    try {
+      setStatus('', '');
+      const rows = await listFiles();
+      render(rows);
+    } catch (e) {
+      setStatus(e.message || 'Failed to fetch', 'error');
+      render([]);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Choose button -> open hidden file input
+    $('file-choose-btn').addEventListener('click', () => $('resource-file-input').click());
+
+    // Update chosen filename
+    $('resource-file-input').addEventListener('change', () => {
+      const f = $('resource-file-input').files[0];
+      $('file-chosen-name').textContent = f ? f.name : 'No file chosen';
+    });
+
+    // Upload
+    $('resource-upload-btn').addEventListener('click', async () => {
+      const file = $('resource-file-input').files[0];
+      const desc = $('resource-desc').value || '';
+
+      if (!file) {
+        setStatus('Choose a file first.', 'error');
+        return;
+      }
+
+      setStatus('Uploading...', 'info');
+      try {
+        await uploadFile(file, desc);
+        $('resource-file-input').value = '';
+        $('resource-desc').value = '';
+        $('file-chosen-name').textContent = 'No file chosen';
+        setStatus('Uploaded successfully.', 'ok');
+        await refresh();
+      } catch (e) {
+        setStatus(e.message || 'Upload failed', 'error');
+      }
+    });
+
+    refresh();
+    feather.replace();
+  });
+})();
+</script>
+</body>
+</html>
