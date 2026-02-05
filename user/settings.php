@@ -1,14 +1,30 @@
-<<<<<<< HEAD
-<?php 
-// Update the nav bar if the current user is a manager
-if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
-    <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
-<?php endif; ?>
-=======
 <?php
-
+session_start();
+ 
+require_once '../config/database.php';
+ 
+$database = new Database();
+$db = $database->getConnection();
+ 
+if (!$db) {
+  die("Database connection failed.");
+}
+ 
+//DEV BYPASS
+$isLoggedIn = isset($_SESSION['role'], $_SESSION['email'], $_SESSION['user_id']);
+ 
+if (!$isLoggedIn) {
+  // you're viewing without login -> force safe defaults
+  $role = 'manager';
+  $isManager = true;
+ 
+  $currentUserId = 1; // TEMP fallback
+} else {
+  $role = $_SESSION['role'];
+  $isManager = ($role === 'manager');
+  $currentUserId = $_SESSION['user_id'];
+}
 ?>
->>>>>>> 0f26fa13af21ac47a12df24f27164b557d562712
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +38,9 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
+
 <body id="settings-page"> <div class="dashboard-container">
+    <?php include 'to-do/todo_widget.php'; ?>
         <nav class="sidebar">
             <div class="nav-top">
                 <div class="logo-container">
@@ -31,6 +49,9 @@ if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
                 <ul class="nav-main">
                     <li><a href="home/home.php"><i data-feather="home"></i>Home</a></li>
                     <li><a href="project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
+                        <li><a href="employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+                    <?php endif; ?>
                     <li><a href="knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
                 </ul>
             </div>
