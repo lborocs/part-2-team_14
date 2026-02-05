@@ -13,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body id="home-page">
+    <?php include '../to-do/todo_widget.php'; ?>
     <div class="dashboard-container">
         <nav class="sidebar">
             <div class="nav-top">

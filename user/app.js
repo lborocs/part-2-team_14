@@ -3666,6 +3666,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const currentUser = await getCurrentUser();
     if (!currentUser) return;
 
+    // Store user in window object for floating widget
+    window.__USER__ = currentUser; 
+
     // *** ADDED: Show "Project Archive" in sidebar for managers ***
     const navArchive = document.getElementById('nav-archive');
     if (navArchive && currentUser.role === 'manager') {
@@ -3745,8 +3748,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupProjectsOverviewSearch();
         setupProjectCardNavigation();
     }
+    fetchAndRenderTasks();
+    setupAssignTaskForm();
 
-
+    initFloatingTodoWidget();
     // Finally, activate all Feather icons
     feather.replace();
 });
@@ -3914,16 +3919,24 @@ function updateTaskCounts() {
 
     column.appendChild(card);
 }*/
-document.addEventListener("DOMContentLoaded", () => {
-    fetchAndRenderTasks();
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  setupAssignTaskForm();
-});
 
 
 
+
+/**
+ * Helper: Get current user email from various sources
+ */
+function getCurrentUserEmail() {
+  // Try from window object first (set by PHP)
+  if (window.__USER__?.email) return window.__USER__.email;
+  
+  // Try from URL parameter
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('user')) return params.get('user');
+  
+  // Default fallback (you might need to adjust this)
+  return 'user@make-it-all.co.uk';
+}
 
 // =============================
 // CLEAR FILTERS BUTTON
