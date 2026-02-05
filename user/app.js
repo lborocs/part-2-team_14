@@ -231,9 +231,9 @@ const initialPersonalTodos = [
 ];
 
 // Load tasks from localStorage or use initial set
-let simTasks = JSON.parse(localStorage.getItem('simTasks'));
+let simTasks = JSON.parse(localStorage.getItem('simTasks')) || [];
 if (!localStorage.getItem('simTasks')) {
-    localStorage.setItem('simTasks', JSON.stringify(simTasks));
+    localStorage.setItem('simTasks', JSON.stringify([]));
 }
 
 let simPersonalTodos = JSON.parse(localStorage.getItem('simPersonalTodos')) || initialPersonalTodos;
@@ -300,10 +300,10 @@ function getCurrentUserStatus() {
 }
 
 function updateAddTaskButtonsVisibility() {
-  const canManage = !!window.__CAN_MANAGE_PROJECT__;
-  document.querySelectorAll(".add-task").forEach(btn => {
-    btn.style.display = canManage ? "" : "none";
-  });
+    const canManage = !!window.__CAN_MANAGE_PROJECT__;
+    document.querySelectorAll(".add-task").forEach(btn => {
+        btn.style.display = canManage ? "" : "none";
+    });
 }
 
 
@@ -1438,7 +1438,6 @@ async function loadProgressPage(currentUser) {
 }
 
 
-
 function renderUpcomingDeadlines(userTasks) {
     const deadlinesList = document.getElementById('deadlines-list');
     const today = new Date("2025-10-25T12:00:00"); // Hardcode date for demo consistency
@@ -1624,9 +1623,6 @@ function setupCreateTopicForm(currentUser) {
     });
 }
 
-/**
- * Runs on the standalone Assign Task page (assign-task.html)
- */
 function setupAssignTaskForm() {
     const form = document.getElementById("assign-task-form");
     if (!form) return;
@@ -1751,21 +1747,21 @@ function setupCreateProjectForm(currentUser) {
  */
 function createTaskCardHTML(task, currentUser) {
     function renderStatusPill(task) {
-    const statuses = {
-        todo: "To Do",
-        inprogress: "In Progress",
-        review: "Review",
-        completed: "Completed"
-    };
+        const statuses = {
+            todo: "To Do",
+            inprogress: "In Progress",
+            review: "Review",
+            completed: "Completed"
+        };
 
-    const priorities = {
-        low: "Low",
-        medium: "Medium",
-        high: "High",
-        urgent: "Urgent"
-    };
+        const priorities = {
+            low: "Low",
+            medium: "Medium",
+            high: "High",
+            urgent: "Urgent"
+        };
 
-    return `
+        return `
       <div class="task-status-menu" data-task-id="${task.id}">
         <button class="status-pill icon-only" aria-label="Task actions">
           <span class="ellipsis">⋯</span>
@@ -1798,7 +1794,7 @@ function createTaskCardHTML(task, currentUser) {
         </div>
       </div>
     `;
-}
+    }
 
     // Check for the special "Leader on Apollo" case
     const currentProjectId = getCurrentProjectId();
@@ -1847,7 +1843,7 @@ function createTaskCardHTML(task, currentUser) {
     // Capitalize priority
     const priorityText = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
 
- return `
+    return `
   <div class="task-card" data-task-id="${task.id}" ${isDraggable ? 'draggable="true"' : ''}>
     <span class="priority ${task.priority}">${priorityText}</span>
     <h3 class="task-title">${task.title}</h3>
@@ -2000,13 +1996,22 @@ async function updateTaskStatusInDb(taskId, newStatus) {
         })
     });
 
-    const raw = await res.text(); // helpful for debugging
+    const raw = await res.text();
     let data;
-    try { data = JSON.parse(raw); } catch { throw new Error("Server did not return JSON: " + raw); }
+    try { data = JSON.parse(raw); }
+    catch { throw new Error("Server did not return JSON: " + raw); }
 
     if (!res.ok || !data.success) {
         throw new Error(data.message || `Update failed (${res.status})`);
     }
+
+    // ✅ Trigger UI refresh after successful update
+    const currentUser = window.__CURRENT_USER__;
+    const projectId = getCurrentProjectId();
+    if (currentUser && projectId) {
+        renderTaskBoard(currentUser, projectId);
+    }
+
     return data;
 }
 async function updateTaskPriorityInDb(taskId, priority) {
@@ -2068,84 +2073,84 @@ async function deleteTaskInDb(taskId) {
 
 function setupStatusPillActions(currentUser, currentProjectId) {
 
-   document.addEventListener("click", (e) => {
-    const pill = e.target.closest(".status-pill");
-    if (!pill) return;
+    document.addEventListener("click", (e) => {
+        const pill = e.target.closest(".status-pill");
+        if (!pill) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
-    if (!window.__CAN_MANAGE_PROJECT__) return;
+        if (!window.__CAN_MANAGE_PROJECT__) return;
 
-    // close all others
-    document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
-    document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+        // close all others
+        document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+        document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
 
-    const menu = pill.nextElementSibling;
-    const card = pill.closest(".task-card");
+        const menu = pill.nextElementSibling;
+        const card = pill.closest(".task-card");
 
-    if (menu && card) {
-        menu.hidden = false;
-        card.classList.add("menu-open");
-    }
-});
+        if (menu && card) {
+            menu.hidden = false;
+            card.classList.add("menu-open");
+        }
+    });
 
 
     // Handle move (CLICK OPTION)
     document.addEventListener("click", async (e) => {
-    const option = e.target.closest(".status-dropdown button");
-    if (!option) return;
+        const option = e.target.closest(".status-dropdown button");
+        if (!option) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
-    if (!window.__CAN_MANAGE_PROJECT__) return;
+        if (!window.__CAN_MANAGE_PROJECT__) return;
 
-    const wrapper = option.closest(".task-status-menu");
-    const taskId = wrapper.dataset.taskId;
-    const action = option.dataset.action;
-    const value = option.dataset.value;
+        const wrapper = option.closest(".task-status-menu");
+        const taskId = wrapper.dataset.taskId;
+        const action = option.dataset.action;
+        const value = option.dataset.value;
 
-    const tasks = window.__TASKS_NORM__ || [];
-    const task = tasks.find(t => String(t.id) === String(taskId));
-    if (!task) return;
+        const tasks = window.__TASKS_NORM__ || [];
+        const task = tasks.find(t => String(t.id) === String(taskId));
+        if (!task) return;
 
-    if (action === "status" && task.status !== value) {
-        const old = task.status;
-        task.status = value;
+        if (action === "status" && task.status !== value) {
+            const old = task.status;
+            task.status = value;
 
-        try {
-            await updateTaskStatusInDb(task.id, denormalizeStatus(value));
-        } catch {
-            task.status = old;
-            alert("Could not change status");
-            return;
+            try {
+                await updateTaskStatusInDb(task.id, denormalizeStatus(value));
+            } catch {
+                task.status = old;
+                alert("Could not change status");
+                return;
+            }
         }
-    }
 
-    if (action === "priority" && task.priority !== value) {
-        const old = task.priority;
-        task.priority = value;
+        if (action === "priority" && task.priority !== value) {
+            const old = task.priority;
+            task.priority = value;
 
-        try {
-            await updateTaskPriorityInDb(task.id, value);
-        } catch {
-            task.priority = old;
-            alert("Could not change priority");
-            return;
+            try {
+                await updateTaskPriorityInDb(task.id, value);
+            } catch {
+                task.priority = old;
+                alert("Could not change priority");
+                return;
+            }
         }
-    }
 
-    renderTaskBoard(currentUser, currentProjectId);
-});
+        renderTaskBoard(currentUser, currentProjectId);
+    });
 
 
-   document.addEventListener("click", (e) => {
-    if (e.target.closest(".task-status-menu")) return;
+    document.addEventListener("click", (e) => {
+        if (e.target.closest(".task-status-menu")) return;
 
-    document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
-    document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
-});
+        document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+        document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+    });
 
 }
 
@@ -2246,9 +2251,6 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
 }
 
 
-/**
- * NEW: Initializes click listeners for task cards to show details
- */
 function initTaskDetailsModal(currentUser) {
     const detailsModal = document.getElementById("task-details-modal");
     const detailsCloseBtn = document.getElementById("details-close-modal-btn");
@@ -2604,76 +2606,6 @@ function loadProjectsPage(currentUser) {
         });
     }
 
-   
-
-
-    // =============================
-    // Close Project (modal + DB update)
-    // =============================
-    const closeProjectBtn = document.getElementById("close-project-btn");
-    const closeProjectModal = document.getElementById("close-project-modal");
-    const closeProjectOk = document.getElementById("close-project-ok");
-    const closeProjectCancel = document.getElementById("close-project-cancel");
-    const closeProjectX = document.getElementById("close-project-x");
-
-    function openCloseProjectModal() {
-        if (!closeProjectModal) return;
-        closeProjectModal.style.display = "flex";
-        if (window.feather) feather.replace();
-    }
-
-    function closeCloseProjectModal() {
-        if (!closeProjectModal) return;
-        closeProjectModal.style.display = "none";
-    }
-
-    // open modal when button clicked
-    if (closeProjectBtn) {
-        closeProjectBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            openCloseProjectModal();
-        });
-    }
-
-    // close modal actions
-    if (closeProjectCancel) closeProjectCancel.addEventListener("click", closeCloseProjectModal);
-    if (closeProjectX) closeProjectX.addEventListener("click", closeCloseProjectModal);
-
-    // click outside closes
-    if (closeProjectModal) {
-        closeProjectModal.addEventListener("click", (e) => {
-            if (e.target === closeProjectModal) closeCloseProjectModal();
-        });
-    }
-
-    // OK = update DB then redirect
-    if (closeProjectOk) {
-        closeProjectOk.addEventListener("click", async () => {
-            try {
-                const pid = getCurrentProjectId();
-                const res = await fetch(`projects.php?project_id=${encodeURIComponent(pid)}`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: new URLSearchParams({ ajax: "close_project" })
-                });
-
-                const raw = await res.text();
-                let data;
-                try { data = JSON.parse(raw); }
-                catch { throw new Error("Server did not return JSON: " + raw); }
-
-                if (!res.ok || !data.success) throw new Error(data.message || "Close project failed");
-
-                // success -> go overview
-                window.location.href = "projects-overview.php";
-            } catch (err) {
-                console.error(err);
-                alert("Could not close project. Check console.");
-            }
-        });
-    }
-
-
     // -----------------------------
     // Modal close listeners
     // -----------------------------
@@ -3002,10 +2934,11 @@ function renderManagerDeadlines(projectTasks) {
             }
         }
 
-const usersMap = getUsersMap();
+        const usersMap = getUsersMap();
         const assignees = (task.assignedTo || [])
             .map(email => (usersMap[email]?.name || email).split(" ")[0])
             .join(", ");
+
 
         return `
             <div class="deadline-item">
@@ -3072,7 +3005,8 @@ function renderTasksPerMemberChart(projectTasks) {
 
     //Aggregate task counts for each user
     userEmails.forEach(email => {
-        const user = simUsers[email];
+        const usersMap = getUsersMap();
+        const user = usersMap[email];
         if (!user) return;
 
         labels.push(user.name);
@@ -3396,20 +3330,27 @@ function setupProjectCardMenus() {
             return;
         }
 
-        // If user clicked an option in the menu (Mark complete / Archive / Reinstate)
+        // If user clicked an option in the menu (Mark complete / Archive / Reinstate / Update)
         if (menuItem) {
             const card = menuItem.closest(".project-card");
-            const projectId = card.dataset.projectId; // from data-project-id
-            const action = menuItem.dataset.action;   // "complete", "archive", "reinstate"
+            const projectId = card.dataset.projectId;
+            const action = menuItem.dataset.action;
 
             // Close menu immediately
             const menu = card.querySelector(".card-menu-dropdown");
             if (menu) menu.hidden = true;
 
-            // Send request to PHP (same page)
+            // ✅ Update opens modal (no DB call here)
+            if (action === "update") {
+                openUpdateProjectModal(card);
+                return;
+            }
+
+            // others go to PHP action handler
             runProjectAction(projectId, action, card);
             return;
         }
+
 
         // If user clicked anywhere else, close all menus
         document.querySelectorAll(".card-menu-dropdown").forEach((m) => (m.hidden = true));
@@ -3482,41 +3423,181 @@ function renderCardMenu(cardEl, state) {
 }
 
 
-function updateArchivedEmptyState() {
-    const archivedGrid = document.querySelector("#archived-section .projects-grid");
-    if (!archivedGrid) return;
+function updateEmptyStates() {
+    // Update Active empty state
+    const activeGrid = document.querySelector("#active-section .projects-grid");
+    if (activeGrid) {
+        const hasActiveCards = activeGrid.querySelector(".project-card:not(.project-card--archived)") !== null;
+        const existingActiveEmpty = activeGrid.querySelector(".empty-state");
 
-    const hasArchivedCards = archivedGrid.querySelector(".project-card") !== null;
-    const existingEmpty = archivedGrid.querySelector(".empty-state");
-
-    if (!hasArchivedCards) {
-        if (!existingEmpty) {
-            archivedGrid.insertAdjacentHTML("beforeend", `
-        <div class="empty-state">
-          <i data-feather="archive"></i>
-          <p>No archived projects</p>
-        </div>
-      `);
-
-            // Re-render feather icon inside the new empty state
-            if (window.feather) feather.replace();
+        if (!hasActiveCards) {
+            if (!existingActiveEmpty) {
+                activeGrid.innerHTML = `
+          <div class="empty-state">
+            <i data-feather="inbox"></i>
+            <p>No current active projects</p>
+          </div>
+        `;
+                if (window.feather) feather.replace();
+            }
+        } else {
+            existingActiveEmpty?.remove();
         }
-    } else {
-        existingEmpty?.remove();
+    }
+
+    // Update Archived empty state
+    const archivedGrid = document.querySelector("#archived-section .projects-grid");
+    if (archivedGrid) {
+        const hasArchivedCards = archivedGrid.querySelector(".project-card") !== null;
+        const existingArchivedEmpty = archivedGrid.querySelector(".empty-state");
+
+        if (!hasArchivedCards) {
+            if (!existingArchivedEmpty) {
+                archivedGrid.innerHTML = `
+          <div class="empty-state">
+            <i data-feather="archive"></i>
+            <p>No archived projects</p>
+          </div>
+        `;
+                if (window.feather) feather.replace();
+            }
+        } else {
+            existingArchivedEmpty?.remove();
+        }
     }
 }
 
 function restoreDeadlinePill(cardEl) {
-    const text = cardEl.dataset.deadlineText || "";
-    const cls = cardEl.dataset.deadlineClass || "days-pill";
+    const deadlineStr = cardEl.dataset.deadline || "";
+    
+    // ✅ Recalculate the deadline pill based on current date
+    if (!deadlineStr) {
+        const pill = cardEl.querySelector(".days-pill");
+        if (pill) {
+            pill.className = "days-pill";
+            const span = pill.querySelector("span");
+            if (span) span.textContent = "No date set";
+        }
+        cardEl.dataset.deadlineText = "No date set";
+        cardEl.dataset.deadlineClass = "days-pill";
+        return;
+    }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const d = new Date(deadlineStr);
+    d.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((d - today) / (1000 * 60 * 60 * 24));
+
+    let text = "";
+    let cls = "days-pill";
+
+    if (diffDays < 0) {
+        text = `${Math.abs(diffDays)} days overdue`;
+        cls = "days-pill is-overdue";
+    } else if (diffDays === 0) {
+        text = "Due today";
+        cls = "days-pill is-due";
+    } else {
+        text = `${diffDays} days left`;
+        cls = "days-pill";
+    }
+
+    // ✅ Update the pill in the DOM
     const pill = cardEl.querySelector(".days-pill");
-    if (!pill) return;
+    if (pill) {
+        pill.className = cls;
+        const span = pill.querySelector("span");
+        if (span) span.textContent = text;
+    }
 
-    pill.className = cls;
+    // ✅ Update datasets for future reference
+    cardEl.dataset.deadlineText = text;
+    cardEl.dataset.deadlineClass = cls;
+}
 
-    const span = pill.querySelector("span");
-    if (span) span.textContent = text;
+function insertCardInSortedPosition(card, grid, sortBy = "due") {
+    if (!grid) return;
+
+    const existingCards = Array.from(grid.querySelectorAll(".project-card:not(.empty-state)"));
+    
+    // If no cards, just append
+    if (existingCards.length === 0) {
+        grid.appendChild(card);
+        return;
+    }
+
+    const priorityRank = (p) => {
+        if (p === 'high') return 3;
+        if (p === 'medium') return 2;
+        if (p === 'low') return 1;
+        return 0;
+    };
+
+    // Find the correct position based on current sort
+    let insertBeforeCard = null;
+
+    for (const existingCard of existingCards) {
+        let shouldInsertBefore = false;
+
+        switch (sortBy) {
+            case "due": {
+                const cardDate = card.dataset.deadline 
+                    ? new Date(card.dataset.deadline) 
+                    : new Date('9999-12-31');
+                const existingDate = existingCard.dataset.deadline 
+                    ? new Date(existingCard.dataset.deadline) 
+                    : new Date('9999-12-31');
+                shouldInsertBefore = cardDate < existingDate;
+                break;
+            }
+
+            case "progress": {
+                const cardProgress = Number(card.dataset.progress) || 0;
+                const existingProgress = Number(existingCard.dataset.progress) || 0;
+                shouldInsertBefore = cardProgress > existingProgress; // Higher % first
+                break;
+            }
+
+            case "name": {
+                const cardName = (card.dataset.name || "").toLowerCase();
+                const existingName = (existingCard.dataset.name || "").toLowerCase();
+                shouldInsertBefore = cardName < existingName;
+                break;
+            }
+
+            case "priorityHigh": {
+                const cardPriority = priorityRank(card.dataset.priority || "");
+                const existingPriority = priorityRank(existingCard.dataset.priority || "");
+                shouldInsertBefore = cardPriority > existingPriority;
+                break;
+            }
+
+            case "priorityLow": {
+                const cardPriority = priorityRank(card.dataset.priority || "");
+                const existingPriority = priorityRank(existingCard.dataset.priority || "");
+                shouldInsertBefore = cardPriority < existingPriority;
+                break;
+            }
+
+            default:
+                shouldInsertBefore = false;
+        }
+
+        if (shouldInsertBefore) {
+            insertBeforeCard = existingCard;
+            break;
+        }
+    }
+
+    // Insert at the correct position
+    if (insertBeforeCard) {
+        grid.insertBefore(card, insertBeforeCard);
+    } else {
+        grid.appendChild(card);
+    }
 }
 
 
@@ -3531,8 +3612,6 @@ function updateCardUIAfterAction(action, cardEl) {
         const text = card.querySelector(".progress-text");
         if (fill) fill.style.width = "100%";
         if (text) text.textContent = "100% complete";
-
-        // Also update dataset so sorting works later
         card.dataset.progress = "100";
     }
 
@@ -3541,14 +3620,12 @@ function updateCardUIAfterAction(action, cardEl) {
         const pill = card.querySelector(".days-pill");
         if (!pill) return;
 
-        pill.className = "days-pill"; // reset
+        pill.className = "days-pill";
         if (extraClass) pill.classList.add(extraClass);
 
         const span = pill.querySelector("span");
         if (span) span.textContent = text;
     }
-
-    console.log("archivedGrid is", archivedGrid);
 
     if (action === "archive") {
         archivedGrid?.querySelector(".empty-state")?.remove();
@@ -3561,50 +3638,313 @@ function updateCardUIAfterAction(action, cardEl) {
         if (archivedSection) archivedSection.style.display = "";
 
         renderCardMenu(cardEl, "archived");
-        updateArchivedEmptyState();
+        updateEmptyStates();
     }
 
-
     if (action === "complete") {
-        // Remove empty state if this is the first archived item
         archivedGrid?.querySelector(".empty-state")?.remove();
-
-        // Move card to archived grid
         archivedGrid.appendChild(cardEl);
 
-        // Mark card as archived + completed
         cardEl.classList.add("project-card--archived");
-
-        // Set progress to 100%
         setProgressTo100(cardEl);
-
-        // Update status pill
         setPill(cardEl, "Completed", "is-completed");
 
-        // Make sure archived section is visible
         const archivedSection = document.getElementById("archived-section");
         if (archivedSection) archivedSection.style.display = "";
 
-        // Switch menu to "Reinstate"
         renderCardMenu(cardEl, "archived");
-        updateArchivedEmptyState();
+        updateEmptyStates();
+    }
+
+    if (action === "reinstate") {
+        // ✅ Remove empty state first
+        activeGrid?.querySelector(".empty-state")?.remove();
+        
+        // ✅ Remove archived styling
+        cardEl.classList.remove("project-card--archived");
+
+        // ✅ CRITICAL: Restore the deadline pill BEFORE moving the card
+        restoreDeadlinePill(cardEl);
+
+        // ✅ Update the menu to show active options
+        renderCardMenu(cardEl, "active");
+
+        // ✅ Insert card in the correct sorted position
+        const deadline = cardEl.dataset.deadline || "";
+        const sortDropdown = document.getElementById("sortProjects");
+        const currentSort = sortDropdown ? sortDropdown.value : "due";
+
+        insertCardInSortedPosition(cardEl, activeGrid, currentSort);
+
+        // ✅ Update empty states
+        updateEmptyStates();
+    }
+
+    if (window.feather) feather.replace();
+}
+
+function refreshProjectsGrid() {
+    const grid = document.querySelector(".projects-grid");
+    if (!grid) return;
+
+    const cards = Array.from(grid.querySelectorAll(".project-card"));
+
+    // Clear grid safely
+    grid.innerHTML = "";
+
+    // Re-append cards (single source of truth)
+    cards.forEach(card => grid.appendChild(card));
+
+    feather.replace();
+}
+
+
+function openUpdateProjectModal(card) {
+    const modal = document.getElementById("update-project-modal");
+    const closeBtn = document.getElementById("update-project-close-btn");
+    const form = document.getElementById("update-project-form");
+
+    if (!modal || !form) return;
+
+    // Prefill from card dataset
+    const projectId = card.dataset.projectId || "";
+    const name = card.querySelector(".project-title")?.textContent?.trim() || "";
+    const deadline = card.dataset.deadline || "";
+    const desc = card.dataset.description || "";
+    const leaderId = card.dataset.teamLeaderId || "";
+    const leaderName = card.dataset.teamLeaderName || "";
+
+    document.getElementById("update-project-id").value = projectId;
+    document.getElementById("update-project-name").value = name;
+    document.getElementById("update-project-deadline").value = deadline;
+    document.getElementById("update-project-description").value = desc;
+
+    // leader fields
+    const leaderSearch = document.getElementById("update-leader-search");
+    const leaderHidden = document.getElementById("update-team-leader-id");
+    if (leaderSearch) leaderSearch.value = leaderName !== "Unassigned" ? leaderName : "";
+    if (leaderHidden) leaderHidden.value = leaderId;
+
+    // Setup autocomplete once
+    if (form.dataset.autocompleteBound !== "1") {
+        form.dataset.autocompleteBound = "1";
+
+        setupLeaderAutocomplete({
+            inputId: "update-leader-search",
+            hiddenId: "update-team-leader-id",
+            resultsId: "update-leader-results",
+            endpointUrl: "projects-overview.php?ajax=leaders",
+            formId: "update-project-form",
+        });
+    }
+
+    // open / close
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    if (window.feather) feather.replace();
+
+    const close = () => {
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+    };
+
+    // Prevent double binding
+    if (modal.dataset.bound !== "1") {
+        modal.dataset.bound = "1";
+
+        // ONLY close via X button
+        closeBtn?.addEventListener("click", close);
     }
 
 
-    if (action === "reinstate") {
-        if (activeGrid) activeGrid.appendChild(cardEl);
-        cardEl.classList.remove("project-card--archived");
-        const originalText = cardEl.dataset.pillText || "Active";
-        const originalClass = cardEl.dataset.pillClass || "days-pill";
-        setPill(cardEl, originalText);
-        cardEl.querySelector(".days-pill").className = originalClass;
+    // Submit once
+    if (form.dataset.submitBound !== "1") {
+        form.dataset.submitBound = "1";
 
-        renderCardMenu(cardEl, "active");
-        restoreDeadlinePill(cardEl);
-        updateArchivedEmptyState();
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const pid = document.getElementById("update-project-id").value;
+            const projectName = document.getElementById("update-project-name").value.trim();
+            const deadline = document.getElementById("update-project-deadline").value;
+            const description = document.getElementById("update-project-description").value.trim();
+            const teamLeaderId = document.getElementById("update-team-leader-id").value;
+
+            if (!projectName) {
+                alert("Project name is required.");
+                return;
+            }
+            if (!teamLeaderId) {
+                alert("Please select a Team Leader from the suggestions.");
+                return;
+            }
+
+            try {
+                const res = await fetch(window.location.href, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({
+                        action: "update_project",
+                        project_id: pid,
+                        project_name: projectName,
+                        deadline: deadline,
+                        description: description,
+                        team_leader_id: teamLeaderId
+                    })
+                });
+
+                const raw = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(raw);
+                } catch {
+                    console.error("Non-JSON response:", raw);
+                    alert("Server did not return JSON. Check console.");
+                    return;
+                }
+
+                if (!data.success) {
+                    alert(data.message || "Update failed");
+                    return;
+                }
+
+                // ✅ Find the card and update it
+                const card = document.querySelector(`[data-project-id="${pid}"]`);
+                if (card) {
+                    applyUpdatedProjectToCard(card, data.updated);
+                }
+
+                // ✅ Close modal
+                modal.style.display = "none";
+                document.body.style.overflow = "";
+
+                // ✅ Show success message
+                showSuccessNotification("Project updated successfully!");
+
+                // ✅ Re-render feather icons
+                if (window.feather) feather.replace();
+
+            } catch (err) {
+                console.error(err);
+                alert("Network/server error updating project.");
+            }
+        });
     }
 
 }
+
+function applyUpdatedProjectToCard(card, updated) {
+    if (!card || !updated) return;
+
+    // ✅ Update title
+    const titleEl = card.querySelector(".project-title");
+    if (titleEl) titleEl.textContent = updated.project_name;
+
+    // ✅ Update description (if displayed anywhere)
+    const descEl = card.querySelector(".project-description");
+    if (descEl) descEl.textContent = updated.description || "";
+
+    // ✅ Update datasets
+    card.dataset.name = String(updated.project_name || "").toLowerCase();
+    card.dataset.deadline = updated.deadline || "";
+    card.dataset.description = updated.description || "";
+    card.dataset.teamLeaderId = updated.team_leader_id || "";
+    card.dataset.teamLeaderName = updated.leader_name || "Unassigned";
+
+    // ✅ Update leader name
+    const leaderNameEl = card.querySelector(".leader-name");
+    if (leaderNameEl) leaderNameEl.textContent = updated.leader_name || "Unassigned";
+
+    // ✅ Update leader avatar
+    const leaderRow = card.querySelector(".leader-row");
+    const avatarImg = card.querySelector("img.leader-avatar");
+    const avatarDefault = card.querySelector(".leader-avatar--default");
+
+    if (updated.leader_picture) {
+        // Remove default avatar if it exists
+        if (avatarDefault) avatarDefault.remove();
+
+        if (avatarImg) {
+            // Update existing image
+            avatarImg.src = updated.leader_picture;
+        } else {
+            // Create new image
+            if (leaderRow) {
+                const firstChild = leaderRow.firstElementChild;
+                leaderRow.insertAdjacentHTML(
+                    "afterbegin",
+                    `<img class="leader-avatar" src="${updated.leader_picture}" alt="Leader pfp">`
+                );
+            }
+        }
+    } else {
+        // No picture - show default avatar
+        if (avatarImg) avatarImg.remove();
+
+        if (!avatarDefault && leaderRow) {
+            leaderRow.insertAdjacentHTML(
+                "afterbegin",
+                `<div class="leader-avatar leader-avatar--default" aria-hidden="true">
+                    <i data-feather="user"></i>
+                </div>`
+            );
+        }
+    }
+
+    // ✅ Update deadline pill
+    updateDeadlinePillUI(card, updated.deadline);
+
+    // ✅ Re-render icons
+    if (window.feather) feather.replace();
+}
+
+function updateDeadlinePillUI(card, deadlineStr) {
+    const pill = card.querySelector(".days-pill");
+    if (!pill) return;
+
+    // if no deadline
+    if (!deadlineStr) {
+        pill.className = "days-pill";
+        const span = pill.querySelector("span");
+        if (span) span.textContent = "No date set";
+        card.dataset.deadlineText = "No date set";
+        card.dataset.deadlineClass = "days-pill";
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const d = new Date(deadlineStr);
+    d.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((d - today) / (1000 * 60 * 60 * 24));
+
+    let text = "";
+    let cls = "days-pill";
+
+    if (diffDays < 0) {
+        text = `${Math.abs(diffDays)} days overdue`;
+        cls = "days-pill is-overdue";
+    } else if (diffDays === 0) {
+        text = "Due today";
+        cls = "days-pill is-due";
+    } else {
+        text = `${diffDays} days left`;
+        cls = "days-pill";
+    }
+
+    pill.className = cls;
+    const span = pill.querySelector("span");
+    if (span) span.textContent = text;
+
+    // keep datasets in sync for restore + future
+    card.dataset.deadlineText = text;
+    card.dataset.deadlineClass = cls;
+}
+
+
 
 function setupLeaderAutocomplete({
     inputId,
@@ -3889,14 +4229,14 @@ function setupProjectCardNavigation() {
         const projectId = card.dataset.projectId;
         if (!projectId) return;
 
-            // 🔍 DEBUG – BEFORE navigation
+        // 🔍 DEBUG – BEFORE navigation
         console.log("Navigating to", projectId);
 
         // 🔍 DEBUG – AFTER navigation attempt
         setTimeout(() => console.log("Still here"), 0);
 
         // Go to DB-backed project page
-         sessionStorage.setItem("currentProjectName", card.dataset.name || "Project");
+        sessionStorage.setItem("currentProjectName", card.dataset.name || "Project");
         window.location.href = `projects.php?project_id=${encodeURIComponent(projectId)}`;
     });
 }
@@ -3937,6 +4277,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Get the "logged in" user
     const currentUser = await getCurrentUser();
     if (!currentUser) return;
+    // Make current user globally available
+    window.__CURRENT_USER__ = currentUser;
+
 
     // Store user in window object for floating widget
     window.__USER__ = currentUser;
@@ -3984,10 +4327,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadHomePage(currentUser);
     } else if (pageId === 'progress-page') {
         // Team Member Progress page (with redirect)
-        loadProgressPage(currentUser);
+        await loadProgressPage(currentUser);
     } else if (pageId === 'manager-progress-page') {
         // Manager Progress page
-        loadManagerProgressPage(currentUser);
+        await loadManagerProgressPage(currentUser);
     } else if (pageId === 'project-resources-page') {
         // Project Resources page
         loadProjectResourcesPage(currentUser);
@@ -4042,7 +4385,7 @@ function resetAllData() {
 
     let searchTimeout = null;
 
-        function applyFilters() {
+    function applyFilters() {
         fetchAndRenderTasks({
             search: searchInput.value.trim(),
             status: statusFilter?.value || "",
@@ -4105,6 +4448,25 @@ function matchesDueFilter(deadline, filter) {
         default:
             return true;
     }
+}
+async function fetchProjectTasksFromDb(projectId) {
+    const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
+    const res = await fetch(url, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
+
+    // data.tasks are DB shape -> normalize to your UI shape
+    return (data.tasks || []).map(t => ({
+        id: t.task_id,
+        title: t.task_name,
+        description: t.description || "",
+        priority: t.priority || "medium",
+        status: normalizeDbStatus(t.status),     // you already have this function
+        deadline: t.deadline,
+        assignedTo: Array.isArray(t.assignedUsers)
+            ? t.assignedUsers.map(u => u.email)
+            : []
+    }));
 }
 
 async function fetchProjectTasksFromDb(projectId) {
@@ -4187,7 +4549,6 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
         .catch(err => console.error("Task fetch error:", err));
 }
 
-
 function clearTaskColumns() {
     document.querySelectorAll(".task-column .task-list")
         .forEach(col => col.innerHTML = "");
@@ -4262,6 +4623,8 @@ function getCurrentUserEmail() {
   return 'user@make-it-all.co.uk';
 }
 
+
+
 // =============================
 // CLEAR FILTERS BUTTON (fixed)
 // =============================
@@ -4294,5 +4657,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (panel) panel.style.display = "none";
     });
 });
+
 
 
