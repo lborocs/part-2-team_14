@@ -376,9 +376,12 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
           </div>
         </div>
 
-        <a class="file-download" href="${downloadHref}" target="_blank" rel="noopener">
-          <i data-feather="download"></i> Download
-        </a>
+        <div class="file-actions">
+            <a class="file-download" href="${downloadHref}" target="_blank" rel="noopener">
+                <i data-feather="download"></i> Download
+            </a>
+            <button type="button" class="create-post-btn" id="delete-file-btn">✖</button>
+        </div>
       `;
       list.appendChild(row);
     });

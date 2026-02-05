@@ -49,6 +49,16 @@ text-transform: capitalize !important;
     height: 20px;
 }
 
+#delete-file-btn {
+    background: #fff;
+    color: #1E1E1E;
+    border: none;
+}
+
+#delete-file-btn:hover {
+    background: #F8F9FA;
+}
+
 .resource-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -388,4 +398,10 @@ text-transform: capitalize !important;
 .file-download svg {
     width: 16px;
     height: 16px;
+}
+
+.file-actions {
+    display: flex;
+    align-items: right;
+    gap: 8px;
 }
