@@ -716,9 +716,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
     </style>
 </head>
 <body>
-    <?php 
-    // Include the floating todo widget
-    include '../to-do/todo_widget.php'; 
+    <?php include '../to-do/todo_widget.php'; 
     ?>
 
     <div class="dashboard-container">
@@ -730,7 +728,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
                 </div>
                 <ul class="nav-main">
                     <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <li class="active-parent">
                         <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
                     </li>

@@ -322,7 +322,6 @@ if ($isAjax) {
 </head>
 <body>
     <?php include '../to-do/todo_widget.php'; ?>
-
     <div class="dashboard-container">
 
         <!-- Sidebar -->
@@ -333,7 +332,7 @@ if ($isAjax) {
                 </div>
                 <ul class="nav-main">
                     <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <li class="active-parent">
                         <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
                     </li>
@@ -643,34 +642,6 @@ if ($isAjax) {
                     </button>
                 </div>
             </div>
-            <!-- Floating Todo Widget -->
-<div class="floating-todo-widget" id="floating-todo-widget">
-  <button class="todo-fab" id="todo-fab" aria-label="Toggle personal todos">
-    <i data-feather="check-square"></i>
-    <span class="todo-badge" id="todo-badge">0</span>
-  </button>
-
-  <div class="todo-panel" id="todo-panel" hidden>
-    <div class="todo-panel-header">
-      <h3>My To-Dos</h3>
-      <button class="todo-close-btn" id="todo-close-btn" aria-label="Close">
-        <i data-feather="x"></i>
-      </button>
-    </div>
-
-    <div class="todo-panel-content">
-      <div class="todo-panel-list" id="floating-todo-list">
-        <!-- Populated by JavaScript -->
-      </div>
-      
-      <div class="todo-panel-footer">
-        <a href="../create-todo.html" class="todo-add-btn">
-          <i data-feather="plus"></i> Add New To-Do
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
         </main>
 
     </div>
