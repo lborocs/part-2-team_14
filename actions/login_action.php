@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['profile_picture'] = $user['profile_picture'];
         
         // Determine redirect based on role
-        $redirect = ($user['role'] === 'manager')
+        $redirect = ($user['role'] === 'manager' || $user['role'] === 'team_leader')
             ? 'user/home/home.php?user=' . urlencode($user['email'])
             : 'user/project/projects-overview.php';
         
