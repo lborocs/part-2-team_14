@@ -1,3 +1,6 @@
+<?php
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,6 +42,7 @@
             <div class="kb-layout-wrapper">
                 <div class="kb-main-content">
 
+                    <!-- Profile Details -->
                     <form id="profile-form" class="settings-card">
                         <h2>Profile Information</h2>
                         <div class="form-group">
