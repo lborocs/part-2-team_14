@@ -908,6 +908,13 @@ if ($role === 'team_member') {
             filterProjects();
             displayEmployees();
             loadProjectNameOptions();
+
+            // Show Employees tab for managers
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (currentUser.role === 'manager') {
+                document.getElementById('nav-employees').style.display = 'block';
+            }
+            feather.replace();
         });
     </script>
 </body>

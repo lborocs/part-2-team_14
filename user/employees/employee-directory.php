@@ -28,6 +28,46 @@ if ($_SESSION['role'] !== 'manager') {
 }
 
 /* =============================
+   EMPLOYEE CARD COLOR ASSIGNMENT SYSTEM
+   ============================= */
+session_start(); // Start session to maintain colors
+
+// Define 10-color banner palette
+$bannerColors = [
+    '#5B9BD5',  // Soft Blue
+    '#7FB069',  // Sage Green
+    '#9B59B6',  // Muted Purple
+    '#D4926F',  // Muted Orange
+    '#45B7B8',  // Teal
+    '#6C8EAD',  // Slate Blue
+    '#2A9D8F',  // Deep Teal
+    '#B56576',  // Mauve/Rose
+    '#52796F',  // Forest Green
+    '#7D8FA0',  // Dusty Blue
+];
+
+// Initialize color map in session if not exists
+if (!isset($_SESSION['employee_colors'])) {
+    $_SESSION['employee_colors'] = [];
+}
+
+// Function to get or assign color for employee
+function getEmployeeColor($userId, $bannerColors, &$colorMap) {
+    // If color already assigned in this session, return it
+    if (isset($colorMap[$userId])) {
+        return $colorMap[$userId];
+    }
+    
+    // Randomly assign one of the 10 colors
+    $selectedColor = $bannerColors[array_rand($bannerColors)];
+    
+    // Store in session for persistence
+    $colorMap[$userId] = $selectedColor;
+    
+    return $selectedColor;
+}
+
+/* =============================
    FILTER OPTIONS (Specialties + Projects)
    ============================= */
 
@@ -103,6 +143,9 @@ $orderBy = $allowedSorts[$sortKey] ?? $allowedSorts['name_asc'];
 $selectedSpecialties = $_GET['specialty'] ?? [];
 $selectedProjects    = $_GET['project'] ?? [];
 
+// Read the search query from URL
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+
 if (!is_array($selectedSpecialties)) {
     $selectedSpecialties = [$selectedSpecialties];
 }
@@ -134,6 +177,16 @@ $countSql = "
 ";
 
 $countParams = [];
+
+/* ---------- Search filter ---------- */
+if (!empty($searchQuery)) {
+    $countSql .= " AND (
+        CONCAT(u.first_name, ' ', u.last_name) LIKE :search
+        OR u.specialties LIKE :search_specialty
+    )";
+    $countParams[':search'] = '%' . $searchQuery . '%';
+    $countParams[':search_specialty'] = '%' . $searchQuery . '%';
+}
 
 /* ---------- Specialty filter ---------- */
 if (!empty($selectedSpecialties)) {
@@ -208,6 +261,16 @@ WHERE u.is_active = TRUE
 ";
 
 $params = [];
+
+// Search filter (name or specialty)
+if (!empty($searchQuery)) {
+    $sql .= " AND (
+        CONCAT(u.first_name, ' ', u.last_name) LIKE :search
+        OR u.specialties LIKE :search_specialty
+    )";
+    $params[':search'] = '%' . $searchQuery . '%';
+    $params[':search_specialty'] = '%' . $searchQuery . '%';
+}
 
 // specialty filter (ALL selected specialties must match)
 if (!empty($selectedSpecialties)) {
@@ -369,8 +432,10 @@ if ($isAjax) {
                     <i data-feather="search"></i>
                     <input
                         type="text"
+                        id="employee-search-input"
                         name="search"
                         placeholder="Search employees by name or speciality"
+                        value="<?= htmlspecialchars($searchQuery) ?>"
                     >
                 </div>
 
@@ -400,9 +465,9 @@ if ($isAjax) {
                     <div class="sort-wrap">
                         <span class="sort-label">Sort by:</span>
                         <select class="sort-dropdown" id="sortEmployees">
-                            <option value="name_asc">Name (A-Z)</option>
-                            <option value="projects_asc">Project Count (Low → High)</option>
-                            <option value="projects_desc">Project Count (High → Low)</option>
+                            <option value="name_asc" <?= $sortKey === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
+                            <option value="projects_asc" <?= $sortKey === 'projects_asc' ? 'selected' : '' ?>>Project Count (Low → High)</option>
+                            <option value="projects_desc" <?= $sortKey === 'projects_desc' ? 'selected' : '' ?>>Project Count (High → Low)</option>
                         </select>
                     </div>
 
@@ -502,6 +567,12 @@ if ($isAjax) {
                     <?php foreach ($employees as $employee): ?>
 
                         <?php
+                            // Get color for this employee (randomly assigned once per session)
+                            $employeeColor = getEmployeeColor(
+                                $employee['user_id'], 
+                                $bannerColors, 
+                                $_SESSION['employee_colors']
+                            );
 
                             // Decode specialties (stored as JSON or comma text)
                             $specialties = [];
@@ -517,7 +588,7 @@ if ($isAjax) {
                             data-employee-id="<?= $employee['user_id'] ?>"
                         >
 
-                            <div class="employee-card-top">
+                            <div class="employee-card-top" style="background-color: <?= htmlspecialchars($employeeColor) ?>;">
                                 <div class="employee-avatar">
                                     <img
                                         src="<?= htmlspecialchars($employee['profile_picture']) ?>"
@@ -548,7 +619,7 @@ if ($isAjax) {
 
                                     </div>
 
-                                    <button type="button" class="see-more-btn" hidden>...</button>
+                                    <button type="button" class="see-more-btn" hidden>Show More</button>
                                 </div>
 
                                 <div class="employee-card-footer">

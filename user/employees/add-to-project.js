@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         employeeDisplay.innerHTML = selectedEmployeeData.map(emp => `
-            <span class="employee-pill">
+            <span class="employee-pill" style="background-color: ${emp.color || '#E5E7EB'}; color: #fff;">
                 <i data-feather="user"></i>
                 ${emp.name}
             </span>
