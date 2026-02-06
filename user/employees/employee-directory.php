@@ -30,7 +30,7 @@ if ($_SESSION['role'] !== 'manager') {
 /* =============================
    EMPLOYEE CARD COLOR ASSIGNMENT SYSTEM
    ============================= */
-session_start(); // Start session to maintain colors
+
 
 // Define 10-color banner palette
 $bannerColors = [
