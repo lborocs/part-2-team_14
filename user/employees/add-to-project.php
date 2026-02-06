@@ -178,9 +178,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+                    <?php if (isset($_SESSION['role']) && ($_SESSION['role'] === 'manager' || $_SESSION['role'] === 'team_leader')): ?>
+                        <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+                    <?php endif; ?>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
-                    <li class="active-parent"><a href="employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
+                        <li class="active-parent"><a href="employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+                    <?php endif; ?>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
                 </ul>
             </div>

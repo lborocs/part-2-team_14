@@ -1,3 +1,25 @@
+<?php
+session_start();
+
+// Check if user is logged in
+$isLoggedIn = isset($_SESSION['role'], $_SESSION['email'], $_SESSION['user_id']);
+
+if (!$isLoggedIn) {
+    $role = 'manager';
+    $isManager = true;
+    $isTeamLeader = false;
+} else {
+    $role = $_SESSION['role'];
+    $isManager = ($role === 'manager');
+    $isTeamLeader = ($role === 'team_leader');
+}
+
+// Team members should be redirected to projects page
+if ($role === 'team_member') {
+    header('Location: ../project/projects-overview.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,9 +43,13 @@
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li class="active-parent"><a href="home.php"><i data-feather="home"></i>Home</a></li>
+                    <?php if ($isManager || $isTeamLeader): ?>
+                        <li class="active-parent"><a href="home.php"><i data-feather="home"></i>Home</a></li>
+                    <?php endif; ?>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
-                    <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+                    <?php if ($isManager): ?>
+                        <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+                    <?php endif; ?>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge
                             Base</a></li>
                 </ul>
