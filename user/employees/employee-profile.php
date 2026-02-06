@@ -183,6 +183,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
     
     <!-- Feather Icons -->
     <script src="https://unpkg.com/feather-icons"></script>
