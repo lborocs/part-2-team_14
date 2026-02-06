@@ -253,15 +253,19 @@
 
 /* the scroll container */
 .projects-grid-scroll {
-  max-height: calc((var(--card-height) * 2) + var(--grid-gap));
-  overflow-y: visible;
-  overflow-x: hidden;
-  padding-right: 6px;
-  /* space so scrollbar doesn't overlap content */
+  /* REMOVE the max-height that creates the clipping */
+  max-height: none;
 
-  padding-top: 10px;         /* ✅ add space for hover lift */
-  margin-top: -10px; 
+  /* Allow shadows to show outside the container */
+  overflow: visible;
+
+  /* keep your spacing */
+  padding-right: 6px;
+
+  padding-top: 10px;
+  margin-top: -10px;
 }
+
 
 .projects-grid {
   display: grid;
@@ -525,6 +529,28 @@
 .days-pill.is-completed {
   color: #2E7D32;
 }
+
+/* Update Project modal leader autocomplete dropdown */
+.autocomplete-results{
+  position: relative;
+  margin-top: 8px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.autocomplete-item{
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active{
+  background: #f5f5f5;
+}
+
 
 /* Responsive */
 @media (max-width: 1200px) {

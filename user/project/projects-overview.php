@@ -10,6 +10,45 @@ if (!$db) {
   die("Database connection failed.");
 }
 
+// AJAX: leaders search for autocomplete
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'leaders') {
+  header('Content-Type: application/json');
+
+  $q = trim($_GET['q'] ?? '');
+  if (strlen($q) < 2) {
+    echo json_encode([]);
+    exit;
+  }
+
+  $stmt = $db->prepare("
+    SELECT user_id, first_name, last_name, email
+    FROM users
+    WHERE is_active = 1
+      AND (
+        first_name LIKE :q
+        OR last_name LIKE :q
+        OR email LIKE :q
+      )
+    ORDER BY first_name ASC
+    LIMIT 10
+  ");
+  $stmt->execute([':q' => "%$q%"]);
+
+  $out = [];
+  while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $full = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+    $label = $full !== '' ? "$full ({$row['email']})" : $row['email'];
+
+    $out[] = [
+      'id' => (int)$row['user_id'],
+      'label' => $label
+    ];
+  }
+
+  echo json_encode($out);
+  exit;
+}
+
 //DEV BYPASS
 $isLoggedIn = isset($_SESSION['role'], $_SESSION['email'], $_SESSION['user_id']);
 
@@ -83,6 +122,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
               WHERE project_id = :id";
       $stmt = $db->prepare($sql);
       $stmt->execute([':id' => $projectId]);
+    } elseif ($action === 'update_project') {
+
+      $name = trim($_POST['project_name'] ?? '');
+      $deadline = $_POST['deadline'] ?? null;
+      $desc = trim($_POST['description'] ?? '');
+      $leaderId = isset($_POST['team_leader_id']) ? (int)$_POST['team_leader_id'] : 0;
+
+      if ($name === '') {
+        echo json_encode(['success' => false, 'message' => 'Project name is required']);
+        exit;
+      }
+
+      // allow blank deadline
+      if ($deadline === '') $deadline = null;
+
+      // leader required (you can relax this if you want "unassigned")
+      if ($leaderId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Please select a team leader from suggestions']);
+        exit;
+      }
+
+      // Update project
+      $sql = "UPDATE projects
+          SET project_name = :name,
+              deadline = :deadline,
+              description = :descr,
+              team_leader_id = :leader
+          WHERE project_id = :id";
+      $stmt = $db->prepare($sql);
+      $stmt->execute([
+        ':name' => $name,
+        ':deadline' => $deadline,
+        ':descr' => $desc,
+        ':leader' => $leaderId,
+        ':id' => $projectId
+      ]);
+
+      // Return leader info for UI update
+      $u = $db->prepare("SELECT first_name, last_name, profile_picture FROM users WHERE user_id = :uid LIMIT 1");
+      $u->execute([':uid' => $leaderId]);
+      $leader = $u->fetch(PDO::FETCH_ASSOC);
+
+      $leaderName = trim(($leader['first_name'] ?? '') . ' ' . ($leader['last_name'] ?? ''));
+      if ($leaderName === '') $leaderName = 'Unassigned';
+
+      echo json_encode([
+        'success' => true,
+        'updated' => [
+          'project_name' => $name,
+          'deadline' => $deadline,
+          'description' => $desc,
+          'team_leader_id' => $leaderId,
+          'leader_name' => $leaderName,
+          'leader_picture' => $leader['profile_picture'] ?? ''
+        ]
+      ]);
+      exit;
     } else {
       echo json_encode(['success' => false, 'message' => 'Unknown action']);
       exit;
@@ -113,16 +209,19 @@ function daysLeft(?string $estimated, ?string $deadline): ?int
 //gets active projects with sql statement
 $activeSql = "
   SELECT DISTINCT
-    p.project_id,
-    p.project_name,
-    p.status,
-    p.priority,
-    p.deadline,
-    p.estimated_completion_date,
-    p.completion_percentage,
-    u.first_name AS leader_first_name,
-    u.last_name  AS leader_last_name,
-    u.profile_picture AS leader_picture
+  p.project_id,
+  p.project_name,
+  p.description,
+  p.team_leader_id,
+  p.status,
+  p.priority,
+  p.deadline,
+  p.estimated_completion_date,
+  p.completion_percentage,
+  u.first_name AS leader_first_name,
+  u.last_name  AS leader_last_name,
+  u.profile_picture AS leader_picture
+
   FROM projects p
   LEFT JOIN users u ON p.team_leader_id = u.user_id
   LEFT JOIN project_members pm
@@ -193,6 +292,7 @@ if ($isManager) {
 </head>
 
 <body id="projects-overview-page">
+  <?php include '../to-do/todo_widget.php'; ?>
   <div class="dashboard-container">
     <nav class="sidebar">
       <div class="nav-top">
@@ -200,14 +300,19 @@ if ($isManager) {
           <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
         </div>
         <ul class="nav-main">
-          <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+          <?php if ($role === 'manager' || $role === 'team_leader'): ?>
+            <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+          <?php endif; ?>
           <li class="active-parent"><a href="projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+          <?php if ($role === 'manager'): ?>
+            <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+          <?php endif; ?>
           <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
         </ul>
       </div>
       <div class="nav-footer">
         <ul>
-          <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+          <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
         </ul>
       </div>
     </nav>
@@ -237,6 +342,7 @@ if ($isManager) {
       </header>
 
       <!-- ACTIVE -->
+      <!-- ACTIVE -->
       <section class="projects-section" id="active-section">
         <div class="section-top">
           <h2 class="active-projects-title">Active Projects</h2>
@@ -250,19 +356,19 @@ if ($isManager) {
               <option value="name">Name (A-Z)</option>
               <option value="priorityHigh">Priority (High → Low)</option>
               <option value="priorityLow">Priority (Low → High)</option>
-
             </select>
           </div>
         </div>
 
-        <?php if (count($activeProjects) === 0): ?>
-          <div class="empty-state">
-            <i data-feather="inbox"></i>
-            <p>No current active projects</p>
-          </div>
-        <?php else: ?>
-          <div class="projects-grid-scroll">
-            <div class="projects-grid">
+        <div class="projects-grid-scroll">
+          <div class="projects-grid">
+            <?php if (count($activeProjects) === 0): ?>
+              <!-- Empty state -->
+              <div class="empty-state">
+                <i data-feather="inbox"></i>
+                <p>No current active projects</p>
+              </div>
+            <?php else: ?>
               <!-- Project cards display -->
               <?php foreach ($activeProjects as $p): ?>
                 <?php
@@ -297,11 +403,11 @@ if ($isManager) {
                   $dateText = $days . ' days left';
                   $dateClass = 'days-pill';
                 }
+
+                $priority = strtolower($p['priority'] ?? 'medium');
                 ?>
 
                 <!-- Project cards design -->
-
-                <?php $priority = strtolower($p['priority'] ?? 'medium'); ?>
                 <article
                   class="project-card"
                   data-name="<?= strtolower(htmlspecialchars($p['project_name'])) ?>"
@@ -310,7 +416,10 @@ if ($isManager) {
                   data-project-id="<?= htmlspecialchars($p['project_id'] ?? '') ?>"
                   data-deadline-text="<?= htmlspecialchars($dateText) ?>"
                   data-deadline-class="<?= htmlspecialchars($dateClass) ?>"
-                  data-priority="<?= htmlspecialchars($priority) ?>">
+                  data-priority="<?= htmlspecialchars($priority) ?>"
+                  data-description="<?= htmlspecialchars($p['description'] ?? '') ?>"
+                  data-team-leader-id="<?= htmlspecialchars($p['team_leader_id'] ?? '') ?>"
+                  data-team-leader-name="<?= htmlspecialchars($leaderName) ?>">
 
                   <!-- 3 dots for moving projects to archive -->
                   <?php if ($isManager): ?>
@@ -322,24 +431,20 @@ if ($isManager) {
                       <div class="card-menu-dropdown" hidden>
                         <button type="button" class="card-menu-item" data-action="complete">Mark as complete</button>
                         <button type="button" class="card-menu-item" data-action="archive">Move to archives</button>
+                        <button type="button" class="card-menu-item" data-action="update">Update project</button>
                       </div>
                     </div>
                   <?php endif; ?>
 
-
                   <h3 class="project-title"><?= htmlspecialchars($p['project_name']) ?></h3>
 
                   <!-- Priority label and progress pill -->
-
                   <div class="progress-head">
                     <span class="small-label">PROGRESS</span>
-
                     <span class="priority-pill priority-<?= htmlspecialchars($priority) ?>">
                       <?= ucfirst(htmlspecialchars($priority)) ?> priority
                     </span>
                   </div>
-
-
 
                   <div class="progress-track" aria-hidden="true">
                     <div class="progress-fill" style="width: <?= (int)round($progress) ?>%;"></div>
@@ -365,9 +470,9 @@ if ($isManager) {
                   </div>
                 </article>
               <?php endforeach; ?>
-            </div>
+            <?php endif; ?>
           </div>
-        <?php endif; ?>
+        </div>
       </section>
 
       <!-- ARCHIVED (MANAGER ONLY) -->
@@ -407,9 +512,28 @@ if ($isManager) {
                     if ($leaderName === '') $leaderName = 'Unassigned';
 
                     $avatar = $p['leader_picture'] ?? '';
+                    $priority = strtolower($p['priority'] ?? 'medium'); // ✅ Get priority
 
                     $dateText = 'Archived';
                     $dateClass = 'days-pill';
+
+                    // ✅ Calculate the REAL deadline text for when it's reinstated
+                    $days = daysLeft($p['estimated_completion_date'] ?? null, $p['deadline'] ?? null);
+                    $realDeadlineText = 'No date set';
+                    $realDeadlineClass = 'days-pill';
+
+                    if ($days !== null) {
+                      if ($days < 0) {
+                        $realDeadlineText = abs($days) . ' days overdue';
+                        $realDeadlineClass = 'days-pill is-overdue';
+                      } elseif ($days === 0) {
+                        $realDeadlineText = 'Due today';
+                        $realDeadlineClass = 'days-pill is-due';
+                      } else {
+                        $realDeadlineText = $days . ' days left';
+                        $realDeadlineClass = 'days-pill';
+                      }
+                    }
                     ?>
 
                     <article
@@ -418,11 +542,12 @@ if ($isManager) {
                       data-progress="<?= (int)$progress ?>"
                       data-deadline="<?= htmlspecialchars($p['deadline'] ?? '') ?>"
                       data-project-id="<?= htmlspecialchars($p['project_id']) ?>"
-                      data-pill-text="<?= htmlspecialchars($dateText) ?>"
-                      data-pill-class="<?= htmlspecialchars($dateClass) ?>"
-                      data-deadline-text="<?= htmlspecialchars($dateText) ?>"
-                      data-deadline-class="<?= htmlspecialchars($dateClass) ?>"
-                      data-priority="<?= htmlspecialchars($priority) ?>">
+                      data-priority="<?= htmlspecialchars($priority) ?>"
+                      data-description="<?= htmlspecialchars($p['description'] ?? '') ?>"
+                      data-team-leader-id="<?= htmlspecialchars($p['team_leader_id'] ?? '') ?>"
+                      data-team-leader-name="<?= htmlspecialchars($leaderName) ?>"
+                      data-deadline-text="<?= htmlspecialchars($realDeadlineText) ?>"
+                      data-deadline-class="<?= htmlspecialchars($realDeadlineClass) ?>">
 
                       <!-- 3 dots menu -->
                       <div class="card-menu">
@@ -480,6 +605,52 @@ if ($isManager) {
 
     </main>
   </div>
+
+  <!-- UPDATE PROJECT MODAL -->
+  <div class="modal-overlay" id="update-project-modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Update Project</h2>
+        <button type="button" class="close-btn" id="update-project-close-btn">
+          <i data-feather="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="update-project-form" class="create-post-form" onsubmit="return false;">
+          <input type="hidden" id="update-project-id" />
+
+          <div class="form-group">
+            <label for="update-project-name">Project Name</label>
+            <input type="text" id="update-project-name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="update-project-deadline">Due Date</label>
+            <input type="date" id="update-project-deadline" required />
+          </div>
+
+          <div class="form-group">
+            <label for="update-project-description">Description</label>
+            <textarea id="update-project-description" rows="4"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="update-leader-search">Team Leader</label>
+
+            <!-- same pattern as create-project page -->
+            <input type="text" id="update-leader-search" placeholder="Search team leader…" autocomplete="off" required />
+            <input type="hidden" id="update-team-leader-id" />
+
+            <div id="update-leader-results" class="autocomplete-results" style="display:none;"></div>
+          </div>
+
+          <button type="submit" class="create-post-btn">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script>
     feather.replace();
   </script>

@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Only show button if content overflows
             if (container.scrollHeight > container.clientHeight) {
                 btn.hidden = false;
-                btn.textContent = '...'; // INITIAL STATE
+                btn.textContent = 'Show More'; // INITIAL STATE
             } else {
                 btn.hidden = true;
             }
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const isExpanded = container.classList.toggle('expanded');
 
-                btn.textContent = isExpanded ? 'Hide' : '...';
+                btn.textContent = isExpanded ? 'Hide' : 'Show More';
             });
 
         });
@@ -192,8 +192,33 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'add-to-project.php';
         });
     }
+
+    // Create New Project button
+    const createProjectBtn = document.getElementById('create-project-btn');
+    if (createProjectBtn) {
+        createProjectBtn.addEventListener('click', () => {
+            const selectedIds = Array.from(selectedEmployees);
+            
+            if (selectedIds.length === 0) {
+                alert('Please select at least one employee to create a project.');
+                return;
+            }
+            
+            // Validate minimum 4 employees
+            if (selectedIds.length < 4) {
+                alert('⚠️ Minimum 4 employees required to create a project.\n\nYou have selected ' + selectedIds.length + ' employee(s). Please select at least 4 employees.');
+                return;
+            }
+            
+            // Store selected employees in sessionStorage
+            sessionStorage.setItem('preselectedEmployees', JSON.stringify(selectedIds));
+            
+            // Navigate to create-new-project page
+            window.location.href = 'create-new-project.php';
+        });
+    }
     
-    // Assign Task button (placeholder for now)
+    // Assign Task button
     const assignTaskBtn = document.getElementById('assign-task-btn');
     if (assignTaskBtn) {
         assignTaskBtn.addEventListener('click', () => {
@@ -204,9 +229,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             
-            // TODO: Implement assign task functionality
-            console.log('Selected employees:', selectedIds);
-            alert('Assign Task functionality - Coming soon!');
+            // Store selected employees in sessionStorage
+            sessionStorage.setItem('preselectedEmployees', JSON.stringify(selectedIds));
+            
+            // Navigate to assign-task page
+            window.location.href = 'assign-task.php';
         });
     }
 
@@ -318,6 +345,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
     wireFilterSearch('filter-specialty-search', 'filter-specialty-list');
     wireFilterSearch('filter-project-search', 'filter-project-list');
+
+    /* ---------------------------------
+    MAIN SEARCH BAR FUNCTIONALITY
+    ---------------------------------- */
+    const searchInput = document.getElementById('employee-search-input');
+
+    if (searchInput) {
+        let searchTimeout;
+        
+        function performSearch() {
+            const url = new URL(window.location.href);
+            const searchValue = searchInput.value.trim();
+            
+            if (searchValue) {
+                url.searchParams.set('search', searchValue);
+            } else {
+                url.searchParams.delete('search');
+            }
+            
+            url.searchParams.set('page', '1');
+            fetchAndReplace(url);
+        }
+        
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, 300);
+        });
+        
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                performSearch();
+            }
+        });
+    }
 
     /* ---------------------------------
        AJAX pagination (no page reload)
