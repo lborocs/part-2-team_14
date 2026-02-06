@@ -218,15 +218,13 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Make-It-All - Project Resources</title>
-
   <link rel="stylesheet" href="../dashboard.css" />
   <link rel="stylesheet" href="progress.css" />
   <link rel="stylesheet" href="project-resources.css" />
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
+  <link rel="icon" type="image/png" href="/favicon.png">
   <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body id="project-resources-page">
