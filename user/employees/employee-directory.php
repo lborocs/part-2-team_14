@@ -376,7 +376,7 @@ if ($isAjax) {
                     <img src="../logo.png" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <li class="active-parent">
                         <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
@@ -597,7 +597,7 @@ if ($isAjax) {
 
                                     </div>
 
-                                    <button type="button" class="see-more-btn" hidden>...</button>
+                                    <button type="button" class="see-more-btn" hidden>Show More</button>
                                 </div>
 
                                 <div class="employee-card-footer">

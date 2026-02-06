@@ -1,41 +1,4 @@
 <?php
-session_start(); // Ensure session is available
-
-// Get search query (needed for AJAX requests)
-$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
-
-// Re-define the same 10-color banner palette (must match employee-directory.php)
-$bannerColors = [
-    '#5B9BD5',  // Soft Blue
-    '#7FB069',  // Sage Green
-    '#9B59B6',  // Muted Purple
-    '#D4926F',  // Muted Orange
-    '#45B7B8',  // Teal
-    '#6C8EAD',  // Slate Blue
-    '#2A9D8F',  // Deep Teal
-    '#B56576',  // Mauve/Rose
-    '#52796F',  // Forest Green
-    '#7D8FA0',  // Dusty Blue
-];
-
-// Re-define color function (must match employee-directory.php)
-function getEmployeeColor($userId, $bannerColors, &$colorMap) {
-    // If color already assigned in this session, return it
-    if (isset($colorMap[$userId])) {
-        return $colorMap[$userId];
-    }
-    
-    // Randomly assign one of the 10 colors
-    $selectedColor = $bannerColors[array_rand($bannerColors)];
-    
-    // Store in session for persistence
-    $colorMap[$userId] = $selectedColor;
-    
-    return $selectedColor;
-}
-?>
-
-<?php
 /* =======================
    SPECIALTY → CSS CLASS MAP
    ======================= */
@@ -128,7 +91,7 @@ $specialtyClassMap = [
                 </div>
 
 
-                <button type="button" class="see-more-btn" hidden>...</button>
+                <button type="button" class="see-more-btn" hidden>Show More</button>
             </div>
 
 

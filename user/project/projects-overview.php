@@ -202,6 +202,9 @@ if ($isManager) {
         <ul class="nav-main">
           <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
           <li class="active-parent"><a href="projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+          <?php if ($isManager): ?>
+          <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+          <?php endif; ?>
           <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
         </ul>
       </div>

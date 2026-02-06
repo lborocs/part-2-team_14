@@ -24,6 +24,7 @@
                     <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
                     <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i
                                 data-feather="archive"></i>Project Archive</a></li>
+                    <li id="nav-employees" style="display: none;"><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge
                             Base</a></li>
                 </ul>
@@ -817,6 +818,13 @@
             filterProjects();
             displayEmployees();
             loadProjectNameOptions();
+
+            // Show Employees tab for managers
+            const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            if (currentUser.role === 'manager') {
+                document.getElementById('nav-employees').style.display = 'block';
+            }
+            feather.replace();
         });
     </script>
 </body>

@@ -1,0 +1,225 @@
+/* =========================================
+   ASSIGN TASK - ADDITIONAL STYLES
+   (Inherits most styles from create-project.css)
+========================================= */
+
+/* Selected Employees Display Box */
+.selected-employees-box {
+  min-height: 80px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #DCDCDC;
+  border-radius: 8px;
+  padding: 12px;
+  background: #FAFAFA;
+}
+
+.selected-employees-box .empty-message {
+  color: #8C8C8C;
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Employee Pills - With dynamic colors from session */
+.employee-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 4px;
+}
+
+.employee-pill svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Employee Count Indicator */
+#employee-count {
+  font-weight: 700;
+  color: inherit;
+}
+
+/* =========================================
+   Confirmation Modal
+========================================= */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: modalSlideIn 0.2s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #EAECEE;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.modal-header .close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: background 0.15s ease;
+}
+
+.modal-header .close-btn:hover {
+  background: #F0F0F0;
+}
+
+.modal-header .close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.modal-body p {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  color: #555;
+}
+
+.confirmation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.detail-section strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8C8C8C;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.detail-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: #FAFAFA;
+  border: 1px solid #EAECEE;
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.detail-section li {
+  font-size: 14px;
+  color: #1E1E1E;
+  padding: 4px 0;
+  display: flex;
+  gap: 8px;
+}
+
+.detail-section li strong {
+  display: inline;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  text-transform: none;
+  margin-bottom: 0;
+  min-width: 80px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #EAECEE;
+}
+
+.cancel-btn,
+.confirm-btn {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cancel-btn {
+  border: 1.5px solid #E0E0E0;
+  background: #fff;
+  color: #555;
+}
+
+.cancel-btn:hover {
+  background: #F5F5F5;
+  border-color: #CFCFCF;
+}
+
+.confirm-btn {
+  border: none;
+  background: #FBC02D;
+  color: #1E1E1E;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.confirm-btn:hover {
+  background: #F9A825;
+}
+
+.confirm-btn svg {
+  width: 18px;
+  height: 18px;
+}

@@ -1,0 +1,67 @@
+/* =========================================
+   CREATE NEW PROJECT - ADDITIONAL STYLES
+   (Inherits most styles from create-project.css)
+========================================= */
+
+/* Selected Employees Display Box */
+.selected-employees-box {
+  min-height: 80px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #DCDCDC;
+  border-radius: 8px;
+  padding: 12px;
+  background: #FAFAFA;
+}
+
+.selected-employees-box .empty-message {
+  color: #8C8C8C;
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Employee Pills - Now with dynamic colors from session */
+.employee-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 4px;
+}
+
+.employee-pill svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Employee Count Indicator */
+#employee-count {
+  font-weight: 700;
+  color: #FBC02D;
+}
+
+/* Field Note Styling */
+.field-note {
+  font-size: 13px;
+  color: #777;
+  margin: 6px 0 0 0;
+  transition: color 0.3s ease;
+}
+
+/* Minimum Requirement Note - Default (not enough employees) */
+#minimum-requirement-note strong {
+  color: #D93025;
+  font-weight: 600;
+}
+
+/* Minimum Requirement Note - Success State (4+ employees) */
+#minimum-requirement-note.requirement-met strong {
+  color: #34A853;
+  font-weight: 600;
+}
