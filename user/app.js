@@ -28,7 +28,17 @@ function showSuccessNotification(message) {
     }, 3000);
 }
 
-<<<<<<< knowledge-base
+function getUsersMap() {
+    // Prefer PHP injected users
+    if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
+
+    // Fallback if you still have simUsers defined somewhere else
+    if (typeof window.simUsers === "object") return window.simUsers;
+
+    // Final fallback
+    return {};
+}
+
 function renderTopicIcon(iconValue) {
   // allow iconless
   if (!iconValue || iconValue.trim() === "" || iconValue.trim() === "?") return "";
@@ -43,20 +53,6 @@ function renderTopicIcon(iconValue) {
 
   // unknown value → show nothing
   return "";
-}
-
-
-
-=======
-function getUsersMap() {
-    // Prefer PHP injected users
-    if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
-
-    // Fallback if you still have simUsers defined somewhere else
-    if (typeof window.simUsers === "object") return window.simUsers;
-
-    // Final fallback
-    return {};
 }
 
 
@@ -164,7 +160,6 @@ const initialPosts = [
         replies: []
     }
 ];
->>>>>>> main
 
 // Load posts from localStorage or use initial set
 let simPosts = JSON.parse(localStorage.getItem('simPosts')) || initialPosts;
@@ -1079,76 +1074,67 @@ function loadSettingsPage(currentUser) {
     document.getElementById('profile-email').value = currentUser.email;
     const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
+// Upload a new profile picture
+const uploadBtn = document.getElementById("upload-image-btn");
+const fileInput = document.getElementById("profile-image-input");
+const profileImg = document.getElementById("profile-picture");
 
-<<<<<<< knowledge-base
-    // 2. Add form submit listeners (prototype alerts)
-    document.getElementById('profile-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const newName = document.getElementById('profile-name').value;
-        alert(`Profile updated! (Name changed to ${newName})`);
-=======
-    // Upload a new profile picture
-    const uploadBtn = document.getElementById("upload-image-btn");
-    const fileInput = document.getElementById("profile-image-input");
-    const profileImg = document.getElementById("profile-picture");
+uploadBtn.addEventListener("click", () => {
+    fileInput.click();
+});
 
-    uploadBtn.addEventListener("click", () => {
-        fileInput.click();
-    });
+fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (!file) return;
 
-    fileInput.addEventListener("change", () => {
-        const file = fileInput.files[0];
-        if (!file) return;
+    // Update the image on the page
+    const reader = new FileReader();
+    reader.onload = e => {
+        profileImg.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
 
-        // Update the image on the page
-        const reader = new FileReader();
-        reader.onload = e => {
-            profileImg.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+    // Use file name as the database path
+    const simulatedPath = `/${file.name}`;
 
-        // Use file name as the database path
-        const simulatedPath = `/${file.name}`;
+    fetch("settings.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_picture: simulatedPath })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            console.log("Profile picture updated in DB!");
+        } else {
+            console.error("Failed to update profile picture in DB.");
+        }
+    })
+    .catch(err => console.error(err));
+});
 
-        fetch("settings.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ profile_picture: simulatedPath })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                console.log("Profile picture updated in DB!");
-            } else {
-                console.error("Failed to update profile picture in DB.");
-            }
-        })
-        .catch(err => console.error(err));
-    });
+// Delete current profile picture
+const deleteBtn = document.getElementById("delete-image-btn");
 
-    // Delete current profile picture
-    const deleteBtn = document.getElementById("delete-image-btn");
+deleteBtn.addEventListener("click", () => {
+    const defaultPath = "/default-avatar.png";
+    profileImg.src = defaultPath;
 
-    deleteBtn.addEventListener("click", () => {
-        const defaultPath = "/default-avatar.png";
-        profileImg.src = defaultPath;
-
-        fetch("settings.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ profile_picture: defaultPath })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                console.log("Profile picture reset to default in DB!");
-            } else {
-                console.error("Failed to reset profile picture in DB.");
-            }
-        })
-        .catch(err => console.error(err));
->>>>>>> main
-    });
+    fetch("settings.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile_picture: defaultPath })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            console.log("Profile picture reset to default in DB!");
+        } else {
+            console.error("Failed to reset profile picture in DB.");
+        }
+    })
+    .catch(err => console.error(err));
+});
 
     // Update password
     document.getElementById('password-form').addEventListener('submit', (e) => {
@@ -1170,14 +1156,10 @@ function loadSettingsPage(currentUser) {
         localStorage.clear();
         sessionStorage.clear();
 
-        alert('Signing out...');
+alert('Signing out...');
 
-<<<<<<< knowledge-base
-        // Redirect to the login page 
-=======
-        // Redirect to the login page
->>>>>>> main
-        window.location.href = '../index.html';
+// Redirect to the login page
+window.location.href = '../index.html';
     });
 }
 
@@ -1942,25 +1924,13 @@ function setupCreateTopicForm(currentUser) {
   });
 }
 
-<<<<<<< knowledge-base
-
-/**
- * Runs on the standalone Assign Task page (assign-task.html)
- */
-=======
->>>>>>> main
 function setupAssignTaskForm() {
     const form = document.getElementById("assign-task-form");
     if (!form) return;
 
-<<<<<<< knowledge-base
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault(); 
-=======
     // ✅ Prevent double-binding (stops multiple submit handlers)
     if (form.dataset.bound === "1") return;
     form.dataset.bound = "1";
->>>>>>> main
 
 
     form.addEventListener("submit", async (e) => {
@@ -4914,17 +4884,6 @@ function updateTaskCounts() {
     column.appendChild(card);
 }*/
 document.addEventListener("DOMContentLoaded", () => {
-<<<<<<< knowledge-base
-  const pageId = document.body.id;
-
-  // Only run task fetching on the Projects page (kanban)
-  if (pageId === "projects-page") {
-    fetchAndRenderTasks();
-    setupAssignTaskForm();
-  }
-});
-
-=======
     const pageId = document.body?.id;
 
     // Call it on BOTH pages (only does board rerender if board exists)
@@ -4940,7 +4899,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
->>>>>>> main
 
 
 
@@ -5036,7 +4994,6 @@ function setupKbLikeButtonsOnce() {
     const btn = e.target.closest(".kb-like-btn");
     if (!btn) return;
 
-<<<<<<< knowledge-base
     e.preventDefault();
     e.stopPropagation();
 
@@ -5076,6 +5033,3 @@ function setupKbLikeButtonsOnce() {
     }
   });
 }
-=======
-
->>>>>>> main
