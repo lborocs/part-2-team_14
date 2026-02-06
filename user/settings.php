@@ -126,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </form>
 
+                    <!-- Change Password -->
                     <form id="password-form" class="settings-card">
                         <h2>Change Password</h2>
                         <div class="form-group">
@@ -143,6 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <button type="submit" class="create-post-btn">Update Password</button>
                     </form>
 
+                    <!-- Notification Preferences -->
                     <form id="notifications-form" class="settings-card">
                         <h2>Notification Preferences</h2>
                         <div class="checkbox-group">
@@ -156,6 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <button type="submit" class="create-post-btn">Save Preferences</button>
                     </form>
 
+                    <!-- Sign Out -->
                     <div class="settings-card">
                         <h2>Account</h2>
                         <p>Clicking "Sign Out" will end your current session and return you to the login page.</p>
