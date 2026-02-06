@@ -268,11 +268,17 @@ if ($role === 'team_member') {
                     const projectCard = document.createElement("div");
                     projectCard.classList.add("project-card");
                     projectCard.classList.add(healthClass);
+                    projectCard.dataset.projectId = project.project_id;
                     projectCard.dataset.priority = project.priority;
                     projectCard.dataset.resourceLevel = project.resource_level;
                     projectCard.dataset.deadline = project.deadline;
                     projectCard.dataset.completion = onTimePercent;
                     projectCard.dataset.health = healthClass;
+
+                    // Add click handler to navigate to project page
+                    projectCard.addEventListener('click', () => {
+                        window.location.href = `../project/progress.php?project_id=${project.project_id}`;
+                    });
 
                     projectCard.innerHTML = `
                     <h3>${project.project_name}</h3>

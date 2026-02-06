@@ -32,12 +32,34 @@
 
 .project-health-content {
     width: 100%;
+    padding: 5px 0;
 }
 
 .project-health-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: flex;
     gap: 25px;
+    overflow-x: auto;
+    padding: 15px 5px 20px 5px;
+    margin: -15px -5px -20px -5px;
+    scroll-behavior: smooth;
+}
+
+.project-health-grid::-webkit-scrollbar {
+    height: 8px;
+}
+
+.project-health-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.project-health-grid::-webkit-scrollbar-thumb {
+    background: #F5A623;
+    border-radius: 4px;
+}
+
+.project-health-grid::-webkit-scrollbar-thumb:hover {
+    background: #d4890f;
 }
 
 .project-card{
@@ -47,11 +69,15 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     transition: transform 0.2s, box-shadow 0.2s;
     border-left: 4px solid;
+    min-width: 320px;
+    flex-shrink: 0;
+    cursor: pointer;
 }
 
 .project-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    border-left-width: 6px;
 }
 
 .health-indicator-container{
