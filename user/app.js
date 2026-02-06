@@ -28,110 +28,24 @@ function showSuccessNotification(message) {
     }, 3000);
 }
 
-// Initial hardcoded posts
-const initialPosts = [
-    // Software Issues
-    {
-        id: 1,
-        topic: 'Software Issues',
-        title: 'Jasmine software crashing on startup',
-        author: 'Steve Adams',
-        authorEmail: 'user@make-it-all.co.uk',
-        date: '3 October 2025',
-        content: "Every time I try to open the Jasmine client on my machine, it shows the splash screen and then immediately closes. \n\nI've tried: \n- Restarting my computer \n- Reinstalling the software \n\nNothing seems to work. Any ideas?",
-        reactions: { up: 4, lightbulb: 1, comments: 1 },
-        replies: [
-            {
-                id: 101,
-                author: 'Jane Doe',
-                authorRole: 'specialist',
-                avatarClass: 'avatar-4',
-                date: '3 October 2025',
-                content: "Hi Steve, this is a known issue with the latest Windows update. The team is working on a patch. \n\nFor now, you can fix this by deleting the cache file at: \n`C:\\Users\\[YourName]\\AppData\\Local\\Jasmine\\cache.dat` \n\nLet me know if that works!"
-            }
-        ]
-    },
-    {
-        id: 3,
-        topic: 'Software Issues',
-        title: 'Cannot access shared drive',
-        author: 'Maria Garcia',
-        authorEmail: 'maria@make-it-all.co.uk',
-        date: '1 October 2025',
-        content: 'I keep getting a "Permission Denied" error when trying to access the //PROJECTS/ shared drive. I had access yesterday. Did something change?',
-        reactions: { up: 7, lightbulb: 0, comments: 0 },
-        replies: []
-    },
-    // Printing
-    {
-        id: 2,
-        topic: 'Printing',
-        title: 'Printer not connecting to WiFi',
-        author: 'Steve Adams',
-        authorEmail: 'user@make-it-all.co.uk',
-        date: '2 October 2025',
-        content: 'I have tried to connect my printer (HP LaserJet M404) to WiFi numerous times, even tried restarting it and the router. My laptop can see the WiFi, but the printer cannot. \n\nAny suggestions to fix it?',
-        reactions: { up: 2, lightbulb: 0, comments: 0 },
-        replies: []
-    },
-    // Network
-    {
-        id: 4,
-        topic: 'Network',
-        title: 'Company VPN is extremely slow today',
-        author: 'Ben Carter',
-        authorEmail: 'manager@make-it-all.co.uk',
-        date: '4 October 2025',
-        content: 'Is anyone else experiencing very slow speeds on the company VPN? My file transfers are timing out and video calls are impossible.',
-        reactions: { up: 12, lightbulb: 0, comments: 0 },
-        replies: []
-    },
-    // Security
-    {
-        id: 5,
-        topic: 'Security',
-        title: 'Suspicious Phishing Email Received',
-        author: 'Steve Adams',
-        authorEmail: 'user@make-it-all.co.uk',
-        date: '4 October 2025',
-        content: "I received an email from 'IT Support' asking me to validate my password by clicking a link. This looks like a phishing attempt. Forwarding to the security team, but wanted to warn others.",
-        reactions: { up: 9, lightbulb: 3, comments: 1 },
-        replies: [
-            {
-                id: 102,
-                author: 'Jane Doe',
-                authorRole: 'specialist',
-                avatarClass: 'avatar-4',
-                date: '4 October 2025',
-                content: "Thanks, Steve. This is correct. That is a phishing email. **DO NOT** click the link. Our team is working to block it now. Well spotted!"
-            }
-        ]
-    },
-    // Database
-    {
-        id: 6,
-        topic: 'Database',
-        title: 'Query timeout on customer_report table',
-        author: 'Jane Doe',
-        authorEmail: 'specialist@make-it-all.co.uk',
-        date: '1 October 2025',
-        content: 'Running a standard SELECT query on the `customer_report` view is timing out after 30 seconds. This report is critical for month-end. Investigating now.',
-        reactions: { up: 1, lightbulb: 1, comments: 0 },
-        replies: []
-    },
-    // Finance
-    {
-        id: 7,
-        topic: 'Finance',
-        title: 'Question about new expense reporting tool',
-        author: 'Maria Garcia',
-        authorEmail: 'maria@make-it-all.co.uk',
-        date: '29 September 2025',
-        content: "Where can I find the training guide for the new 'Expensify' tool? The old Concur portal is now read-only.",
-        reactions: { up: 3, lightbulb: 0, comments: 0 },
-        replies: []
-    }
-];
+function renderTopicIcon(iconValue) {
+  // allow iconless
+  if (!iconValue || iconValue.trim() === "" || iconValue.trim() === "?") return "";
+
+  // emoji (non-ascii)
+  const looksEmoji = /[^\u0000-\u007F]/.test(iconValue);
+  if (looksEmoji) return `<span class="topic-emoji">${iconValue}</span>`;
+
+  // feather icon name (like "tool", "users", "code")
+  const featherPattern = /^[a-z0-9-]+$/;
+  if (featherPattern.test(iconValue)) return `<i data-feather="${iconValue}"></i>`;
+
+  // unknown value → show nothing
+  return "";
+}
+
+
+
 
 // Load posts from localStorage or use initial set
 let simPosts = JSON.parse(localStorage.getItem('simPosts')) || initialPosts;
@@ -256,7 +170,7 @@ const initialPersonalTodos = [
 ];
 
 // Load tasks from localStorage or use initial set
-let simTasks = JSON.parse(localStorage.getItem('simTasks'));
+let simTasks = JSON.parse(localStorage.getItem('simTasks')) || [];
 if (!localStorage.getItem('simTasks')) {
     localStorage.setItem('simTasks', JSON.stringify(simTasks));
 }
@@ -393,55 +307,51 @@ function updateSidebarAndNav() {
  * @param {string} currentUserEmail - The email of the current user.
  */
 function createPostCardHTML(post, currentUserEmail) {
-    const postLink = `knowledge-base-post.html?id=${post.id}&user=${currentUserEmail}`;
-    const topicClass = post.topic.toLowerCase().split(' ')[0]; // 'software issues' -> 'software'
+  const postLink = `knowledge-base-post.html?post_id=${post.id}`;
+  const topicClass = post.topic.toLowerCase().split(' ')[0];
 
-    // Determine avatar class
-    let avatarClass = 'avatar-3'; // Default avatar
-    if (post.authorEmail === 'user@make-it-all.co.uk') avatarClass = 'avatar-1';
-    if (post.authorEmail === 'specialist@make-it-all.co.uk') avatarClass = 'avatar-4';
-    if (post.authorEmail === 'manager@make-it-all.co.uk') avatarClass = 'avatar-2';
+  let avatarClass = 'avatar-3';
+  if (post.authorEmail === 'user@make-it-all.co.uk') avatarClass = 'avatar-1';
+  if (post.authorEmail === 'specialist@make-it-all.co.uk') avatarClass = 'avatar-4';
+  if (post.authorEmail === 'manager@make-it-all.co.uk') avatarClass = 'avatar-2';
 
-    return `
-        <div class="post-card">
-            <div class="post-card-header">
-                <div class="post-card-avatar ${avatarClass}"></div>
-                <div>
-                    <span class="post-card-author">${post.author}</span>
-                    <span class="post-card-date">${post.date}</span>
-                </div>
-                <span class="post-card-tag ${topicClass}">${post.topic}</span>
-            </div>
-            <a href="${postLink}" class="post-card-body">
-                <h3>${post.title}</h3>
-                <p>${post.content}</p>
-            </a>
-            <div class="post-card-footer">
-                <span><i data-feather="thumbs-up"></i> ${post.reactions.up}</span>
-                <span><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
-            </div>
+  const solvedBadge = Number(post.is_solved) === 1
+    ? `<span class="kb-solved-badge">Solved</span>`
+    : "";
+
+  return `
+    <div class="post-card">
+      <div class="post-card-header">
+        <div class="post-card-avatar ${avatarClass}"></div>
+        <div>
+          <span class="post-card-author">${post.author}</span>
+          <span class="post-card-date">${post.date}</span>
         </div>
-    `;
+
+        ${solvedBadge}
+
+        <span class="post-card-tag ${topicClass}">${post.topic}</span>
+      </div>
+
+      <a href="${postLink}" class="post-card-body">
+        <h3>${post.title}</h3>
+        <p>${post.content}</p>
+      </a>
+
+      <div class="post-card-footer">
+        <span><i data-feather="thumbs-up"></i> ${post.reactions.up}</span>
+        <span><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
+      </div>
+    </div>
+  `;
 }
+
 
 /**
  * Saves the current state of simPosts to localStorage.
  */
 function savePosts() {
     localStorage.setItem('simPosts', JSON.stringify(simPosts));
-}
-
-/* ===========================
-   TOPICS STORE (persist custom topics)
-   =========================== */
-const MAIN_TOPICS = ["Printing", "Software Issues", "Network", "Security", "Database", "Finance"];
-let customTopics = JSON.parse(localStorage.getItem('customTopics')) || [];
-
-function getAllTopics() {
-    return [...MAIN_TOPICS, ...customTopics];
-}
-function saveCustomTopics() {
-    localStorage.setItem('customTopics', JSON.stringify(customTopics));
 }
 
 
@@ -468,12 +378,18 @@ function renderPostList(posts, currentUserEmail) {
     feather.replace();
 }
 
+let KB_ACTIVE_TOPIC = null;      // string or null
+let KB_ACTIVE_POSTS = [];        // array of posts currently in that topic
+
 /**
  * Switches the main KB page to show a specific topic.
  * @param {string} topicName - The name of the topic, e.g., "Software Issues".
  * @param {object} currentUser - The current user object.
  */
-function showTopicView(topicName, currentUser) {
+async function showTopicView(topicName, currentUser) {
+    // tell CSS we’re in “topic page” mode
+    document.body.dataset.topicsView = "topic";
+
     // 1. Hide the topic grid and its parent section
     document.getElementById('kb-topics-section').style.display = 'none';
 
@@ -505,9 +421,15 @@ function showTopicView(topicName, currentUser) {
     document.getElementById('posts-list-title').textContent = 'All Posts';
     document.getElementById('post-tabs-container').style.display = 'none';
 
-    // 7. Filter and render the posts for this topic
-    const topicPosts = simPosts.filter(post => post.topic === topicName);
+    // 7. Fetch posts from DB for this topic
+    const all = await fetchKbPostsFromDb("new", 50); // get latest + filter
+    const topicPosts = all.filter(p => p.topic === topicName);
+
+    KB_ACTIVE_TOPIC = topicName;
+    KB_ACTIVE_POSTS = topicPosts;
+
     renderPostList(topicPosts, currentUser.email);
+
 }
 
 /**
@@ -515,144 +437,366 @@ function showTopicView(topicName, currentUser) {
  * @param {boolean} showAll If true, render all topics (unused for main page now). If false, render main topics only.
  * @param {object} currentUser Current user (for click-through)
  */
-function renderTopicGrid(showAll, currentUser) {
-    const grid = document.getElementById('topic-grid');
-    if (!grid) return;
+async function renderTopicGrid(showAll, currentUser) {
+  const grid = document.getElementById('topic-grid');
+  if (!grid) return;
 
-    // For main page we always show only MAIN_TOPICS
-    const topics = MAIN_TOPICS;
+  await ensureKbTopicsLoaded();
 
-    // Build cards
-    const topicCardsHtml = topics.map(t => `
-        <a href="#" class="topic-card" data-topic="${t}">
-            <i data-feather="${iconForTopic(t)}"></i>
-            <span>${t}</span>
-        </a>
-    `).join('');
+    // Main KB page: ONLY show original topics (has_icon = 1)
+    const publicTopics = KB_TOPICS.filter(t => String(t.is_public) === "1");
 
-    // “Add New Topic” card
-    const addCardHtml = `
-        <a href="knowledge-base-create-topic.html?user=${currentUser.email}" class="topic-card add-topic-card" id="add-topic-card">
-            <i data-feather="plus"></i>
-            <span>Add New Topic</span>
-        </a>
-    `;
+    // originals = ones that have icons
+    const originalTopics = publicTopics.filter(t => String(t.has_icon) === "1");
 
-    grid.innerHTML = topicCardsHtml + addCardHtml;
+    // main page shows originals only
+    const topicsToShow = showAll ? publicTopics : originalTopics;
 
-    // Hook up topic clicks
-    grid.querySelectorAll('.topic-card:not(.add-topic-card)').forEach(card => {
-        card.addEventListener('click', (e) => {
-            e.preventDefault();
-            const topicName = card.dataset.topic;
-            showTopicView(topicName, currentUser);
-        });
+
+  const topicCardsHtml = topicsToShow.map(t => `
+    <a href="#" class="topic-card" data-topic="${t.topic_name}">
+      ${renderTopicIcon(t.icon)}
+      <span>${t.topic_name}</span>
+    </a>
+  `).join('');
+
+  const addCardHtml = `
+    <a href="knowledge-base-create-topic.html?user=${currentUser.email}" class="topic-card add-topic-card" id="add-topic-card">
+      <i data-feather="plus"></i>
+      <span>Add New Topic</span>
+    </a>
+  `;
+
+  grid.innerHTML = topicCardsHtml + addCardHtml;
+
+  grid.querySelectorAll('.topic-card:not(.add-topic-card)').forEach(card => {
+    card.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const topicName = card.dataset.topic;
+      await showTopicView(topicName, currentUser);
     });
+  });
 
-    // Note: Add New Topic now links to form page instead of prompt
-
-    feather.replace();
+  feather.replace();
 }
 
-/** Pick an icon per topic (fallback: tag) */
-function iconForTopic(topic) {
-    const map = {
-        "Printing": "printer",
-        "Software Issues": "alert-triangle",
-        "Network": "wifi",
-        "Security": "shield",
-        "Database": "database",
-        "Finance": "shopping-cart"
-    };
-    return map[topic] || "tag";
+
+/* ===========================
+   KB DB BACKEND (PHP actions)
+   =========================== */
+const KB_ACTIONS_BASE = "/Github/part-2-team_14/user/knowledge-base/actions";
+
+// ===========================
+// TOPICS (DB-driven)
+// ===========================
+let KB_TOPICS = [];                 // array of {topic_id, topic_name, description, icon, ...}
+let TOPIC_ID_TO_NAME = {};          // { [id]: name }
+let TOPIC_NAME_TO_ID = {};          // { [name]: id }
+let TOPIC_NAME_TO_ICON = {};        // { [name]: icon }
+
+async function fetchKbTopicsFromDb() {
+  const res = await fetch(`${KB_ACTIONS_BASE}/fetch_topics.php`, { credentials: "include" });
+  const data = await res.json();
+  if (!data.success) return [];
+
+  return data.topics || [];
 }
 
-/**
- * Runs on the Knowledge Base Index page (knowledge-base.html)
- */
-function loadKbIndex(currentUser) {
+async function createKbTopicInDb({ topic_name, description, icon }) {
+  const fd = new FormData();
+  fd.append("topic_name", topic_name);
+  fd.append("description", description || "");
+  fd.append("icon", icon || "");
+
+
+  const res = await fetch(`${KB_ACTIONS_BASE}/create_topic.php`, {
+    method: "POST",
+    body: fd,
+    credentials: "include"
+  });
+
+  return await res.json();
+}
+
+
+async function ensureKbTopicsLoaded() {
+  if (KB_TOPICS.length) return;
+
+  KB_TOPICS = await fetchKbTopicsFromDb();
+
+  TOPIC_ID_TO_NAME = {};
+  TOPIC_NAME_TO_ID = {};
+  TOPIC_NAME_TO_ICON = {};
+
+  KB_TOPICS.forEach(t => {
+    TOPIC_ID_TO_NAME[t.topic_id] = t.topic_name;
+    TOPIC_NAME_TO_ID[t.topic_name] = t.topic_id;
+    TOPIC_NAME_TO_ICON[t.topic_name] = t.icon || "";
+
+  });
+}
+
+function getTopicIdFromName(name) {
+  return TOPIC_NAME_TO_ID[name] || 0;
+}
+
+
+// Format MySQL datetime -> "3 October 2025"
+function formatKbMysqlDate(mysqlDate) {
+  if (!mysqlDate) return "";
+  const d = new Date(String(mysqlDate).replace(" ", "T"));
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function mapDbPostToUiPost(p) {
+  const topicName = TOPIC_ID_TO_NAME[p.topic_id] || "General";
+
+  let avatarClass = "avatar-3";
+  if (p.author_id === 1) avatarClass = "avatar-1";
+  if (p.author_id === 2) avatarClass = "avatar-2";
+  if (p.author_id === 3) avatarClass = "avatar-4";
+
+  return {
+    id: p.post_id,
+    topic: topicName,
+    title: p.title,
+    author: p.author_name || "Unknown",
+    authorEmail: "",
+    date: formatKbMysqlDate(p.created_at),
+    content: p.snippet || "",
+    fullContent: p.content || "",
+    is_solved: Number(p.is_solved || 0), 
+    reactions: {
+      up: p.view_count ?? 0,
+      lightbulb: 0,
+      comments: p.comment_count ?? 0
+    },
+    replies: []
+  };
+}
+
+
+async function fetchKbPostsFromDb(type = "popular", limit = 20, search = "") {
+  const url =
+    `${KB_ACTIONS_BASE}/fetch_posts.php?type=${encodeURIComponent(type)}&limit=${encodeURIComponent(limit)}&search=${encodeURIComponent(search)}`;
+
+  const res = await fetch(url, { credentials: "include" });
+  const data = await res.json();
+  if (!data.success) return [];
+  return (data.posts || []).map(mapDbPostToUiPost);
+}
+
+
+async function createKbPostInDb({ title, topicName, details }) {
+  const topicId = getTopicIdFromName(topicName);
+  const fd = new FormData();
+  fd.append("title", title);
+  fd.append("topic_id", String(topicId));
+  fd.append("content", details);
+
+  const res = await fetch(`${KB_ACTIONS_BASE}/create_post.php`, {
+    method: "POST",
+    body: fd,
+    credentials: "include"
+  });
+
+  const data = await res.json();
+  return data; // {success, post_id} or {success:false,message}
+}
+
+async function loadKbIndex(currentUser) {
     // Make sure the Create Post button is visible
     const createBtn = document.getElementById('create-post-btn-topic');
     if (createBtn) createBtn.style.display = 'inline-flex';
 
-    // Load and render popular posts
-    const popularPosts = [...simPosts].sort((a, b) => b.reactions.up - a.reactions.up);
-    renderPostList(popularPosts, currentUser.email);
-
-    // Render the main topics grid (main topics + Add New Topic)
+    // Render topics (keep existing)
     document.body.dataset.topicsView = 'main';
-    renderTopicGrid(false, currentUser);
+    await renderTopicGrid(false, currentUser);
 
-    // Update "View more topics" link to All Topics page
+
+    // Update "View more topics" link
     const viewMoreLink = document.getElementById('view-more-topics');
     if (viewMoreLink) {
         viewMoreLink.setAttribute('href', 'all-topics.html');
     }
-}
 
-/**
- * Runs on the Create Post page (knowledge-base-create.html)
- */
-function setupCreateForm(currentUser) {
-    const form = document.getElementById('create-post-form');
-    const topicSelect = document.getElementById('post-topic');
+    // Load popular posts from DB
+    const posts = await fetchKbPostsFromDb("popular", 20);
+    renderPostList(posts, currentUser.email);
 
-    if (!form || !topicSelect) return;
+    KB_ACTIVE_TOPIC = null;
+    KB_ACTIVE_POSTS = [];
 
-    // Populate the topic dropdown with all topics (main + custom)
-    const allTopics = getAllTopics();
-    topicSelect.innerHTML = '<option value="">Select a topic...</option>';
-    allTopics.forEach(topic => {
-        const option = document.createElement('option');
-        option.value = topic;
-        option.textContent = topic;
-        topicSelect.appendChild(option);
-    });
+    // Make Popular/New tabs actually fetch DB versions
+    const tabsContainer = document.getElementById("post-tabs-container");
+    if (tabsContainer) {
+        const buttons = tabsContainer.querySelectorAll("button");
+        const popularBtn = buttons[0];
+        const newBtn = buttons[1];
 
-    // Check if a topic was passed via URL parameter (from topic view)
-    const urlParams = new URLSearchParams(window.location.search);
-    const preselectedTopic = urlParams.get('topic');
-    if (preselectedTopic) {
-        topicSelect.value = preselectedTopic;
+        if (popularBtn && newBtn) {
+            popularBtn.addEventListener("click", async () => {
+                popularBtn.classList.add("active");
+                newBtn.classList.remove("active");
+                const p = await fetchKbPostsFromDb("popular", 20);
+                renderPostList(p, currentUser.email);
+            });
+
+            newBtn.addEventListener("click", async () => {
+                newBtn.classList.add("active");
+                popularBtn.classList.remove("active");
+                const n = await fetchKbPostsFromDb("new", 20);
+                renderPostList(n, currentUser.email);
+            });
+        }
     }
 
-    // Handle form submission
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
+    setupKbSearch(currentUser);
 
-        const title = document.getElementById('post-title').value.trim();
-        const topic = document.getElementById('post-topic').value;
-        const details = document.getElementById('post-details').value.trim();
-
-        if (!title || !topic || !details) {
-            alert('Please fill out all required fields.');
-            return;
-        }
-
-        // Create new post object
-        const newPost = {
-            id: new Date().getTime(),
-            topic: topic,
-            title: title,
-            author: currentUser.name,
-            authorEmail: currentUser.email,
-            date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-            content: details,
-            reactions: { up: 0, lightbulb: 0, comments: 0 },
-            replies: []
-        };
-
-        // Add to posts array and save
-        simPosts.push(newPost);
-        savePosts();
-
-        // Store success message
-        sessionStorage.setItem('postCreated', `Post "${title}" created successfully!`);
-
-        // Redirect back to knowledge base
-        window.location.href = `knowledge-base.html?user=${currentUser.email}`;
-    });
 }
+
+function setupKbSearch(currentUser) {
+  const input = document.getElementById("kb-search-input");
+  if (!input) return;
+
+  const tabsContainer = document.getElementById("post-tabs-container");
+  const buttons = tabsContainer ? tabsContainer.querySelectorAll("button") : [];
+  const popularBtn = buttons[0];
+  const newBtn = buttons[1];
+
+  function getActiveType() {
+    return newBtn && newBtn.classList.contains("active") ? "new" : "popular";
+  }
+
+  let t = null;
+
+  async function runSearch() {
+    const q = input.value.trim();
+
+    // if search cleared, restore the current view
+    if (q === "") {
+      if (KB_ACTIVE_TOPIC) {
+        renderPostList(KB_ACTIVE_POSTS, currentUser.email);
+      } else {
+        const type = getActiveType();
+        const posts = await fetchKbPostsFromDb(type, 20, "");
+        renderPostList(posts, currentUser.email);
+      }
+      return;
+    }
+
+    // if in a topic, filter locally (DON'T hit DB)
+    if (KB_ACTIVE_TOPIC) {
+      const qLower = q.toLowerCase();
+      const filtered = KB_ACTIVE_POSTS.filter(p =>
+        (p.title || "").toLowerCase().includes(qLower) ||
+        (p.content || "").toLowerCase().includes(qLower) ||
+        (p.author || "").toLowerCase().includes(qLower)
+      );
+      renderPostList(filtered, currentUser.email);
+      return;
+    }
+
+    // normal global search (DB)
+    const type = getActiveType();
+    const posts = await fetchKbPostsFromDb(type, 20, q);
+    renderPostList(posts, currentUser.email);
+  }
+
+  // prevent double-binding if loadKbIndex is called again
+  if (input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+
+  input.addEventListener("input", () => {
+    clearTimeout(t);
+    t = setTimeout(runSearch, 250);
+  });
+}
+
+
+/**
+ * Runs on the Create Post page 
+ */
+async function setupCreateForm(currentUser) {
+  const form = document.getElementById("create-post-form");
+
+  // NEW elements (searchable)
+  const topicInput = document.getElementById("post-topic-input");   // visible
+  const topicsList = document.getElementById("topics-datalist");    // datalist
+  const topicHidden = document.getElementById("post-topic");        // hidden (submitted)
+  const topicError = document.getElementById("topic-error");        // optional msg
+
+  if (!form || !topicInput || !topicsList || !topicHidden) return;
+
+  await ensureKbTopicsLoaded();
+
+  // only public topics
+  const topicNames = KB_TOPICS
+    .filter(t => String(t.is_public) === "1")
+    .map(t => String(t.topic_name || "").trim())
+    .filter(Boolean);
+
+  // fill datalist
+  topicsList.innerHTML = topicNames
+    .map(name => `<option value="${escapeHtml(name)}"></option>`)
+    .join("");
+
+  // Preselect if topic passed in URL (?topic=...)
+  const urlParams = new URLSearchParams(window.location.search);
+  const preselectedTopic = urlParams.get("topic");
+  if (preselectedTopic) {
+    topicInput.value = preselectedTopic;
+    topicHidden.value = topicNames.includes(preselectedTopic) ? preselectedTopic : "";
+  }
+
+  function syncTopic() {
+    const v = String(topicInput.value || "").trim();
+    const ok = topicNames.includes(v);
+
+    topicHidden.value = ok ? v : "";
+
+    if (topicError) {
+      topicError.style.display = (v && !ok) ? "block" : "none";
+    }
+  }
+
+  topicInput.addEventListener("input", syncTopic);
+  topicInput.addEventListener("blur", syncTopic);
+
+  // Handle form submission
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const title = document.getElementById("post-title").value.trim();
+    const topic = topicHidden.value; 
+    const details = document.getElementById("post-details").value.trim();
+
+    if (!title || !topic || !details) {
+      alert("Please fill out all required fields (and pick a valid topic).");
+      return;
+    }
+
+    const result = await createKbPostInDb({ title, topicName: topic, details });
+
+    if (!result.success) {
+      alert(result.message || "Could not create post.");
+      return;
+    }
+
+    sessionStorage.setItem("postCreated", `Post "${title}" created successfully!`);
+    window.location.href = `knowledge-base.html?user=${currentUser.email}`;
+  });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 
 /**
  * Runs on the single Knowledge Base Post page (knowledge-base-post.html)
@@ -798,9 +942,7 @@ function setupCreateProjectPage(currentUser) {
         inputId: "leader-search",
         hiddenId: "team-leader-id",
         resultsId: "leader-results",
-        // If you made the endpoint INSIDE create-project.php:
         endpointUrl: "create-project.php?ajax=leaders",
-        // If you instead created a separate file, use:
         // endpointUrl: "search_leaders.php",
         formId: "create-project-form",
     });
@@ -835,7 +977,6 @@ function loadSettingsPage(currentUser) {
     // 2. Add form submit listeners (prototype alerts)
     document.getElementById('profile-form').addEventListener('submit', (e) => {
         e.preventDefault();
-        // In a real app, you'd save this new name
         const newName = document.getElementById('profile-name').value;
         alert(`Profile updated! (Name changed to ${newName})`);
     });
@@ -855,13 +996,12 @@ function loadSettingsPage(currentUser) {
         e.preventDefault();
 
         // Clear the simulated session
-        // This clears the posts you created, etc.
         localStorage.clear();
         sessionStorage.clear();
 
         alert('Signing out...');
 
-        // Redirect to the login page (assuming it's index.html)
+        // Redirect to the login page 
         window.location.href = '../index.html';
     });
 }
@@ -873,7 +1013,7 @@ function loadSettingsPage(currentUser) {
  * Runs on All Topics page (all-topics.html)
  * Shows a plain list (no buttons) of all topics: main + custom.
  */
-function loadAllTopicsPage(currentUser) {
+async function loadAllTopicsPage(currentUser) {
     // Title + breadcrumbs
     const titleContainer = document.getElementById('kb-title-container');
     if (titleContainer) {
@@ -888,7 +1028,9 @@ function loadAllTopicsPage(currentUser) {
     // Build clickable rows
     const listEl = document.getElementById('all-topics-list');
     if (listEl) {
-        const topics = getAllTopics();
+        await ensureKbTopicsLoaded();
+        const topics = KB_TOPICS.filter(t => String(t.is_public) === "1").map(t => t.topic_name);
+
         if (topics.length === 0) {
             listEl.innerHTML = '<p>No topics yet.</p>';
         } else {
@@ -1244,43 +1386,36 @@ function renderTodoItems(tasks, currentUser) {
     feather.replace();
 }
 
-/**
- * Renders trending posts
- */
-function renderTrendingPosts(currentUser) {
-    const trendingPostsList = document.getElementById('trending-posts-list');
-    const topPosts = [...simPosts].sort((a, b) => b.reactions.up - a.reactions.up).slice(0, 3);
+async function renderTrendingPosts(currentUser) {
+  const trendingPostsList = document.getElementById('trending-posts-list');
+  if (!trendingPostsList) return;
 
-    trendingPostsList.innerHTML = topPosts.map(post => {
-        let avatarClass = 'avatar-3';
-        if (post.authorEmail === 'user@make-it-all.co.uk') avatarClass = 'avatar-1';
-        if (post.authorEmail === 'specialist@make-it-all.co.uk') avatarClass = 'avatar-4';
-        if (post.authorEmail === 'manager@make-it-all.co.uk') avatarClass = 'avatar-2';
+  const posts = await fetchKbPostsFromDb("popular", 3); // DB
+  trendingPostsList.innerHTML = posts.map(post => {
+    const topicClass = post.topic.toLowerCase().split(' ')[0];
+    return `
+      <div class="trending-post">
+        <div class="post-header">
+          <div class="post-avatar ${post.avatarClass || 'avatar-3'}"></div>
+          <div class="post-author-info">
+            <p class="post-author-name">${post.author}</p>
+            <span class="post-date">${post.date}</span>
+          </div>
+          <span class="post-tag ${topicClass}">${post.topic}</span>
+        </div>
+        <h3 class="post-title">${post.title}</h3>
+        <p class="post-excerpt">${post.content.substring(0, 100)}...</p>
+        <div class="post-stats">
+          <span class="post-stat"><i data-feather="eye"></i> ${post.reactions.up}</span>
+          <span class="post-stat"><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
 
-        const topicClass = post.topic.toLowerCase().split(' ')[0];
-
-        return `
-            <div class="trending-post">
-                <div class="post-header">
-                    <div class="post-avatar ${avatarClass}">${post.author.split(' ').map(n => n[0]).join('')}</div>
-                    <div class="post-author-info">
-                        <p class="post-author-name">${post.author}</p>
-                        <span class="post-date">${post.date.split(' ').slice(0, 2).join(' ')}</span>
-                    </div>
-                    <span class="post-tag ${topicClass}">${post.topic}</span>
-                </div>
-                <h3 class="post-title">${post.title}</h3>
-                <p class="post-excerpt">${post.content.substring(0, 100)}...</p>
-                <div class="post-stats">
-                    <span class="post-stat"><i data-feather="thumbs-up"></i> ${post.reactions.up}</span>
-                    <span class="post-stat"><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    feather.replace();
+  feather.replace();
 }
+
 
 /**
  * Renders notifications
@@ -1516,42 +1651,53 @@ function renderTaskDistributionChart(userTasks) {
     }
 }
 
-/**
- * Runs on the Create Topic page (knowledge-base-create-topic.html)
- */
 function setupCreateTopicForm(currentUser) {
-    const createTopicForm = document.getElementById('create-topic-form');
+  const createTopicForm = document.getElementById('create-topic-form');
+  if (!createTopicForm) return;
 
-    if (!createTopicForm) return;
+  createTopicForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    createTopicForm.addEventListener('submit', (e) => {
-        e.preventDefault();
+    await ensureKbTopicsLoaded();
 
-        const topicName = document.getElementById('topic-name').value.trim();
-        const topicDescription = document.getElementById('topic-description').value.trim();
+    const topicName = document.getElementById('topic-name').value.trim();
+    const topicDescription = document.getElementById('topic-description').value.trim();
 
-        if (!topicName) {
-            alert('Please enter a topic name.');
-            return;
-        }
+    // If you have an icon input, use it. If not, default to "tag".
+    const iconInput = document.getElementById('topic-icon');
+    const topicIcon = iconInput ? iconInput.value.trim() : "";
 
-        // Check for duplicates (case-insensitive)
-        if (getAllTopics().some(t => t.toLowerCase() === topicName.toLowerCase())) {
-            alert('A topic with that name already exists. Please choose a different name.');
-            return;
-        }
+    if (!topicName) {
+      alert('Please enter a topic name.');
+      return;
+    }
 
-        // Add the new topic to custom topics
-        customTopics.push(topicName);
-        saveCustomTopics();
+    // duplicate check (case-insensitive) against DB-loaded topics
+    const exists = KB_TOPICS.some(t => t.topic_name.toLowerCase() === topicName.toLowerCase());
+    if (exists) {
+      alert('A topic with that name already exists. Please choose a different name.');
+      return;
+    }
 
-        // Store success message to show on next page
-        sessionStorage.setItem('topicCreated', `Topic "${topicName}" created successfully!`);
-
-        // Redirect to knowledge base
-        window.location.href = `knowledge-base.html?user=${currentUser.email}`;
+    const result = await createKbTopicInDb({
+      topic_name: topicName,
+      description: topicDescription,
+      icon: topicIcon || ""
     });
+
+    if (!result.success) {
+      alert(result.message || "Could not create topic.");
+      return;
+    }
+
+    // reset cache so homepage loads new topic instantly
+    KB_TOPICS = [];
+    sessionStorage.setItem('topicCreated', `Topic "${topicName}" created successfully!`);
+
+    window.location.href = `knowledge-base.html?user=${currentUser.email}`;
+  });
 }
+
 
 /**
  * Runs on the standalone Assign Task page (assign-task.html)
@@ -1562,7 +1708,7 @@ function setupAssignTaskForm() {
   if (!form) return;
 
   form.addEventListener('submit', async (e) => {
-    e.preventDefault(); // ⛔ STOP PAGE RELOAD
+    e.preventDefault(); 
 
     const titleEl = document.getElementById('modal-task-title');
     const priorityEl = document.getElementById('modal-task-priority');
@@ -3680,6 +3826,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const returnTopic = sessionStorage.getItem('returnToTopic');
         const showCreatedNotification = sessionStorage.getItem('topicCreated');
         const showPostNotification = sessionStorage.getItem('postCreated');
+        setupKbLikeButtonsOnce();
 
         // Show any pending notifications
         if (showCreatedNotification) {
@@ -3692,25 +3839,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (returnTopic) {
-            sessionStorage.removeItem('returnToTopic'); // Clear it after use
-            loadKbIndex(currentUser); // Load index to attach listeners
-            showTopicView(returnTopic, currentUser); // Immediately switch to topic view
+            sessionStorage.removeItem('returnToTopic');
+
+            await loadKbIndex(currentUser);          // attach listeners + load posts/topics
+            await showTopicView(returnTopic, currentUser); // then switch view safely
         } else {
-            loadKbIndex(currentUser);
+            await loadKbIndex(currentUser);
         }
+
     } else if (pageId === 'kb-post') {
-        loadKbPost(currentUser);
-    } else if (pageId === 'kb-create') {
-        setupCreateForm(currentUser);
-    } else if (pageId === 'settings-page') {
-        loadSettingsPage(currentUser);
-    } else if (pageId === 'kb-topics-all') {
-        // dedicated "All Topics" page
-        loadAllTopicsPage(currentUser);
-    } else if (pageId === 'kb-create-topic') {
-        // Create Topic form page
-        setupCreateTopicForm(currentUser);
-    } else if (pageId === 'home-page') {
+    // DB-driven post page uses post.js now
+  } else if (pageId === 'kb-create') {
+      await setupCreateForm(currentUser);
+  } else if (pageId === 'settings-page') {
+      loadSettingsPage(currentUser);
+  } else if (pageId === 'kb-topics-all') {
+      await loadAllTopicsPage(currentUser);
+  } else if (pageId === 'kb-create-topic') {
+      // Create Topic form page
+      setupCreateTopicForm(currentUser);
+  } else if (pageId === 'home-page') {
         // Home page with to-do list
         loadHomePage(currentUser);
     } else if (pageId === 'progress-page') {
@@ -3915,12 +4063,15 @@ function updateTaskCounts() {
     column.appendChild(card);
 }*/
 document.addEventListener("DOMContentLoaded", () => {
+  const pageId = document.body.id;
+
+  // Only run task fetching on the Projects page (kanban)
+  if (pageId === "projects-page") {
     fetchAndRenderTasks();
+    setupAssignTaskForm();
+  }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-  setupAssignTaskForm();
-});
 
 
 
@@ -3953,4 +4104,84 @@ filterClearBtn?.addEventListener('click', () => {
     if (panel) panel.hidden = true;
 });
 
+(function renderAnnouncements() {
+  const announcements = [
+    {
+      title: "🔧 Scheduled maintenance",
+      body: "The platform will be briefly unavailable on Sunday from 9:00–9:30 PM for routine updates. Please save any drafts beforehand.",
+      date: "9 Feb 2026"
+    },
+    {
+      title: "⏱ Response time expectations",
+      body: "Technical posts are usually answered by a specialist within 24–48 hours. If your issue is urgent, make sure your title clearly explains the problem.",
+      date: "6 Feb 2026"
+    },
+    {
+      title: "💙 Mental health & wellbeing support",
+      body: "If you’re feeling overwhelmed or struggling, confidential mental health support is available through our employee assistance programme. You’re not alone — reaching out is okay.",
+      date: "5 Feb 2026"
+    }
+  ];
 
+  const container = document.querySelector(".announcement-content-placeholder");
+  if (!container) return;
+
+  // Show latest 3 announcements only (cleaner UI)
+  const latest = announcements.slice(0, 3);
+
+  container.innerHTML = latest.map(a => `
+    <div class="announcement-item">
+      <strong class="announcement-title">${a.title}</strong>
+      <p class="announcement-body">${a.body}</p>
+      <span class="announcement-date">${a.date}</span>
+    </div>
+  `).join("");
+})();
+
+function setupKbLikeButtonsOnce() {
+  if (document.body.dataset.kbLikesBound === "1") return;
+  document.body.dataset.kbLikesBound = "1";
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest(".kb-like-btn");
+    if (!btn) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const postId = parseInt(btn.dataset.postId, 10);
+    if (!postId) return;
+
+    const countEl = btn.querySelector(".kb-like-count");
+    const oldVal = countEl ? parseInt(countEl.textContent || "0", 10) : 0;
+
+    // optimistic UI
+    if (countEl) countEl.textContent = String(oldVal + 1);
+    btn.disabled = true;
+
+    try {
+      const fd = new FormData();
+      fd.append("post_id", String(postId));
+
+      const res = await fetch(`${KB_ACTIONS_BASE}/like_post.php`, {
+        method: "POST",
+        body: fd,
+        credentials: "include"
+      });
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "Like failed");
+
+      // sync UI with DB value
+      if (countEl) countEl.textContent = String(data.view_count ?? (oldVal + 1));
+    } catch (err) {
+      // revert on fail
+      if (countEl) countEl.textContent = String(oldVal);
+      console.error(err);
+      alert("Could not like post. Please try again.");
+    } finally {
+      btn.disabled = false;
+      if (window.feather) feather.replace();
+    }
+  });
+}

@@ -1,0 +1,107 @@
+<?php
+session_start();
+header('Content-Type: application/json');
+
+require_once __DIR__ . '/../../../config/database.php';
+
+$type   = $_GET['type'] ?? 'popular'; 
+$limit  = (int)($_GET['limit'] ?? 20);
+$search = trim($_GET['search'] ?? '');   
+
+if ($limit < 1) $limit = 20;
+if ($limit > 50) $limit = 50;
+
+try {
+    $database = new Database();
+    $db = $database->getConnection();
+
+    $orderBy = ($type === 'new')
+        ? "p.created_at DESC"
+        : "p.view_count DESC, p.comment_count DESC, p.created_at DESC";
+
+    // optional WHERE when searching
+    $where = "";
+    if ($search !== "") {
+        $where = "WHERE (
+            p.title LIKE :q
+            OR p.content LIKE :q
+            OR CONCAT(IFNULL(u.first_name,''), ' ', IFNULL(u.last_name,'')) LIKE :q
+        )";
+    }
+
+    $sql = "
+        SELECT
+            p.post_id,
+            p.title,
+            p.content,
+            p.topic_id,
+            p.author_id,
+            p.tags,
+            p.view_count,
+            p.comment_count,
+            p.is_solved,
+            p.created_at,
+            u.first_name,
+            u.last_name
+        FROM kb_posts p
+        LEFT JOIN users u ON u.user_id = p.author_id
+        $where
+        ORDER BY $orderBy
+        LIMIT :limit
+    ";
+
+    $stmt = $db->prepare($sql);
+
+    // bind :q only if search is used
+    if ($search !== "") {
+        $stmt->bindValue(':q', '%' . $search . '%', PDO::PARAM_STR);
+    }
+
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $posts = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $tags = [];
+        if (!empty($row['tags'])) {
+            $decoded = json_decode($row['tags'], true);
+            if (is_array($decoded)) $tags = $decoded;
+        }
+
+        $authorName = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+        if ($authorName === '') $authorName = 'Unknown';
+
+        $snippet = trim($row['content'] ?? '');
+        if (mb_strlen($snippet) > 140) {
+            $snippet = mb_substr($snippet, 0, 140) . '...';
+        }
+
+        $posts[] = [
+            'post_id'        => (int)$row['post_id'],
+            'title'          => $row['title'] ?? '',
+            'snippet'        => $snippet,
+            'content'        => $row['content'] ?? '',
+            'topic_id'       => (int)($row['topic_id'] ?? 0),
+            'author_id'      => (int)($row['author_id'] ?? 0),
+            'author_name'    => $authorName,
+            'tags'           => $tags,
+            'view_count'     => (int)($row['view_count'] ?? 0),
+            'comment_count'  => (int)($row['comment_count'] ?? 0),
+            'is_solved'      => (int)($row['is_solved'] ?? 0),
+            'created_at'     => $row['created_at'] ?? null,
+        ];
+    }
+
+    echo json_encode(['success' => true, 'posts' => $posts]);
+    exit();
+
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Database error',
+        'debug' => $e->getMessage()
+    ]);
+    exit();
+}
+?>
