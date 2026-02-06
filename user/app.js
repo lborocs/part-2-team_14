@@ -432,9 +432,8 @@ function createPostCardHTML(post, currentUserEmail) {
           <span class="post-card-date">${post.date}</span>
         </div>
 
-        ${solvedBadge}
-
         <span class="post-card-tag ${topicClass}">${post.topic}</span>
+        ${solvedBadge}
       </div>
 
       <a href="${postLink}" class="post-card-body">
