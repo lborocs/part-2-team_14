@@ -1077,72 +1077,93 @@ function loadSettingsPage(currentUser) {
     document.getElementById('profile-email').value = currentUser.email;
     const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
-// Upload a new profile picture
-const uploadBtn = document.getElementById("upload-image-btn");
-const fileInput = document.getElementById("profile-image-input");
-const profileImg = document.getElementById("profile-picture");
 
-uploadBtn.addEventListener("click", () => {
-    fileInput.click();
-});
+    // Upload a new profile picture
+    const uploadBtn = document.getElementById("upload-image-btn");
+    const fileInput = document.getElementById("profile-image-input");
+    const profileImg = document.getElementById("profile-picture");
 
-fileInput.addEventListener("change", () => {
-    const file = fileInput.files[0];
-    if (!file) return;
+    uploadBtn.addEventListener("click", () => {
+        fileInput.click();
+    });
 
-    // Update the image on the page
-    const reader = new FileReader();
-    reader.onload = e => {
-        profileImg.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) return;
 
-    // Use file name as the database path
-    const simulatedPath = `/${file.name}`;
+        // Update the image on the page
+        const reader = new FileReader();
+        reader.onload = e => {
+            profileImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
 
-    fetch("settings.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile_picture: simulatedPath })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            console.log("Profile picture updated in DB!");
-        } else {
-            console.error("Failed to update profile picture in DB.");
-        }
-    })
-    .catch(err => console.error(err));
-});
+        // Use file name as the database path
+        const simulatedPath = `/${file.name}`;
 
-// Delete current profile picture
-const deleteBtn = document.getElementById("delete-image-btn");
+        fetch("settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile_picture: simulatedPath })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture updated in DB!");
+            } else {
+                console.error("Failed to update profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
+    });
 
-deleteBtn.addEventListener("click", () => {
-    const defaultPath = "/default-avatar.png";
-    profileImg.src = defaultPath;
+    // Delete current profile picture
+    const deleteBtn = document.getElementById("delete-image-btn");
 
-    fetch("settings.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile_picture: defaultPath })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            console.log("Profile picture reset to default in DB!");
-        } else {
-            console.error("Failed to reset profile picture in DB.");
-        }
-    })
-    .catch(err => console.error(err));
-});
+    deleteBtn.addEventListener("click", () => {
+        const defaultPath = "/default-avatar.png";
+        profileImg.src = defaultPath;
 
-    // Update password
-    document.getElementById('password-form').addEventListener('submit', (e) => {
+        fetch("settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile_picture: defaultPath })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture reset to default in DB!");
+            } else {
+                console.error("Failed to reset profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
+    });
+
+    // Change password
+    document.getElementById('password-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        alert('Password updated! (This is a demo)');
+
+        const current_password = document.getElementById('current-password').value;
+        const new_password = document.getElementById('new-password').value;
+        const confirm_password = document.getElementById('confirm-password').value;
+
+        const res = await fetch(`${window.__ACTIONS_BASE__}change_password.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                current_password,
+                new_password,
+                confirm_password
+            })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+
+        if (data.success) {
+            e.target.reset();
+        }
     });
 
     // Update notification preferences
@@ -1159,10 +1180,10 @@ deleteBtn.addEventListener("click", () => {
         localStorage.clear();
         sessionStorage.clear();
 
-alert('Signing out...');
+        alert('Signing out...');
 
-// Redirect to the login page
-window.location.href = '../index.html';
+        // Redirect to the login page
+        window.location.href = '../index.html';
     });
 }
 

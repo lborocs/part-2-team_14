@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <label for="profile-role">Role</label>
                                     <input type="text" id="profile-role" value="Loading..." readonly disabled>
                                 </div>
-                                <button type="submit" class="create-post-btn">Save Profile</button>
+                                <button class="create-post-btn">Save Profile</button>
                             </div>
 
                             <div class="profile-avatar">
