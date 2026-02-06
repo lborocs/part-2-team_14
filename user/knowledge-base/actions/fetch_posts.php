@@ -35,6 +35,7 @@ try {
             p.title,
             p.content,
             p.topic_id,
+            t.topic_name,
             p.author_id,
             p.tags,
             p.view_count,
@@ -44,6 +45,7 @@ try {
             u.first_name,
             u.last_name
         FROM kb_posts p
+        LEFT JOIN kb_topics t ON t.topic_id = p.topic_id
         LEFT JOIN users u ON u.user_id = p.author_id
         $where
         ORDER BY $orderBy
@@ -82,6 +84,7 @@ try {
             'snippet'        => $snippet,
             'content'        => $row['content'] ?? '',
             'topic_id'       => (int)($row['topic_id'] ?? 0),
+            'topic_name'     => $row['topic_name'] ?? null,
             'author_id'      => (int)($row['author_id'] ?? 0),
             'author_name'    => $authorName,
             'tags'           => $tags,

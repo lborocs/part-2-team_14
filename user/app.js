@@ -653,7 +653,7 @@ function formatKbMysqlDate(mysqlDate) {
 }
 
 function mapDbPostToUiPost(p) {
-  const topicName = TOPIC_ID_TO_NAME[p.topic_id] || "General";
+  const topicName = p.topic_name || TOPIC_ID_TO_NAME[p.topic_id] || "General";
 
   let avatarClass = "avatar-3";
   if (p.author_id === 1) avatarClass = "avatar-1";
@@ -4576,6 +4576,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Store user in window object for floating widget
     window.__USER__ = currentUser;
     window.__CURRENT_USER__ = currentUser; // Also set for task board rendering
+
+    // Sync sidebar nav items based on role (for static HTML KB pages)
+    const role = (currentUser.role || '').toLowerCase();
+    const navHome = document.getElementById('nav-home');
+    const navEmployees = document.getElementById('nav-employees');
+    if (role === 'manager' || role === 'team_leader') {
+        if (navHome) navHome.style.display = '';
+    }
+    if (role === 'manager') {
+        if (navEmployees) navEmployees.style.display = '';
+    }
 
     // Run page-specific logic based on body ID
     const pageId = document.body.id;
