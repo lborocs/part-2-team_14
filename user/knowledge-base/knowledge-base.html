@@ -42,7 +42,7 @@
             <div class="kb-header-actions">
               <div class="search-bar">
                 <i data-feather="search"></i>
-                <input type="text" placeholder="Search posts...">
+                <input id="kb-search-input" type="text" placeholder="Search posts..." />
               </div>
                 <a href="knowledge-base-create.html" class="create-post-btn" id="create-post-btn-topic">
                 <i data-feather="plus"></i> Create Post
@@ -59,7 +59,6 @@
                     </a>
                 </div>
 
-                <!-- JS renders main topics + "Add New Topic" here -->
                 <div class="topic-grid" id="topic-grid"></div>
             </section>
 
@@ -85,12 +84,9 @@
                     </div>
 
                     <div id="topic-sidebar-widgets" style="display: none;">
-                        <div class="kb-sidebar-widget">
+                        <div class="kb-sidebar-widget" id="related-topics-widget">
                             <h3>Related Topics</h3>
-                            <div class="related-topics-list">
-                                <span class="topic-tag">Hardware</span>
-                                <span class="topic-tag">Security</span>
-                                <span class="topic-tag">Jasmine</span>
+                            <div class="related-topics-list" id="related-topics-list">
                             </div>
                         </div>
 

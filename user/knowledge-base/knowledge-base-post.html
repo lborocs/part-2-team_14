@@ -32,20 +32,24 @@
 
         <main class="main-content">
             <header class="kb-header">
-                 <p class="breadcrumbs" id="post-breadcrumbs">Knowledge Base > ...</p>
-                <h1 id="post-title-placeholder">Loading post...</h1>
-                <div class="search-bar">
-                    <i data-feather="search"></i>
-                    <input type="text" placeholder="Search posts...">
-                </div>
+            <div class="kb-header-left">
+                <p class="breadcrumbs" id="post-breadcrumbs">Knowledge Base > ...</p>
+                <h1 id="post-title-placeholder" class="post-page-title">Loading post...</h1>
+            </div>
+
+            <div class="search-bar">
+                <i data-feather="search"></i>
+                <input type="text" placeholder="Search posts...">
+            </div>
             </header>
+
 
             <div class="kb-layout-wrapper">
                 <div class="kb-main-content">
 
                     <div id="post-full-content"></div>
 
-                    <div classs="post-replies-section">
+                    <div class="post-replies-section">
                         <h2>Replies</h2>
                         <div id="post-replies-list">
                             </div>
@@ -60,26 +64,29 @@
                 </div>
 
                 <aside class="kb-sidebar">
-                    <div class="kb-sidebar-widget">
-                        <h3>Related Topics</h3>
-                        <div class="related-topics-list">
-                            <span class="topic-tag">Hardware</span>
-                            <span class="topic-tag">Security</span>
-                            <span class="topic-tag">Network</span>
-                        </div>
-                    </div>
-                    <div class="kb-sidebar-widget">
-                        <h3>Best Practices</h3>
-                        <ul class="best-practices-list">
-                            <li><strong>Restart after updates:</strong> A quick restart helps apply changes.</li>
-                            <li><strong>Keep software updated:</strong> Regular updates improve stability.</li>
-                            </ul>
-                    </div>
+                <div class="kb-sidebar-widget" id="related-topics-widget">
+                    <h3>Related Topics</h3>
+                    <div class="related-topics-list" id="related-topics-list"></div>
+                </div>
+
+                <div class="kb-sidebar-widget" id="best-practices-widget">
+                    <h3>Best Practices</h3>
+                    <ul class="best-practices-list">
+                    <li><strong>Restart after updates:</strong> A quick restart helps apply changes.</li>
+                    <li><strong>Keep software updated:</strong> Regular updates improve stability.</li>
+                    <li><strong>Search before posting:</strong> Check for existing answers.</li>
+                    <li><strong>Engage with posts:</strong> React or comment to support others.</li>
+                    <li><strong>Add detail in reports:</strong> Include error messages or steps.</li>
+                    </ul>
+                </div>
                 </aside>
+
+
             </div>
         </main>
     </div>
 
     <script src="../app.js"></script>
+    <script src="post.js"></script>
 </body>
 </html>
