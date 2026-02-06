@@ -18,7 +18,7 @@ try {
   $sql = "
     SELECT c.comment_id, c.content, c.post_id, c.author_id,
            c.is_edited, c.last_edited_at, c.created_at,
-           u.first_name, u.last_name
+           u.first_name, u.last_name, u.profile_picture, u.role AS author_role
     FROM kb_comments c
     LEFT JOIN users u ON u.user_id = c.author_id
     WHERE c.post_id = :post_id
@@ -43,6 +43,8 @@ try {
       'is_edited' => (int)($row['is_edited'] ?? 0),
       'last_edited_at' => $row['last_edited_at'] ?? null,
       'created_at' => $row['created_at'] ?? null,
+      'profile_picture' => $row['profile_picture'] ?? null,
+      'author_role' => $row['author_role'] ?? null,
     ];
   }
 

@@ -43,7 +43,8 @@ try {
             p.is_solved,
             p.created_at,
             u.first_name,
-            u.last_name
+            u.last_name,
+            u.profile_picture
         FROM kb_posts p
         LEFT JOIN kb_topics t ON t.topic_id = p.topic_id
         LEFT JOIN users u ON u.user_id = p.author_id
@@ -92,6 +93,7 @@ try {
             'comment_count'  => (int)($row['comment_count'] ?? 0),
             'is_solved'      => (int)($row['is_solved'] ?? 0),
             'created_at'     => $row['created_at'] ?? null,
+            'profile_picture'=> $row['profile_picture'] ?? null,
         ];
     }
 

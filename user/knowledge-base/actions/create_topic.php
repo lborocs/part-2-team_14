@@ -40,8 +40,8 @@ try {
     }
 
     $sql = "
-        INSERT INTO kb_topics (topic_name, description, icon, has_icon, created_by, is_public, restricted_to_role, created_at, updated_at)
-        VALUES (:topic_name, :description, :icon, 0, :created_by, :is_public, :restricted_to_role, NOW(), NOW())
+        INSERT INTO kb_topics (topic_name, description, icon, created_by, is_public, restricted_to_role)
+        VALUES (:topic_name, :description, :icon, :created_by, :is_public, :restricted_to_role)
     ";
     $stmt = $db->prepare($sql);
     $stmt->bindValue(':topic_name', $topic_name, PDO::PARAM_STR);

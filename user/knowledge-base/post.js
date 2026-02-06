@@ -52,7 +52,7 @@
     `;
 
     // Render the post
-    const avatarClass = avatarClassFromAuthorId(post.author_id);
+    const postAvatarSrc = post.profile_picture || '../../default-avatar.png';
 
     const isSolved = Number(post.is_solved || 0) === 1;
 
@@ -72,7 +72,7 @@
     contentEl.innerHTML = `
       <div class="post-card">
         <div class="post-card-header">
-          <div class="post-card-avatar ${avatarClass}"></div>
+          <img class="post-card-avatar" src="${postAvatarSrc}" alt="${escapeHtml(post.author_name || 'Unknown')}" onerror="this.src='../../default-avatar.png'">
           <div>
             <span class="post-card-author">${escapeHtml(post.author_name || "Unknown")}</span>
             <span class="post-card-date">${formatDate(post.created_at)}</span>
@@ -190,14 +190,14 @@
 
     repliesEl.innerHTML = comments
       .map((c) => {
-        const avatarClass = avatarClassFromAuthorId(c.author_id);
+        const replyAvatarSrc = c.profile_picture || '../../default-avatar.png';
 
         const specialistTag =
           String(c.author_role || "").toLowerCase() === "specialist" ? " (Specialist)" : "";
 
         return `
           <div class="reply-card" data-comment-id="${Number(c.comment_id || 0)}">
-            <div class="reply-avatar ${avatarClass}"></div>
+            <img class="reply-avatar" src="${replyAvatarSrc}" alt="${escapeHtml(c.author_name || 'Unknown')}" onerror="this.src='../../default-avatar.png'">
 
             <div class="reply-content">
               <div class="reply-header">
@@ -578,14 +578,6 @@
   // -------------------------
   // Helpers
   // -------------------------
-
-  function avatarClassFromAuthorId(authorId) {
-    const id = Number(authorId);
-    if (id === 1) return "avatar-1";
-    if (id === 2) return "avatar-2";
-    if (id === 3) return "avatar-4";
-    return "avatar-3";
-  }
 
   function formatDate(iso, withTime = false) {
     if (!iso) return "";

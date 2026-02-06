@@ -423,10 +423,7 @@ function createPostCardHTML(post, currentUserEmail) {
   const postLink = `knowledge-base-post.html?post_id=${post.id}`;
   const topicClass = post.topic.toLowerCase().split(' ')[0];
 
-  let avatarClass = 'avatar-3';
-  if (post.authorEmail === 'user@make-it-all.co.uk') avatarClass = 'avatar-1';
-  if (post.authorEmail === 'specialist@make-it-all.co.uk') avatarClass = 'avatar-4';
-  if (post.authorEmail === 'manager@make-it-all.co.uk') avatarClass = 'avatar-2';
+  const avatarSrc = post.profilePicture || '../../default-avatar.png';
 
   const solvedBadge = Number(post.is_solved) === 1
     ? `<span class="kb-solved-badge">Solved</span>`
@@ -435,7 +432,7 @@ function createPostCardHTML(post, currentUserEmail) {
   return `
     <div class="post-card">
       <div class="post-card-header">
-        <div class="post-card-avatar ${avatarClass}"></div>
+        <img class="post-card-avatar" src="${avatarSrc}" alt="${post.author}" onerror="this.src='../../default-avatar.png'">
         <div>
           <span class="post-card-author">${post.author}</span>
           <span class="post-card-date">${post.date}</span>
@@ -665,21 +662,17 @@ function formatKbMysqlDate(mysqlDate) {
 function mapDbPostToUiPost(p) {
   const topicName = p.topic_name || TOPIC_ID_TO_NAME[p.topic_id] || "General";
 
-  let avatarClass = "avatar-3";
-  if (p.author_id === 1) avatarClass = "avatar-1";
-  if (p.author_id === 2) avatarClass = "avatar-2";
-  if (p.author_id === 3) avatarClass = "avatar-4";
-
   return {
     id: p.post_id,
     topic: topicName,
     title: p.title,
     author: p.author_name || "Unknown",
     authorEmail: "",
+    profilePicture: p.profile_picture || null,
     date: formatKbMysqlDate(p.created_at),
     content: p.snippet || "",
     fullContent: p.content || "",
-    is_solved: Number(p.is_solved || 0), 
+    is_solved: Number(p.is_solved || 0),
     reactions: {
       up: p.view_count ?? 0,
       lightbulb: 0,

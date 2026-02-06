@@ -21,7 +21,7 @@ try {
       p.view_count, p.comment_count, p.is_solved,
       p.created_at, p.updated_at,
       t.topic_name,
-      u.first_name, u.last_name
+      u.first_name, u.last_name, u.profile_picture
     FROM kb_posts p
     LEFT JOIN kb_topics t ON t.topic_id = p.topic_id
     LEFT JOIN users u ON u.user_id = p.author_id
@@ -65,6 +65,7 @@ try {
       'is_solved' => (int)($row['is_solved'] ?? 0),
       'created_at' => $row['created_at'] ?? null,
       'updated_at' => $row['updated_at'] ?? null,
+      'profile_picture' => $row['profile_picture'] ?? null,
     ]
   ]);
   exit();

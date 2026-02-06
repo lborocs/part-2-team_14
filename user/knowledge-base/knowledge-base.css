@@ -237,10 +237,9 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    /* Using avatar colors from your dashboard.css */
+    object-fit: cover;
+    background: #E0E0E0;
 }
-.post-card-avatar.avatar-1 { background: #FFAB91; }
-.post-card-avatar.avatar-4 { background: #CE93D8; }
 
 .post-card-author {
     font-weight: 600;
@@ -456,8 +455,9 @@ a, u {
     height: 36px;
     border-radius: 50%;
     flex-shrink: 0;
+    object-fit: cover;
+    background: #E0E0E0;
 }
-.reply-avatar.avatar-4 { background: #CE93D8; }
 
 .reply-content {
     background: #F8F9FA;
