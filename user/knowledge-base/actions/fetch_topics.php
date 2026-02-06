@@ -15,11 +15,10 @@ try {
             topic_name,
             description,
             icon,
-            has_icon,
             is_public,
             restricted_to_role
         FROM kb_topics
-        ORDER BY has_icon DESC, topic_name ASC
+        ORDER BY (icon IS NOT NULL AND icon != '') DESC, topic_name ASC
     ";
 
 

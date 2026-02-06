@@ -766,10 +766,10 @@ INSERT INTO task_assignments (task_id, user_id, assigned_by, user_status, user_c
 
 -- Insert Knowledge Base topics
 INSERT INTO kb_topics (topic_name, description, created_by, icon) VALUES
-('Technical Support', 'IT support, troubleshooting, and technical documentation', 1, '🔧'),
-('HR Policies', 'Company policies, benefits, and HR information', 1, '👥'),
-('Project Best Practices', 'Tips and guidelines for successful project management', 1, '📊'),
-('Development Guidelines', 'Coding standards, architecture decisions, and dev tips', 2, '💻');
+('Technical Support', 'IT support, troubleshooting, and technical documentation', 1, 'tool'),
+('HR Policies', 'Company policies, benefits, and HR information', 1, 'users'),
+('Project Best Practices', 'Tips and guidelines for successful project management', 1, 'bar-chart-2'),
+('Development Guidelines', 'Coding standards, architecture decisions, and dev tips', 2, 'code');
 
 -- Insert sample posts
 INSERT INTO kb_posts (title, content, topic_id, author_id, tags) VALUES
