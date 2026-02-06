@@ -5,7 +5,7 @@
 
 .progress-layout {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 30px;
     padding: 30px 40px; /* ADDED padding here instead */
     overflow-y: auto;
@@ -357,4 +357,10 @@
     .progress-layout {
         grid-template-columns: 1fr;
     }
+}
+
+.deadlines-list{
+  max-height: 240px;   /* tweak until about 3 items show */
+  overflow-y: auto;
+  padding-right: 6px;  /* prevents scrollbar covering content */
 }

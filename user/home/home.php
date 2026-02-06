@@ -13,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body id="home-page">
+    <?php include '../to-do/todo_widget.php'; ?>
     <div class="dashboard-container">
         <nav class="sidebar">
             <div class="nav-top">
@@ -20,18 +21,16 @@
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li class="active-parent"><a href="home.html"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
-                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i
-                                data-feather="archive"></i>Project Archive</a></li>
-                    <li id="nav-employees" style="display: none;"><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+                    <li class="active-parent"><a href="home.php"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge
                             Base</a></li>
                 </ul>
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                    <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>
         </nav>
@@ -40,7 +39,7 @@
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                     <h1 style="margin: 0;">Welcome Back!</h1>
                     <div id="manager-actions" style="display: none;">
-                        <a href="create-project.html" class="create-post-btn">
+                        <a href="create-project.php" class="create-post-btn">
                             <i data-feather="folder-plus"></i> Create Project
                         </a>
                     </div>
@@ -61,6 +60,12 @@
                     <select class="filter-dropdown" id="priority-filter">
                         <option value="">All Priorites</option>
                         <!-- Options will be dynamically populated -->
+                    </select>
+
+                    <!-- Filter dropdown to filter by project health -->
+                    <select class="filter-dropdown" id="health-filter">
+                        <option value = "">All Health Levels</option>
+                        <!-- options will be dynamically populated -->
                     </select>
 
                     <!-- Filter dropdown to filter by resource level --> 
@@ -139,7 +144,7 @@
                         </table>
                     </div>
                 </div>
-                <p id="no-employees-message" style="display: none;">
+                <p id="no-employees-message" style="display: none; text-align: center; margin-top: 10px;">
                     No Employees Found.
                 </p>
                 <p id="no-struggling-employees-message" style="display: none; text-align: center; margin-top: 10px;">
@@ -151,11 +156,10 @@
     <script src="../app.js"></script>
     <script>
         async function displayProjects() {
-            const managerId = 1; // replace with function to get manager Id dynamically 
             const container = document.getElementById("project-health-grid-container");
 
             try {
-                const response = await fetch(`get_projects.php?created_by=${managerId}`);
+                const response = await fetch('get_projects.php');
                 console.log(response);
                 const projects = await response.json();
                 console.log(projects);
@@ -192,18 +196,26 @@
                     let projectHealth = "";
                     let healthColour = "";
                     let healthBgColour = "";
+                    let healthClass = "";
+                    let healthContainerColour = "";
                     if (overdueTasks === 0){
                         projectHealth = "Good";
                         healthColour = "#10b981";
                         healthBgColour = "#d1fae5";
+                        healthContainerColour = "#f0fdf4";
+                        healthClass = "health-good";
                     } else if (overdueTasks >= 1 && overdueTasks < 5){
                         projectHealth = "Average";
                         healthColour = "#f59e0b";
                         healthBgColour = "#fef3c7";
+                        healthContainerColour = "#fffbeb";
+                        healthClass = "health-medium";
                     } else {
                         projectHealth = "Poor";
                         healthColour = "#ef4444";
                         healthBgColour = "#fee2e2";
+                        healthContainerColour = "#fef2f2";
+                        healthClass = "health-poor";
                     }
 
                     // determines the short recommendation text by looking ath the resource level 
@@ -229,20 +241,16 @@
 
                     const projectCard = document.createElement("div");
                     projectCard.classList.add("project-card");
+                    projectCard.classList.add(healthClass);
                     projectCard.dataset.priority = project.priority;
                     projectCard.dataset.resourceLevel = project.resource_level;
                     projectCard.dataset.deadline = project.deadline;
                     projectCard.dataset.completion = onTimePercent;
-
-                    if (project.priority === "high"){
-                        projectCard.classList.add("high-priority");
-                    } else if (project.priority === "medium"){
-                        projectCard.classList.add("medium-priority");
-                    }
+                    projectCard.dataset.health = healthClass;
 
                     projectCard.innerHTML = `
                     <h3>${project.project_name}</h3>
-                    <div class="health-indicator-container">
+                    <div class="health-indicator-container ${healthClass}" style="background-color: ${healthContainerColour};">
                         <div class="health-icon-wrapper">
                             <div class="health-icon-outer" style="background-color: ${healthBgColour};">
                                 <div class="health-icon-inner" style="background-color: ${healthColour};"></div>
@@ -294,6 +302,7 @@
                 });
 
                 loadResourceLevelOptions();
+                loadHealthOptions();
 
                 feather.replace();
             } catch (error) {
@@ -327,6 +336,7 @@
         // the different filters 
         const activeFilters = {
             priority: "",
+            health: "",
             level: "",
             deadline: "",
             percentage: "",
@@ -412,6 +422,12 @@
                     return false;
                 }
 
+                // Health level filter
+
+                if (activeFilters.health && card.dataset.health !== activeFilters.health){
+                    return false;
+                }
+
                 // search filter 
 
                 if (activeFilters.searchQuery){
@@ -444,6 +460,11 @@
                     sufficient: "Sufficient",
                     tight: "Tight"
                 },
+                health: {
+                    "health-good": "Good",
+                    "health-medium": "Average",
+                    "health-poor": "Poor"
+                },
                 deadline: {
                     asc: "Earliest To Latest",
                     desc: "Latest To Earliest"
@@ -458,6 +479,9 @@
 
             if (labelMaps[filterType] && labelMaps[filterType][value]){
                 friendlyValue = labelMaps[filterType][value];
+            } else if (filterType === "health" && value.startsWith("health-")){
+                friendlyValue = value.replace("health-", "");
+                friendlyValue = friendlyValue.charAt(0).toUpperCase() + friendlyValue.slice(1);
             } else {
                 friendlyValue = value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ');
             }
@@ -475,6 +499,8 @@
                 let dropdown;
                 if (filterType === 'priority'){
                     dropdown = document.getElementById('priority-filter');
+                } else if (filterType === 'health'){
+                    dropdown = document.getElementById('health-filter');
                 } else if (filterType === 'level'){
                     dropdown = document.getElementById('status-filter');
                 } else if (filterType === 'deadline'){
@@ -518,6 +544,33 @@
                 );
         }
 
+        // function to load the health level options
+        function loadHealthOptions(){
+            const healthFilter = document.getElementById("health-filter");
+            const cards = document.querySelectorAll(".project-card");
+            const healthLevels = new Set();
+            healthFilter.innerHTML = '<option value="">All Health Levels</option>';
+
+            cards.forEach(card => {
+                if (card.dataset.health){
+                    healthLevels.add(card.dataset.health);
+                }
+            });
+
+            const labels = {
+                "health-good": "Good",
+                "health-medium": "Average",
+                "health-poor": "Poor"
+            };
+
+            healthLevels.forEach(level => {
+                const option = document.createElement("option");
+                option.value = level;
+                option.textContent = labels[level] || level;
+                healthFilter.appendChild(option);
+            });
+        }
+
         // function to load the resource level options
         function loadResourceLevelOptions(){
             const resourceFilter = document.getElementById("status-filter");
@@ -546,6 +599,21 @@
 
             if (selectedResourceLevel){
                 createFilterPill('level', selectedResourceLevel);
+            }
+
+            filterProjects();
+        });
+
+        // filter by health level event listener
+        const healthFilter = document.getElementById("health-filter");
+        healthFilter.addEventListener("change", function(){
+            const selectedHealth = this.value;
+            activeFilters.health = selectedHealth;
+
+            document.querySelectorAll(".filter-pill.health").forEach(pill => pill.remove());
+
+            if (selectedHealth){
+                createFilterPill('health', selectedHealth);
             }
 
             filterProjects();
@@ -639,9 +707,8 @@
             const tableBody = document.getElementById("employee-table");
             const noEmployeesMessage = document.getElementById("no-employees-message");
             
-            const managerId = 2; 
             try {
-                const response = await fetch(`get_employees.php?assigned_by=${managerId}`);
+                const response = await fetch('get_employees.php');
                 console.log(response);
                 const employees = await response.json();
                 console.log(employees);
@@ -695,10 +762,8 @@
 
         // function to load the project name options by puling from the database 
         async function loadProjectNameOptions (){
-            const teamLeaderId = 2; // change to be dynamic 
-
             try{
-                const response = await fetch(`get-project-name.php?team_leader_id=${teamLeaderId}`);
+                const response = await fetch('get-project-name.php');
                 console.log(response);
                 const projectNames = await response.json();
                 console.log(projectNames);
@@ -750,11 +815,10 @@
         const strugglingCheckbox = document.getElementById("struggling-checkbox");
 
         strugglingCheckbox.addEventListener("change", async function(){
-            const teamLeaderId = 2; // change to be dynamic
             try{
                 let employeesToDisplay = allEmployees;
                 if (this.checked){
-                    const response = await fetch(`get-struggling-employees.php?team_leader_id=${teamLeaderId}`);
+                    const response = await fetch('get-struggling-employees.php');
                     employeesToDisplay = await response.json();
                 }
 

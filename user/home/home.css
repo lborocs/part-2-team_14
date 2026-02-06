@@ -62,9 +62,19 @@
     padding: 6px 12px;
     gap: 15px;
     width: 100%;
-    border: 2px solid #fde68a;
-    background-color: #fef9e7;
     border-radius: 6px;
+}
+
+.health-indicator-container.health-good{
+    border: 2px solid #10b981
+}
+
+.health-indicator-container.health-medium{
+    border: 2px solid #ffc107;
+}
+
+.health-indicator-container.health-poor{
+    border: 2px solid #ff5252;
 }
 
 .health-label{
@@ -90,13 +100,18 @@
     transition: all 0.3s ease;
 }
 
-.project-card.high-priority {
+.project-card.health-poor{
     border-left-color: #ff5252;
 }
 
-.project-card.medium-priority {
+.project-card.health-medium{
     border-left-color: #ffc107;
 }
+
+.project-card.health-good{
+    border-left-color: #10b981;
+}
+
 
 .project-card h3{
     font-size: 20px;

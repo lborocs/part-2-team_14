@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
+session_start();
 require_once('../../config/database.php');
+
 $database = new Database();
 $conn = $database->getConnection();
 
@@ -9,9 +11,17 @@ if (!$conn) {
     exit;
 }
 
-$managerId = isset($_GET['created_by']) ? intval($_GET['created_by']) : 0;
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Not authenticated']);
+    exit;
+}
+
+$managerId = (int) $_SESSION['user_id'];
 
 try {
+    
+    // Fetch projects for this manager
     $sql = "SELECT 
                 p.project_id,
                 p.project_name,
@@ -29,9 +39,14 @@ try {
             LEFT JOIN tasks t ON p.project_id = t.project_id
             WHERE p.status = 'active'
             AND p.priority IN ('medium', 'high')
-            AND p.created_by = :managerId
+            AND (p.created_by = :managerId OR p.team_leader_id = :managerId)
             GROUP BY p.project_id, p.project_name, p.priority, p.deadline
-            ORDER BY resource_level DESC";
+            ORDER BY 
+                CASE 
+                    WHEN SUM(CASE WHEN t.deadline < NOW() AND t.status != 'completed' THEN 1 ELSE 0 END) > 3 THEN 1
+                    WHEN SUM(CASE WHEN t.deadline < NOW() AND t.status != 'completed' THEN 1 ELSE 0 END) BETWEEN 1 AND 3 THEN 2
+                    ELSE 3
+                END ASC";
 
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':managerId', $managerId, PDO::PARAM_INT);
@@ -42,7 +57,9 @@ try {
     echo json_encode($projects);
 
 } catch(PDOException $e) {
-    echo json_encode(['error' => $e->getMessage()]);
+    error_log($e->getMessage());
+    echo json_encode(['error' => 'Database query error']);
 }
 ?>
+
    

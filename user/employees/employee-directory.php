@@ -2,12 +2,30 @@
 /* ============================
    BOOTSTRAP & DATABASE
    ============================ */
+// Start session
+session_start();
+
 // Load database configuration
 require_once __DIR__ . "/../../config/database.php";
 
 // Create DB instance & PDO connection
 $database = new Database();
 $pdo = $database->getConnection();
+
+/* ============================
+   ACCESS CONTROL
+   ============================ */
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../../login.html');
+    exit();
+}
+
+// Check if user is a manager
+if ($_SESSION['role'] !== 'manager') {
+    http_response_code(403);
+    die('Access denied. This page is only available to managers.');
+}
 
 /* =============================
    EMPLOYEE CARD COLOR ASSIGNMENT SYSTEM
@@ -366,7 +384,7 @@ if ($isAjax) {
 
 </head>
 <body>
-
+    <?php include '../to-do/todo_widget.php'; ?>
     <div class="dashboard-container">
 
         <!-- Sidebar -->
@@ -376,7 +394,7 @@ if ($isAjax) {
                     <img src="../logo.png" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+                    <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <li class="active-parent">
                         <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
@@ -386,7 +404,7 @@ if ($isAjax) {
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                    <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
         </nav>
 
