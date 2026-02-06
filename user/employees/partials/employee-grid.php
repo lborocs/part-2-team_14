@@ -1,61 +1,34 @@
 <?php
 session_start(); // Ensure session is available
 
-// Re-define specialty colors (must match employee-directory.php)
-$specialtyColors = [
-    'Project Management' => '#1565C0',
-    'Strategy'           => '#0277BD',
-    'Leadership'         => '#2E7D32',
-    'Backend'            => '#512DA8',
-    'Python'             => '#F9A825',
-    'SQL'                => '#558B2F',
-    'API Design'         => '#00695C',
-    'Frontend'           => '#AD1457',
-    'React'              => '#0288D1',
-    'CSS'                => '#3949AB',
-    'JavaScript'         => '#F9A825',
-    'Node.js'            => '#2E7D32',
-    'MongoDB'            => '#00796B',
-    'DevOps'             => '#6A1B9A',
-    'AWS'                => '#EF6C00',
-    'Docker'             => '#0277BD',
-    'CI/CD'              => '#455A64',
-    'UI Design'          => '#C2185B',
-    'Figma'              => '#7B1FA2',
-    'Prototyping'        => '#303F9F',
+// Get search query (needed for AJAX requests)
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+// Re-define the same 10-color banner palette (must match employee-directory.php)
+$bannerColors = [
+    '#5B9BD5',  // Soft Blue
+    '#7FB069',  // Sage Green
+    '#9B59B6',  // Muted Purple
+    '#D4926F',  // Muted Orange
+    '#45B7B8',  // Teal
+    '#6C8EAD',  // Slate Blue
+    '#2A9D8F',  // Deep Teal
+    '#B56576',  // Mauve/Rose
+    '#52796F',  // Forest Green
+    '#7D8FA0',  // Dusty Blue
 ];
 
 // Re-define color function (must match employee-directory.php)
-function getEmployeeColor($userId, $userSpecialties, $specialtyColors, &$colorMap) {
+function getEmployeeColor($userId, $bannerColors, &$colorMap) {
     // If color already assigned in this session, return it
     if (isset($colorMap[$userId])) {
         return $colorMap[$userId];
     }
     
-    // Parse specialties
-    $specialties = [];
-    if (!empty($userSpecialties)) {
-        $specialties = json_decode($userSpecialties, true) ?? explode(',', $userSpecialties);
-        $specialties = array_map('trim', $specialties);
-    }
+    // Randomly assign one of the 10 colors
+    $selectedColor = $bannerColors[array_rand($bannerColors)];
     
-    // Get matching colors from user's specialties
-    $availableColors = [];
-    foreach ($specialties as $spec) {
-        if (isset($specialtyColors[$spec])) {
-            $availableColors[] = $specialtyColors[$spec];
-        }
-    }
-    
-    // If no matching specialty colors, use a random specialty color from the palette
-    if (empty($availableColors)) {
-        $availableColors = array_values($specialtyColors);
-    }
-    
-    // Randomly pick one color from available options
-    $selectedColor = $availableColors[array_rand($availableColors)];
-    
-    // Store in session
+    // Store in session for persistence
     $colorMap[$userId] = $selectedColor;
     
     return $selectedColor;
@@ -105,8 +78,7 @@ $specialtyClassMap = [
     <?php
         $employeeColor = getEmployeeColor(
             $employee['user_id'], 
-            $employee['specialties'], 
-            $specialtyColors, 
+            $bannerColors, 
             $_SESSION['employee_colors']
         );
 

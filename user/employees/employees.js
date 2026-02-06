@@ -320,6 +320,44 @@ document.addEventListener('DOMContentLoaded', () => {
     wireFilterSearch('filter-project-search', 'filter-project-list');
 
     /* ---------------------------------
+    MAIN SEARCH BAR FUNCTIONALITY
+    ---------------------------------- */
+    const searchInput = document.getElementById('employee-search-input');
+
+    if (searchInput) {
+        let searchTimeout;
+        
+        function performSearch() {
+            const url = new URL(window.location.href);
+            const searchValue = searchInput.value.trim();
+            
+            if (searchValue) {
+                url.searchParams.set('search', searchValue);
+            } else {
+                url.searchParams.delete('search');
+            }
+            
+            url.searchParams.set('page', '1');
+            fetchAndReplace(url);
+        }
+        
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, 300);
+        });
+        
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(searchTimeout);
+                performSearch();
+            }
+        });
+    }
+
+    /* ---------------------------------
        AJAX pagination (no page reload)
     ---------------------------------- */
     document.addEventListener('click', (e) => {

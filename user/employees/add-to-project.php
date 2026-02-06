@@ -1,6 +1,20 @@
 <?php
 session_start();
 
+// Define same 10-color banner palette
+$bannerColors = [
+        '#5B9BD5',  // Soft Blue
+        '#7FB069',  // Sage Green
+        '#9B59B6',  // Muted Purple
+        '#D4926F',  // Muted Orange
+        '#45B7B8',  // Teal
+        '#6C8EAD',  // Slate Blue
+        '#2A9D8F',  // Deep Teal
+        '#B56576',  // Mauve/Rose
+        '#52796F',  // Forest Green
+        '#7D8FA0',  // Dusty Blue
+];
+
 // Define same specialty colors
 $specialtyColors = [
     'Project Management' => '#1565C0',
@@ -25,36 +39,16 @@ $specialtyColors = [
     'Prototyping'        => '#303F9F',
 ];
 
-function getEmployeeColor($userId, $userSpecialties, $specialtyColors, &$colorMap) {
+function getEmployeeColor($userId, $bannerColors, &$colorMap) {
     // If color already assigned in this session, return it
     if (isset($colorMap[$userId])) {
         return $colorMap[$userId];
     }
     
-    // Parse specialties
-    $specialties = [];
-    if (!empty($userSpecialties)) {
-        $specialties = json_decode($userSpecialties, true) ?? explode(',', $userSpecialties);
-        $specialties = array_map('trim', $specialties);
-    }
+    // Randomly assign one of the 10 colors
+    $selectedColor = $bannerColors[array_rand($bannerColors)];
     
-    // Get matching colors from user's specialties
-    $availableColors = [];
-    foreach ($specialties as $spec) {
-        if (isset($specialtyColors[$spec])) {
-            $availableColors[] = $specialtyColors[$spec];
-        }
-    }
-    
-    // If no matching specialty colors, use a random specialty color from the palette
-    if (empty($availableColors)) {
-        $availableColors = array_values($specialtyColors);
-    }
-    
-    // Randomly pick one color from available options
-    $selectedColor = $availableColors[array_rand($availableColors)];
-    
-    // Store in session
+    // Store in session for persistence
     $colorMap[$userId] = $selectedColor;
     
     return $selectedColor;
@@ -104,12 +98,11 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_employees') {
     $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Format response with colors
-    $response = array_map(function($emp) use ($specialtyColors) {
-        // Get color from session using specialties
+    $response = array_map(function($emp) use ($bannerColors) {
+        // Get color from session
         $color = getEmployeeColor(
             $emp['user_id'], 
-            $emp['specialties'], 
-            $specialtyColors, 
+            $bannerColors, 
             $_SESSION['employee_colors']
         );
         
