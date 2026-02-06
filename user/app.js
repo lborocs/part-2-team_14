@@ -3152,74 +3152,65 @@ function renderTasksPerMemberChart(projectTasks) {
 /**
  * Runs on the Project Resources page (project-resources.php)
  */
-function loadProjectResourcesPage(currentUser) {
-    const currentProjectId = getCurrentProjectId();
+async function loadProjectResourcesPage(currentUser) {
     updateSidebarAndNav();
 
-    const project = simProjects.find(p => p.id === currentProjectId);
+    const res = await fetch('project-resources.php?action=list', {
+        headers: { 'Accept': 'application/json' }
+    });
 
-    if (project) {
-        // --- Fill in basic project details ---
-        document.getElementById('project-created-date').textContent =
-            new Date(project.createdDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('project-description').textContent =
-            project.description || 'No description provided for this project.';
-
-        // --- Build project contacts dynamically ---
-        const contactsList = document.getElementById('project-contacts-list');
-        if (contactsList) {
-            contactsList.innerHTML = ''; // clear any old content
-
-            const contacts = [];
-
-            // Always include the project manager (creator)
-            if (project.createdBy && simUsers[project.createdBy]) {
-                const manager = simUsers[project.createdBy];
-                contacts.push({
-                    name: manager.name,
-                    role: 'Project Manager',
-                    email: project.createdBy,
-                    avatarClass: manager.avatarClass
-                });
-            }
-
-            // Add team leader if exists
-            if (project.teamLeader && simUsers[project.teamLeader]) {
-                const leader = simUsers[project.teamLeader];
-                contacts.push({
-                    name: leader.name,
-                    role: 'Team Leader',
-                    email: project.teamLeader,
-                    avatarClass: leader.avatarClass
-                });
-            }
-
-            // Render both contacts
-            contactsList.innerHTML = contacts.map(c => `
-                 <div class="contact-item">
-                     <span class="avatar ${c.avatarClass}">
-                         ${c.name.split(' ').map(n => n[0]).join('')}
-                     </span>
-                     <div class="contact-info">
-                         <span class="contact-name">${c.name}</span>
-                         <span class="contact-role">${c.role}</span>
-                         <a href="mailto:${c.email}">${c.email}</a>
-                     </div>
-                 </div>
-             `).join('');
-        }
+    const data = await res.json();
+    if (!data.success) {
+        console.error(data.message);
+        return;
     }
 
-    // --- Show upload button for managers or leaders ---
-    if (currentUser.role === 'manager' || currentUser.role === 'team_leader') {
-        const uploadBtn = document.getElementById('upload-btn');
-        if (uploadBtn) {
-            uploadBtn.style.display = 'inline-flex';
-            uploadBtn.addEventListener('click', () => {
-                alert('This is a prototype demo feature. File upload is not functional.');
-            });
-        }
+    const project = data.project;
+
+    // Fill in project details
+    document.getElementById('project-created-date').textContent =
+        new Date(project.created_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+    document.getElementById('project-description').textContent =
+        project.description || 'No description provided for this project.';
+
+    // Build project contacts
+    const contactsList = document.getElementById('project-contacts-list');
+    contactsList.innerHTML = '';
+
+    const contacts = [];
+
+    if (project.manager_first_name) {
+        contacts.push({
+            name: `${project.manager_first_name} ${project.manager_last_name}`,
+            role: 'Project Manager',
+            avatar: project.manager_avatar || '/default-avatar.png'
+        });
     }
+
+    if (project.team_leader_first_name) {
+        contacts.push({
+            name: `${project.team_leader_first_name} ${project.team_leader_last_name}`,
+            role: 'Team Leader',
+            avatar: project.team_leader_avatar || '/default-avatar.png'
+        });
+    }
+
+    contactsList.innerHTML = contacts.map(c => `
+        <div class="contact-item">
+            <div class="avatar">
+                ${c.avatar ? `<img src="${c.avatar}" alt="${c.name}">` : `<span class="avatar-fallback">${c.name.split(' ').map(n => n[0]).join('')}</span>`}
+            </div>
+            <div class="contact-info">
+                <span class="contact-name">${c.name}</span>
+                <span class="contact-role">${c.role}</span>
+            </div>
+        </div>
+    `).join('');
 }
 
 
