@@ -588,7 +588,7 @@ async function renderTopicGrid(showAll, currentUser) {
 /* ===========================
    KB DB BACKEND (PHP actions)
    =========================== */
-const KB_ACTIONS_BASE = "/Github/part-2-team_14/user/knowledge-base/actions";
+const KB_ACTIONS_BASE = "actions";
 
 // ===========================
 // TOPICS (DB-driven)
