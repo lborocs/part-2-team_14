@@ -66,24 +66,35 @@
 }
 
 .create-new-project-button {
-  height: 42px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 8px;
-  background: #FBC02D;
-  color: #1E1E1E;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+
+  height: 42px;          /*  MATCH search bar */
+  padding: 0 20px;       /* horizontal padding only */
+
+  background: #FBC02D;
+  color: #1E1E1E;
+  border: none;
+  border-radius: 8px;
+
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
   text-decoration: none;
+  transition: background 0.2s ease;
 }
+
 
 .create-new-project-button:hover {
   background: #F9A825;
+}
+
+.create-new-project-button i { 
+  width: 20px; height: 20px; 
 }
 
 .active-projects-title {
@@ -291,7 +302,8 @@
   border-radius: 14px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
   padding: 16px;
-  min-height: 240px;  /* ✅ INCREASED from 220px to accommodate spacing */
+  min-height: 240px;
+  /* ✅ INCREASED from 220px to accommodate spacing */
   /* same height */
   display: flex;
   flex-direction: column;
@@ -307,7 +319,10 @@
 }
 
 /* Only show ring for keyboard focus */
-.project-card:focus-within { outline: none; box-shadow: none; }
+.project-card:focus-within {
+  outline: none;
+  box-shadow: none;
+}
 
 .project-card:has(:focus-visible) {
   box-shadow:
@@ -432,38 +447,40 @@
 
 /* Row that holds PROGRESS + pill */
 
-.progress-head{
-  display:flex;
-  align-items:center;
-  gap:10px;
+.progress-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 
-  margin-top:16px;  /* ✅ INCREASED from 10px - adds space from 3-dot menu */
-  margin-bottom:10px;
+  margin-top: 16px;
+  /* ✅ INCREASED from 10px - adds space from 3-dot menu */
+  margin-bottom: 10px;
 
   /* no reservation */
   padding-right: 0;
 }
 
 /* Pill pushed right, aligned with card edge (same as 3-dot menu) */
-.progress-head .priority-pill{
-  margin-left:auto;
-  margin-right:0;   /* ✅ CHANGED from -4px - aligns with card padding */
+.progress-head .priority-pill {
+  margin-left: auto;
+  margin-right: 0;
+  /* ✅ CHANGED from -4px - aligns with card padding */
 
-  height:18px;
-  line-height:18px;
-  padding:0 10px;
+  height: 18px;
+  line-height: 18px;
+  padding: 0 10px;
 
-  font-size:11px;
-  font-weight:600;
+  font-size: 11px;
+  font-weight: 600;
 
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
-  border-radius:999px;
-  white-space:nowrap;
+  border-radius: 999px;
+  white-space: nowrap;
 
-  overflow:hidden;     
+  overflow: hidden;
 }
 
 
@@ -552,7 +569,7 @@
 }
 
 /* Update Project modal leader autocomplete dropdown */
-.autocomplete-results{
+.autocomplete-results {
   position: relative;
   margin-top: 8px;
   background: #fff;
@@ -562,13 +579,13 @@
   overflow: auto;
 }
 
-.autocomplete-item{
+.autocomplete-item {
   padding: 10px 12px;
   cursor: pointer;
 }
 
 .autocomplete-item:hover,
-.autocomplete-item.active{
+.autocomplete-item.active {
   background: #f5f5f5;
 }
 
