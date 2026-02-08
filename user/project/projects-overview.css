@@ -248,7 +248,7 @@
   --card-height: 220px;
   /* your .project-card min-height */
   --grid-gap: 18px;
-  /* your .projects-grid gap */
+  /* .projects-grid gap */
 }
 
 /* the scroll container */
@@ -291,7 +291,7 @@
   border-radius: 14px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
   padding: 16px;
-  min-height: 220px;
+  min-height: 240px;  /* ✅ INCREASED from 220px to accommodate spacing */
   /* same height */
   display: flex;
   flex-direction: column;
@@ -431,20 +431,41 @@
 }
 
 /* Row that holds PROGRESS + pill */
-.progress-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  /* key: aligns vertically */
-  gap: 10px;
 
-  margin-top: 10px;
-  margin-bottom: 10px;
-  /* space before progress bar */
+.progress-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
 
-  padding-right: 52px;
-  /* keeps pill away from the 3-dot menu */
+  margin-top:16px;  /* ✅ INCREASED from 10px - adds space from 3-dot menu */
+  margin-bottom:10px;
+
+  /* no reservation */
+  padding-right: 0;
 }
+
+/* Pill pushed right, aligned with card edge (same as 3-dot menu) */
+.progress-head .priority-pill{
+  margin-left:auto;
+  margin-right:0;   /* ✅ CHANGED from -4px - aligns with card padding */
+
+  height:18px;
+  line-height:18px;
+  padding:0 10px;
+
+  font-size:11px;
+  font-weight:600;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:999px;
+  white-space:nowrap;
+
+  overflow:hidden;     
+}
+
 
 /* Force PROGRESS label to behave like a fixed-height element */
 .progress-head .small-label {

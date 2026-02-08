@@ -91,6 +91,12 @@ $allowedTaskStatuses = ['to_do', 'in_progress', 'review', 'completed'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_task_status') {
     header('Content-Type: application/json; charset=utf-8');
 
+    // Block status changes if project is archived
+    if (($project['status'] ?? '') === 'archived') {
+        http_response_code(409);
+        echo json_encode(['success' => false, 'message' => 'This project is archived. Reinstate it to change tasks.']);
+        exit;
+    }
 
 
     $roleLower = strtolower((string)$role);
@@ -222,6 +228,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
         echo json_encode(['success' => false, 'message' => 'No permission']);
         exit;
     }
+
+    // Block task creation if project is archived
+    if (($project['status'] ?? '') === 'archived') {
+        http_response_code(409);
+        echo json_encode(['success' => false, 'message' => 'This project is archived. Reinstate it to add tasks.']);
+        exit;
+    }
+
 
 
     // Read inputs
@@ -421,6 +435,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'close_p
 if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["ajax"] ?? "") === "delete_task") {
     header("Content-Type: application/json; charset=UTF-8");
 
+    // Block deletes if project is archived
+    if (($project['status'] ?? '') === 'archived') {
+        http_response_code(409);
+        echo json_encode(['success' => false, 'message' => 'This project is archived. Reinstate it to change tasks.']);
+        exit;
+    }
+
+
     $taskId = isset($_POST["task_id"]) ? (int)$_POST["task_id"] : 0;
 
     if ($taskId <= 0 || $projectId <= 0) {
@@ -474,6 +496,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["ajax"] ?? "") === "delete_
 // =============================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_task_priority') {
     header('Content-Type: application/json; charset=utf-8');
+
+    // Block priority changes if project is archived
+    if (($project['status'] ?? '') === 'archived') {
+        http_response_code(409);
+        echo json_encode(['success' => false, 'message' => 'This project is archived. Reinstate it to change tasks.']);
+        exit;
+    }
+
 
     // Only manager or team leader
     if (!$canManageProject) {
@@ -852,14 +882,15 @@ foreach ($users as $u) {
     window.__ROLE__ = <?= json_encode($role) ?>;
     window.__IS_TEAM_LEADER_PROJECT__ = <?= json_encode($isTeamLeaderOfThisProject) ?>;
     window.__CAN_MANAGE_PROJECT__ = <?= json_encode($canManageProject) ?>;
-    window.__CAN_CLOSE_PROJECT__ = <?= json_encode($canCloseProject) ?>; // ✅ manager-only
+    window.__CAN_CLOSE_PROJECT__ = <?= json_encode($canCloseProject) ?>;
+    window.__IS_ARCHIVED__ = <?= json_encode(($project['status'] ?? '') === 'archived') ?>;
 </script>
 
 <script>
     console.log("__ROLE__", window.__ROLE__);
 </script>
 
-<body id="projects-page">
+<body id="projects-page" class="<?= $canManageProject ? 'can-manage-project' : '' ?>">
 
     <div class="dashboard-container">
         <nav class="sidebar">
@@ -900,7 +931,7 @@ foreach ($users as $u) {
                     </div>
 
                     <div class="project-header-right">
-                        <?php if ($canCloseProject): ?>
+                        <?php if ($canCloseProject && (($project['status'] ?? '') !== 'archived')): ?>
                             <button class="close-project-btn" id="close-project-btn">
                                 Close Project
                             </button>
@@ -977,9 +1008,11 @@ foreach ($users as $u) {
                     <div class="column-header todo-header">
                         <span class="task-count">0</span>
                         <h2>To Do</h2>
-                        <button class="add-task">
-                            <i data-feather="plus"></i>
-                        </button>
+                        <?php if (($project['status'] ?? '') !== 'archived'): ?>
+                            <button class="add-task">
+                                <i data-feather="plus"></i>
+                            </button>
+                        <?php endif; ?>
                     </div>
                     <div class="task-list">
                     </div>
@@ -989,10 +1022,11 @@ foreach ($users as $u) {
                     <div class="column-header inprogress-header">
                         <span class="task-count">0</span>
                         <h2>In Progress</h2>
-                        <button class="add-task">
-                            <i data-feather="plus"></i>
-                        </button>
-
+                        <?php if (($project['status'] ?? '') !== 'archived'): ?>
+                            <button class="add-task">
+                                <i data-feather="plus"></i>
+                            </button>
+                        <?php endif; ?>
                     </div>
                     <div class="task-list">
                     </div>
@@ -1002,9 +1036,11 @@ foreach ($users as $u) {
                     <div class="column-header review-header">
                         <span class="task-count">0</span>
                         <h2>Review</h2>
-                        <button class="add-task">
-                            <i data-feather="plus"></i>
-                        </button>
+                        <?php if (($project['status'] ?? '') !== 'archived'): ?>
+                            <button class="add-task">
+                                <i data-feather="plus"></i>
+                            </button>
+                        <?php endif; ?>
                     </div>
                     <div class="task-list">
                     </div>
@@ -1014,9 +1050,11 @@ foreach ($users as $u) {
                     <div class="column-header completed-header">
                         <span class="task-count">0</span>
                         <h2>Completed</h2>
-                        <button class="add-task">
-                            <i data-feather="plus"></i>
-                        </button>
+                        <?php if (($project['status'] ?? '') !== 'archived'): ?>
+                            <button class="add-task">
+                                <i data-feather="plus"></i>
+                            </button>
+                        <?php endif; ?>
                     </div>
                     <div class="task-list">
                     </div>
@@ -1160,6 +1198,19 @@ foreach ($users as $u) {
     <script src="../app.js"></script>
     <script>
         feather.replace();
+
+        if (window.__IS_ARCHIVED__) {
+            // hide + buttons
+            document.querySelectorAll('.add-task').forEach(btn => btn.style.display = 'none');
+
+            // also prevent opening assign modal if someone clicks via other UI
+            document.querySelectorAll('.add-task').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, true);
+            });
+        }
     </script>
 </body>
 

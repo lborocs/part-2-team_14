@@ -286,8 +286,12 @@ body {
     border: none;
     cursor: pointer;
     padding: 0;
-    display: grid;
+    display: none;
     place-items: center;
+}
+
+body.can-manage-project .add-task {
+  display: inline-flex;
 }
 
 .add-task svg {
