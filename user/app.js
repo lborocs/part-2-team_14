@@ -1080,6 +1080,7 @@ function loadSettingsPage(currentUser) {
     document.getElementById('profile-email').value = currentUser.email;
     const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
+
     // Upload a new profile picture
     const uploadBtn = document.getElementById("upload-image-btn");
     const fileInput = document.getElementById("profile-image-input");
@@ -1108,15 +1109,15 @@ function loadSettingsPage(currentUser) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ profile_picture: simulatedPath })
         })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    console.log("Profile picture updated in DB!");
-                } else {
-                    console.error("Failed to update profile picture in DB.");
-                }
-            })
-            .catch(err => console.error(err));
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture updated in DB!");
+            } else {
+                console.error("Failed to update profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
     });
 
     // Delete current profile picture
@@ -1131,21 +1132,41 @@ function loadSettingsPage(currentUser) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ profile_picture: defaultPath })
         })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    console.log("Profile picture reset to default in DB!");
-                } else {
-                    console.error("Failed to reset profile picture in DB.");
-                }
-            })
-            .catch(err => console.error(err));
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture reset to default in DB!");
+            } else {
+                console.error("Failed to reset profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
     });
 
-    // Update password
-    document.getElementById('password-form').addEventListener('submit', (e) => {
+    // Change password
+    document.getElementById('password-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        alert('Password updated! (This is a demo)');
+
+        const current_password = document.getElementById('current-password').value;
+        const new_password = document.getElementById('new-password').value;
+        const confirm_password = document.getElementById('confirm-password').value;
+
+        const res = await fetch(`${window.__ACTIONS_BASE__}change_password.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                current_password,
+                new_password,
+                confirm_password
+            })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+
+        if (data.success) {
+            e.target.reset();
+        }
     });
 
     // Update notification preferences

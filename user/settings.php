@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body id="settings-page"> <div class="dashboard-container">
@@ -112,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <label for="profile-role">Role</label>
                                     <input type="text" id="profile-role" value="Loading..." readonly disabled>
                                 </div>
-                                <button type="submit" class="create-post-btn">Save Profile</button>
+                                <button class="create-post-btn">Save Profile</button>
                             </div>
 
                             <div class="profile-avatar">
@@ -126,6 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </form>
 
+                    <!-- Change Password -->
                     <form id="password-form" class="settings-card">
                         <h2>Change Password</h2>
                         <div class="form-group">
@@ -143,6 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <button type="submit" class="create-post-btn">Update Password</button>
                     </form>
 
+                    <!-- Notification Preferences -->
                     <form id="notifications-form" class="settings-card">
                         <h2>Notification Preferences</h2>
                         <div class="checkbox-group">
@@ -156,6 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <button type="submit" class="create-post-btn">Save Preferences</button>
                     </form>
 
+                    <!-- Sign Out -->
                     <div class="settings-card">
                         <h2>Account</h2>
                         <p>Clicking "Sign Out" will end your current session and return you to the login page.</p>
