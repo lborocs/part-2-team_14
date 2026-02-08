@@ -7,6 +7,9 @@
  * Shows a success notification message that auto-dismisses after 3 seconds
  * @param {string} message - The message to display
  */
+
+const IS_ARCHIVED = !!window.__IS_ARCHIVED__;
+
 function showSuccessNotification(message) {
     // Create notification element
     const notification = document.createElement('div');
@@ -41,27 +44,27 @@ function getUsersMap() {
 
 // Default feather icon for known topics (fallback when DB icon is missing/corrupted)
 const DEFAULT_TOPIC_ICONS = {
-  'Technical Support': 'tool',
-  'HR Policies': 'users',
-  'Project Best Practices': 'bar-chart-2',
-  'Development Guidelines': 'code',
+    'Technical Support': 'tool',
+    'HR Policies': 'users',
+    'Project Best Practices': 'bar-chart-2',
+    'Development Guidelines': 'code',
 };
 
 function renderTopicIcon(iconValue, topicName) {
-  const val = (iconValue || '').trim();
+    const val = (iconValue || '').trim();
 
-  // feather icon name (like "tool", "users", "code")
-  const featherPattern = /^[a-z0-9-]+$/;
-  if (val && featherPattern.test(val)) return `<i data-feather="${val}"></i>`;
+    // feather icon name (like "tool", "users", "code")
+    const featherPattern = /^[a-z0-9-]+$/;
+    if (val && featherPattern.test(val)) return `<i data-feather="${val}"></i>`;
 
-  // emoji (non-ascii, not corrupted "?")
-  if (val && val !== '?' && /[^\u0000-\u007F]/.test(val)) {
-    return `<span class="topic-emoji">${val}</span>`;
-  }
+    // emoji (non-ascii, not corrupted "?")
+    if (val && val !== '?' && /[^\u0000-\u007F]/.test(val)) {
+        return `<span class="topic-emoji">${val}</span>`;
+    }
 
-  // fallback: use default icon for known topics, or a generic icon
-  const fallback = (topicName && DEFAULT_TOPIC_ICONS[topicName]) || 'help-circle';
-  return `<i data-feather="${fallback}"></i>`;
+    // fallback: use default icon for known topics, or a generic icon
+    const fallback = (topicName && DEFAULT_TOPIC_ICONS[topicName]) || 'help-circle';
+    return `<i data-feather="${fallback}"></i>`;
 }
 
 
@@ -420,16 +423,16 @@ function updateSidebarAndNav() {
  * @param {string} currentUserEmail - The email of the current user.
  */
 function createPostCardHTML(post, currentUserEmail) {
-  const postLink = `knowledge-base-post.html?post_id=${post.id}`;
-  const topicClass = post.topic.toLowerCase().split(' ')[0];
+    const postLink = `knowledge-base-post.html?post_id=${post.id}`;
+    const topicClass = post.topic.toLowerCase().split(' ')[0];
 
-  const avatarSrc = post.profilePicture || '../../default-avatar.png';
+    const avatarSrc = post.profilePicture || '../../default-avatar.png';
 
-  const solvedBadge = Number(post.is_solved) === 1
-    ? `<span class="kb-solved-badge">Solved</span>`
-    : "";
+    const solvedBadge = Number(post.is_solved) === 1
+        ? `<span class="kb-solved-badge">Solved</span>`
+        : "";
 
-  return `
+    return `
     <div class="post-card">
       <div class="post-card-header">
         <img class="post-card-avatar" src="${avatarSrc}" alt="${post.author}" onerror="this.src='../../default-avatar.png'">
@@ -547,48 +550,48 @@ async function showTopicView(topicName, currentUser) {
  * @param {object} currentUser Current user (for click-through)
  */
 async function renderTopicGrid(showAll, currentUser) {
-  const grid = document.getElementById('topic-grid');
-  if (!grid) return;
+    const grid = document.getElementById('topic-grid');
+    if (!grid) return;
 
-  await ensureKbTopicsLoaded();
+    await ensureKbTopicsLoaded();
 
     // Main KB page: ONLY show original topics (ones with icons)
     const publicTopics = KB_TOPICS.filter(t => String(t.is_public) === "1");
 
     // originals = ones that have a DB icon set OR a known default
     const originalTopics = publicTopics.filter(t =>
-      (t.icon && t.icon.trim() !== "" && t.icon.trim() !== "?") || DEFAULT_TOPIC_ICONS[t.topic_name]
+        (t.icon && t.icon.trim() !== "" && t.icon.trim() !== "?") || DEFAULT_TOPIC_ICONS[t.topic_name]
     );
 
     // main page shows originals only
     const topicsToShow = showAll ? publicTopics : originalTopics;
 
 
-  const topicCardsHtml = topicsToShow.map(t => `
+    const topicCardsHtml = topicsToShow.map(t => `
     <a href="#" class="topic-card" data-topic="${t.topic_name}">
       ${renderTopicIcon(t.icon, t.topic_name)}
       <span>${t.topic_name}</span>
     </a>
   `).join('');
 
-  const addCardHtml = `
+    const addCardHtml = `
     <a href="knowledge-base-create-topic.html?user=${currentUser.email}" class="topic-card add-topic-card" id="add-topic-card">
       <i data-feather="plus"></i>
       <span>Add New Topic</span>
     </a>
   `;
 
-  grid.innerHTML = topicCardsHtml + addCardHtml;
+    grid.innerHTML = topicCardsHtml + addCardHtml;
 
-  grid.querySelectorAll('.topic-card:not(.add-topic-card)').forEach(card => {
-    card.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const topicName = card.dataset.topic;
-      await showTopicView(topicName, currentUser);
+    grid.querySelectorAll('.topic-card:not(.add-topic-card)').forEach(card => {
+        card.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const topicName = card.dataset.topic;
+            await showTopicView(topicName, currentUser);
+        });
     });
-  });
 
-  feather.replace();
+    feather.replace();
 }
 
 
@@ -606,109 +609,109 @@ let TOPIC_NAME_TO_ID = {};          // { [name]: id }
 let TOPIC_NAME_TO_ICON = {};        // { [name]: icon }
 
 async function fetchKbTopicsFromDb() {
-  const res = await fetch(`${KB_ACTIONS_BASE}/fetch_topics.php`, { credentials: "include" });
-  const data = await res.json();
-  if (!data.success) return [];
+    const res = await fetch(`${KB_ACTIONS_BASE}/fetch_topics.php`, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
 
-  return data.topics || [];
+    return data.topics || [];
 }
 
 async function createKbTopicInDb({ topic_name, description, icon }) {
-  const fd = new FormData();
-  fd.append("topic_name", topic_name);
-  fd.append("description", description || "");
-  fd.append("icon", icon || "");
+    const fd = new FormData();
+    fd.append("topic_name", topic_name);
+    fd.append("description", description || "");
+    fd.append("icon", icon || "");
 
 
-  const res = await fetch(`${KB_ACTIONS_BASE}/create_topic.php`, {
-    method: "POST",
-    body: fd,
-    credentials: "include"
-  });
+    const res = await fetch(`${KB_ACTIONS_BASE}/create_topic.php`, {
+        method: "POST",
+        body: fd,
+        credentials: "include"
+    });
 
-  return await res.json();
+    return await res.json();
 }
 
 
 async function ensureKbTopicsLoaded() {
-  if (KB_TOPICS.length) return;
+    if (KB_TOPICS.length) return;
 
-  KB_TOPICS = await fetchKbTopicsFromDb();
+    KB_TOPICS = await fetchKbTopicsFromDb();
 
-  TOPIC_ID_TO_NAME = {};
-  TOPIC_NAME_TO_ID = {};
-  TOPIC_NAME_TO_ICON = {};
+    TOPIC_ID_TO_NAME = {};
+    TOPIC_NAME_TO_ID = {};
+    TOPIC_NAME_TO_ICON = {};
 
-  KB_TOPICS.forEach(t => {
-    TOPIC_ID_TO_NAME[t.topic_id] = t.topic_name;
-    TOPIC_NAME_TO_ID[t.topic_name] = t.topic_id;
-    TOPIC_NAME_TO_ICON[t.topic_name] = t.icon || "";
+    KB_TOPICS.forEach(t => {
+        TOPIC_ID_TO_NAME[t.topic_id] = t.topic_name;
+        TOPIC_NAME_TO_ID[t.topic_name] = t.topic_id;
+        TOPIC_NAME_TO_ICON[t.topic_name] = t.icon || "";
 
-  });
+    });
 }
 
 function getTopicIdFromName(name) {
-  return TOPIC_NAME_TO_ID[name] || 0;
+    return TOPIC_NAME_TO_ID[name] || 0;
 }
 
 
 // Format MySQL datetime -> "3 October 2025"
 function formatKbMysqlDate(mysqlDate) {
-  if (!mysqlDate) return "";
-  const d = new Date(String(mysqlDate).replace(" ", "T"));
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    if (!mysqlDate) return "";
+    const d = new Date(String(mysqlDate).replace(" ", "T"));
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
 function mapDbPostToUiPost(p) {
-  const topicName = p.topic_name || TOPIC_ID_TO_NAME[p.topic_id] || "General";
+    const topicName = p.topic_name || TOPIC_ID_TO_NAME[p.topic_id] || "General";
 
-  return {
-    id: p.post_id,
-    topic: topicName,
-    title: p.title,
-    author: p.author_name || "Unknown",
-    authorEmail: "",
-    profilePicture: p.profile_picture || null,
-    date: formatKbMysqlDate(p.created_at),
-    content: p.snippet || "",
-    fullContent: p.content || "",
-    is_solved: Number(p.is_solved || 0),
-    reactions: {
-      up: p.view_count ?? 0,
-      lightbulb: 0,
-      comments: p.comment_count ?? 0
-    },
-    replies: []
-  };
+    return {
+        id: p.post_id,
+        topic: topicName,
+        title: p.title,
+        author: p.author_name || "Unknown",
+        authorEmail: "",
+        profilePicture: p.profile_picture || null,
+        date: formatKbMysqlDate(p.created_at),
+        content: p.snippet || "",
+        fullContent: p.content || "",
+        is_solved: Number(p.is_solved || 0),
+        reactions: {
+            up: p.view_count ?? 0,
+            lightbulb: 0,
+            comments: p.comment_count ?? 0
+        },
+        replies: []
+    };
 }
 
 
 async function fetchKbPostsFromDb(type = "popular", limit = 20, search = "") {
-  const url =
-    `${KB_ACTIONS_BASE}/fetch_posts.php?type=${encodeURIComponent(type)}&limit=${encodeURIComponent(limit)}&search=${encodeURIComponent(search)}`;
+    const url =
+        `${KB_ACTIONS_BASE}/fetch_posts.php?type=${encodeURIComponent(type)}&limit=${encodeURIComponent(limit)}&search=${encodeURIComponent(search)}`;
 
-  const res = await fetch(url, { credentials: "include" });
-  const data = await res.json();
-  if (!data.success) return [];
-  return (data.posts || []).map(mapDbPostToUiPost);
+    const res = await fetch(url, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
+    return (data.posts || []).map(mapDbPostToUiPost);
 }
 
 
 async function createKbPostInDb({ title, topicName, details }) {
-  const topicId = getTopicIdFromName(topicName);
-  const fd = new FormData();
-  fd.append("title", title);
-  fd.append("topic_id", String(topicId));
-  fd.append("content", details);
+    const topicId = getTopicIdFromName(topicName);
+    const fd = new FormData();
+    fd.append("title", title);
+    fd.append("topic_id", String(topicId));
+    fd.append("content", details);
 
-  const res = await fetch(`${KB_ACTIONS_BASE}/create_post.php`, {
-    method: "POST",
-    body: fd,
-    credentials: "include"
-  });
+    const res = await fetch(`${KB_ACTIONS_BASE}/create_post.php`, {
+        method: "POST",
+        body: fd,
+        credentials: "include"
+    });
 
-  const data = await res.json();
-  return data; // {success, post_id} or {success:false,message}
+    const data = await res.json();
+    return data; // {success, post_id} or {success:false,message}
 }
 
 async function loadKbIndex(currentUser) {
@@ -763,61 +766,61 @@ async function loadKbIndex(currentUser) {
 }
 
 function setupKbSearch(currentUser) {
-  const input = document.getElementById("kb-search-input");
-  if (!input) return;
+    const input = document.getElementById("kb-search-input");
+    if (!input) return;
 
-  const tabsContainer = document.getElementById("post-tabs-container");
-  const buttons = tabsContainer ? tabsContainer.querySelectorAll("button") : [];
-  const popularBtn = buttons[0];
-  const newBtn = buttons[1];
+    const tabsContainer = document.getElementById("post-tabs-container");
+    const buttons = tabsContainer ? tabsContainer.querySelectorAll("button") : [];
+    const popularBtn = buttons[0];
+    const newBtn = buttons[1];
 
-  function getActiveType() {
-    return newBtn && newBtn.classList.contains("active") ? "new" : "popular";
-  }
+    function getActiveType() {
+        return newBtn && newBtn.classList.contains("active") ? "new" : "popular";
+    }
 
-  let t = null;
+    let t = null;
 
-  async function runSearch() {
-    const q = input.value.trim();
+    async function runSearch() {
+        const q = input.value.trim();
 
-    // if search cleared, restore the current view
-    if (q === "") {
-      if (KB_ACTIVE_TOPIC) {
-        renderPostList(KB_ACTIVE_POSTS, currentUser.email);
-      } else {
+        // if search cleared, restore the current view
+        if (q === "") {
+            if (KB_ACTIVE_TOPIC) {
+                renderPostList(KB_ACTIVE_POSTS, currentUser.email);
+            } else {
+                const type = getActiveType();
+                const posts = await fetchKbPostsFromDb(type, 20, "");
+                renderPostList(posts, currentUser.email);
+            }
+            return;
+        }
+
+        // if in a topic, filter locally (DON'T hit DB)
+        if (KB_ACTIVE_TOPIC) {
+            const qLower = q.toLowerCase();
+            const filtered = KB_ACTIVE_POSTS.filter(p =>
+                (p.title || "").toLowerCase().includes(qLower) ||
+                (p.content || "").toLowerCase().includes(qLower) ||
+                (p.author || "").toLowerCase().includes(qLower)
+            );
+            renderPostList(filtered, currentUser.email);
+            return;
+        }
+
+        // normal global search (DB)
         const type = getActiveType();
-        const posts = await fetchKbPostsFromDb(type, 20, "");
+        const posts = await fetchKbPostsFromDb(type, 20, q);
         renderPostList(posts, currentUser.email);
-      }
-      return;
     }
 
-    // if in a topic, filter locally (DON'T hit DB)
-    if (KB_ACTIVE_TOPIC) {
-      const qLower = q.toLowerCase();
-      const filtered = KB_ACTIVE_POSTS.filter(p =>
-        (p.title || "").toLowerCase().includes(qLower) ||
-        (p.content || "").toLowerCase().includes(qLower) ||
-        (p.author || "").toLowerCase().includes(qLower)
-      );
-      renderPostList(filtered, currentUser.email);
-      return;
-    }
+    // prevent double-binding if loadKbIndex is called again
+    if (input.dataset.bound === "1") return;
+    input.dataset.bound = "1";
 
-    // normal global search (DB)
-    const type = getActiveType();
-    const posts = await fetchKbPostsFromDb(type, 20, q);
-    renderPostList(posts, currentUser.email);
-  }
-
-  // prevent double-binding if loadKbIndex is called again
-  if (input.dataset.bound === "1") return;
-  input.dataset.bound = "1";
-
-  input.addEventListener("input", () => {
-    clearTimeout(t);
-    t = setTimeout(runSearch, 250);
-  });
+    input.addEventListener("input", () => {
+        clearTimeout(t);
+        t = setTimeout(runSearch, 250);
+    });
 }
 
 
@@ -825,83 +828,83 @@ function setupKbSearch(currentUser) {
  * Runs on the Create Post page 
  */
 async function setupCreateForm(currentUser) {
-  const form = document.getElementById("create-post-form");
+    const form = document.getElementById("create-post-form");
 
-  // NEW elements (searchable)
-  const topicInput = document.getElementById("post-topic-input");   // visible
-  const topicsList = document.getElementById("topics-datalist");    // datalist
-  const topicHidden = document.getElementById("post-topic");        // hidden (submitted)
-  const topicError = document.getElementById("topic-error");        // optional msg
+    // NEW elements (searchable)
+    const topicInput = document.getElementById("post-topic-input");   // visible
+    const topicsList = document.getElementById("topics-datalist");    // datalist
+    const topicHidden = document.getElementById("post-topic");        // hidden (submitted)
+    const topicError = document.getElementById("topic-error");        // optional msg
 
-  if (!form || !topicInput || !topicsList || !topicHidden) return;
+    if (!form || !topicInput || !topicsList || !topicHidden) return;
 
-  await ensureKbTopicsLoaded();
+    await ensureKbTopicsLoaded();
 
-  // only public topics
-  const topicNames = KB_TOPICS
-    .filter(t => String(t.is_public) === "1")
-    .map(t => String(t.topic_name || "").trim())
-    .filter(Boolean);
+    // only public topics
+    const topicNames = KB_TOPICS
+        .filter(t => String(t.is_public) === "1")
+        .map(t => String(t.topic_name || "").trim())
+        .filter(Boolean);
 
-  // fill datalist
-  topicsList.innerHTML = topicNames
-    .map(name => `<option value="${escapeHtml(name)}"></option>`)
-    .join("");
+    // fill datalist
+    topicsList.innerHTML = topicNames
+        .map(name => `<option value="${escapeHtml(name)}"></option>`)
+        .join("");
 
-  // Preselect if topic passed in URL (?topic=...)
-  const urlParams = new URLSearchParams(window.location.search);
-  const preselectedTopic = urlParams.get("topic");
-  if (preselectedTopic) {
-    topicInput.value = preselectedTopic;
-    topicHidden.value = topicNames.includes(preselectedTopic) ? preselectedTopic : "";
-  }
-
-  function syncTopic() {
-    const v = String(topicInput.value || "").trim();
-    const ok = topicNames.includes(v);
-
-    topicHidden.value = ok ? v : "";
-
-    if (topicError) {
-      topicError.style.display = (v && !ok) ? "block" : "none";
-    }
-  }
-
-  topicInput.addEventListener("input", syncTopic);
-  topicInput.addEventListener("blur", syncTopic);
-
-  // Handle form submission
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const title = document.getElementById("post-title").value.trim();
-    const topic = topicHidden.value; 
-    const details = document.getElementById("post-details").value.trim();
-
-    if (!title || !topic || !details) {
-      alert("Please fill out all required fields (and pick a valid topic).");
-      return;
+    // Preselect if topic passed in URL (?topic=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectedTopic = urlParams.get("topic");
+    if (preselectedTopic) {
+        topicInput.value = preselectedTopic;
+        topicHidden.value = topicNames.includes(preselectedTopic) ? preselectedTopic : "";
     }
 
-    const result = await createKbPostInDb({ title, topicName: topic, details });
+    function syncTopic() {
+        const v = String(topicInput.value || "").trim();
+        const ok = topicNames.includes(v);
 
-    if (!result.success) {
-      alert(result.message || "Could not create post.");
-      return;
+        topicHidden.value = ok ? v : "";
+
+        if (topicError) {
+            topicError.style.display = (v && !ok) ? "block" : "none";
+        }
     }
 
-    sessionStorage.setItem("postCreated", `Post "${title}" created successfully!`);
-    window.location.href = `knowledge-base.html?user=${currentUser.email}`;
-  });
+    topicInput.addEventListener("input", syncTopic);
+    topicInput.addEventListener("blur", syncTopic);
+
+    // Handle form submission
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById("post-title").value.trim();
+        const topic = topicHidden.value;
+        const details = document.getElementById("post-details").value.trim();
+
+        if (!title || !topic || !details) {
+            alert("Please fill out all required fields (and pick a valid topic).");
+            return;
+        }
+
+        const result = await createKbPostInDb({ title, topicName: topic, details });
+
+        if (!result.success) {
+            alert(result.message || "Could not create post.");
+            return;
+        }
+
+        sessionStorage.setItem("postCreated", `Post "${title}" created successfully!`);
+        window.location.href = `knowledge-base.html?user=${currentUser.email}`;
+    });
 }
 
 function escapeHtml(str) {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 
@@ -1568,13 +1571,13 @@ function renderTodoItems(tasks, currentUser) {
 }
 
 async function renderTrendingPosts(currentUser) {
-  const trendingPostsList = document.getElementById('trending-posts-list');
-  if (!trendingPostsList) return;
+    const trendingPostsList = document.getElementById('trending-posts-list');
+    if (!trendingPostsList) return;
 
-  const posts = await fetchKbPostsFromDb("popular", 3); // DB
-  trendingPostsList.innerHTML = posts.map(post => {
-    const topicClass = post.topic.toLowerCase().split(' ')[0];
-    return `
+    const posts = await fetchKbPostsFromDb("popular", 3); // DB
+    trendingPostsList.innerHTML = posts.map(post => {
+        const topicClass = post.topic.toLowerCase().split(' ')[0];
+        return `
       <div class="trending-post">
         <div class="post-header">
           <div class="post-avatar ${post.avatarClass || 'avatar-3'}"></div>
@@ -1592,9 +1595,9 @@ async function renderTrendingPosts(currentUser) {
         </div>
       </div>
     `;
-  }).join("");
+    }).join("");
 
-  feather.replace();
+    feather.replace();
 }
 
 
@@ -1902,50 +1905,50 @@ function renderTaskDistributionChart(userTasks) {
 }
 
 function setupCreateTopicForm(currentUser) {
-  const createTopicForm = document.getElementById('create-topic-form');
-  if (!createTopicForm) return;
+    const createTopicForm = document.getElementById('create-topic-form');
+    if (!createTopicForm) return;
 
-  createTopicForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    createTopicForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    await ensureKbTopicsLoaded();
+        await ensureKbTopicsLoaded();
 
-    const topicName = document.getElementById('topic-name').value.trim();
-    const topicDescription = document.getElementById('topic-description').value.trim();
+        const topicName = document.getElementById('topic-name').value.trim();
+        const topicDescription = document.getElementById('topic-description').value.trim();
 
-    // If you have an icon input, use it. If not, default to "tag".
-    const iconInput = document.getElementById('topic-icon');
-    const topicIcon = iconInput ? iconInput.value.trim() : "";
+        // If you have an icon input, use it. If not, default to "tag".
+        const iconInput = document.getElementById('topic-icon');
+        const topicIcon = iconInput ? iconInput.value.trim() : "";
 
-    if (!topicName) {
-      alert('Please enter a topic name.');
-      return;
-    }
+        if (!topicName) {
+            alert('Please enter a topic name.');
+            return;
+        }
 
-    // duplicate check (case-insensitive) against DB-loaded topics
-    const exists = KB_TOPICS.some(t => t.topic_name.toLowerCase() === topicName.toLowerCase());
-    if (exists) {
-      alert('A topic with that name already exists. Please choose a different name.');
-      return;
-    }
+        // duplicate check (case-insensitive) against DB-loaded topics
+        const exists = KB_TOPICS.some(t => t.topic_name.toLowerCase() === topicName.toLowerCase());
+        if (exists) {
+            alert('A topic with that name already exists. Please choose a different name.');
+            return;
+        }
 
-    const result = await createKbTopicInDb({
-      topic_name: topicName,
-      description: topicDescription,
-      icon: topicIcon || ""
+        const result = await createKbTopicInDb({
+            topic_name: topicName,
+            description: topicDescription,
+            icon: topicIcon || ""
+        });
+
+        if (!result.success) {
+            alert(result.message || "Could not create topic.");
+            return;
+        }
+
+        // reset cache so homepage loads new topic instantly
+        KB_TOPICS = [];
+        sessionStorage.setItem('topicCreated', `Topic "${topicName}" created successfully!`);
+
+        window.location.href = `knowledge-base.html?user=${currentUser.email}`;
     });
-
-    if (!result.success) {
-      alert(result.message || "Could not create topic.");
-      return;
-    }
-
-    // reset cache so homepage loads new topic instantly
-    KB_TOPICS = [];
-    sessionStorage.setItem('topicCreated', `Topic "${topicName}" created successfully!`);
-
-    window.location.href = `knowledge-base.html?user=${currentUser.email}`;
-  });
 }
 
 function setupAssignTaskForm() {
@@ -2132,7 +2135,7 @@ function createTaskCardHTML(task, currentUser) {
 
     const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
 
-    const isDraggable = isManagerView && !isLeaderOnApollo;
+    const isDraggable = isManagerView && !isLeaderOnApollo && !IS_ARCHIVED;
     const showMoveBtn = isManagerView && !isLeaderOnApollo;
 
     const usersMap = getUsersMap();
@@ -2174,7 +2177,7 @@ function createTaskCardHTML(task, currentUser) {
     <h3 class="task-title">${task.title}</h3>
     ${task.description ? `<p class="task-desc">${task.description}</p>` : ''}
 
-    ${isManagerView ? renderStatusPill(task) : ""}
+    ${(isManagerView && !IS_ARCHIVED) ? renderStatusPill(task) : ""}
 
     <div class="task-assignees">
       ${assigneesHtml}
@@ -2485,94 +2488,96 @@ function setupStatusPillActions(currentUser, currentProjectId) {
  * Initializes drag and drop functionality for the board
  */
 function setupBoardDnDOnce(currentUser, currentProjectId) {
-    const board = document.querySelector(".task-board");
-    if (!board) return;
+    if (!IS_ARCHIVED) {
+        const board = document.querySelector(".task-board");
+        if (!board) return;
 
-    // Prevent double-binding
-    if (board.dataset.dndBound === "1") return;
-    board.dataset.dndBound = "1";
+        // Prevent double-binding
+        if (board.dataset.dndBound === "1") return;
+        board.dataset.dndBound = "1";
 
-    // 1) dragstart/dragend using event delegation
-    board.addEventListener("dragstart", (e) => {
-        const card = e.target.closest('.task-card[draggable="true"]');
-        if (!card) return;
+        // 1) dragstart/dragend using event delegation
+        board.addEventListener("dragstart", (e) => {
+            const card = e.target.closest('.task-card[draggable="true"]');
+            if (!card) return;
 
-        e.dataTransfer.setData("text/plain", card.dataset.taskId);
-        e.dataTransfer.effectAllowed = "move";
-        setTimeout(() => card.classList.add("dragging"), 0);
-    });
+            e.dataTransfer.setData("text/plain", card.dataset.taskId);
+            e.dataTransfer.effectAllowed = "move";
+            setTimeout(() => card.classList.add("dragging"), 0);
+        });
 
-    board.addEventListener("dragend", (e) => {
-        const card = e.target.closest(".task-card");
-        if (card) card.classList.remove("dragging");
+        board.addEventListener("dragend", (e) => {
+            const card = e.target.closest(".task-card");
+            if (card) card.classList.remove("dragging");
 
-        board.querySelectorAll(".task-list.drag-over")
-            .forEach((l) => l.classList.remove("drag-over"));
-    });
+            board.querySelectorAll(".task-list.drag-over")
+                .forEach((l) => l.classList.remove("drag-over"));
+        });
 
-    // 2) dragover/dragleave/drop delegation for columns/lists
-    board.addEventListener("dragover", (e) => {
-        const col = e.target.closest(".task-column");
-        if (!col) return;
+        // 2) dragover/dragleave/drop delegation for columns/lists
+        board.addEventListener("dragover", (e) => {
+            const col = e.target.closest(".task-column");
+            if (!col) return;
 
-        e.preventDefault(); // required
-        e.dataTransfer.dropEffect = "move";
+            e.preventDefault(); // required
+            e.dataTransfer.dropEffect = "move";
 
-        const list = col.querySelector(".task-list");
-        if (list) list.classList.add("drag-over");
-    });
+            const list = col.querySelector(".task-list");
+            if (list) list.classList.add("drag-over");
+        });
 
-    board.addEventListener("dragleave", (e) => {
-        const col = e.target.closest(".task-column");
-        if (!col) return;
+        board.addEventListener("dragleave", (e) => {
+            const col = e.target.closest(".task-column");
+            if (!col) return;
 
-        const related = e.relatedTarget;
-        // if still inside the same column, ignore
-        if (related && col.contains(related)) return;
+            const related = e.relatedTarget;
+            // if still inside the same column, ignore
+            if (related && col.contains(related)) return;
 
-        const list = col.querySelector(".task-list");
-        if (list) list.classList.remove("drag-over");
-    });
+            const list = col.querySelector(".task-list");
+            if (list) list.classList.remove("drag-over");
+        });
 
-    board.addEventListener("drop", async (e) => {
-        const col = e.target.closest(".task-column");
-        if (!col) return;
+        board.addEventListener("drop", async (e) => {
+            const col = e.target.closest(".task-column");
+            if (!col) return;
 
-        e.preventDefault();
+            e.preventDefault();
 
-        const list = col.querySelector(".task-list");
-        if (list) list.classList.remove("drag-over");
+            const list = col.querySelector(".task-list");
+            if (list) list.classList.remove("drag-over");
 
-        const taskId = e.dataTransfer.getData("text/plain");
-        const newStatus = col.dataset.status;
+            const taskId = e.dataTransfer.getData("text/plain");
+            const newStatus = col.dataset.status;
 
-        const tasksNorm = window.__TASKS_NORM__ || [];
-        const normTask = tasksNorm.find(t => String(t.id) === String(taskId));
-        if (!normTask) return;
+            const tasksNorm = window.__TASKS_NORM__ || [];
+            const normTask = tasksNorm.find(t => String(t.id) === String(taskId));
+            if (!normTask) return;
 
-        const oldStatus = normTask.status;
-        if (oldStatus === newStatus) return;
+            const oldStatus = normTask.status;
+            if (oldStatus === newStatus) return;
 
-        // optimistic update
-        normTask.status = newStatus;
+            // optimistic update
+            normTask.status = newStatus;
 
-        // keep __TASKS__ in sync too (so refresh/rerender doesn't snap back)
-        if (Array.isArray(window.__TASKS__)) {
-            const dbTask = window.__TASKS__.find(t => String(t.task_id) === String(taskId));
-            if (dbTask) dbTask.status = denormalizeStatus(newStatus);
-        }
+            // keep __TASKS__ in sync too (so refresh/rerender doesn't snap back)
+            if (Array.isArray(window.__TASKS__)) {
+                const dbTask = window.__TASKS__.find(t => String(t.task_id) === String(taskId));
+                if (dbTask) dbTask.status = denormalizeStatus(newStatus);
+            }
 
-        try {
-            await updateTaskStatusInDb(taskId, denormalizeStatus(newStatus));
-        } catch (err) {
-            console.error(err);
-            normTask.status = oldStatus; // revert
-            alert("Could not save change. Please try again.");
-        }
+            try {
+                await updateTaskStatusInDb(taskId, denormalizeStatus(newStatus));
+            } catch (err) {
+                console.error(err);
+                normTask.status = oldStatus; // revert
+                alert("Could not save change. Please try again.");
+            }
 
-        // rerender after drop
-        renderTaskBoard(currentUser, currentProjectId);
-    });
+            // rerender after drop
+            renderTaskBoard(currentUser, currentProjectId);
+        });
+    }
 }
 
 
@@ -2657,6 +2662,7 @@ function initTaskDetailsModal(currentUser) {
         }
 
         // Buttons
+        // Buttons
         const markBtn = document.getElementById("project-complete-btn");
         const deleteBtn = document.getElementById("delete-task-btn");
 
@@ -2664,69 +2670,75 @@ function initTaskDetailsModal(currentUser) {
         const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
         const isManagerLike = role === "manager" || canManageProject;
 
-        // Team members: show mark complete. Managers/leaders: show delete.
-        if (markBtn) markBtn.style.display = isManagerLike ? "none" : "inline-flex";
-        if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
+        // ✅ Archived project: no actions
+        if (IS_ARCHIVED) {
+            if (markBtn) markBtn.style.display = "none";
+            if (deleteBtn) deleteBtn.style.display = "none";
+        } else {
+            // Team members: show mark complete. Managers/leaders: show delete.
+            if (markBtn) markBtn.style.display = isManagerLike ? "none" : "inline-flex";
+            if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
 
-        // Rebind delete button safely
-        if (deleteBtn) {
-            const freshDeleteBtn = deleteBtn.cloneNode(true);
-            deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
+            // ✅ Only bind delete handler if NOT archived AND manager-like
+            if (deleteBtn && isManagerLike) {
+                const freshDeleteBtn = deleteBtn.cloneNode(true);
+                deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
 
-            freshDeleteBtn.addEventListener("click", async () => {
-                const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
-                if (!ok) return;
+                freshDeleteBtn.addEventListener("click", async () => {
+                    const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
+                    if (!ok) return;
 
-                try {
-                    await deleteTaskInDb(task.id);
+                    try {
+                        await deleteTaskInDb(task.id);
 
-                    // remove locally too
-                    if (Array.isArray(window.__TASKS_NORM__)) {
-                        window.__TASKS_NORM__ = window.__TASKS_NORM__.filter((t) => String(t.id) !== String(task.id));
+                        // remove locally too
+                        if (Array.isArray(window.__TASKS_NORM__)) {
+                            window.__TASKS_NORM__ = window.__TASKS_NORM__.filter((t) => String(t.id) !== String(task.id));
+                        }
+                        if (Array.isArray(window.__TASKS__)) {
+                            window.__TASKS__ = window.__TASKS__.filter((t) => String(t.task_id) !== String(task.id));
+                        }
+
+                        closeModal();
+                        showSuccessNotification("Task deleted successfully!");
+                        renderTaskBoard(currentUser, getCurrentProjectId());
+                    } catch (err) {
+                        console.error(err);
+                        alert("Could not delete task. Check console.");
                     }
-                    if (Array.isArray(window.__TASKS__)) {
-                        window.__TASKS__ = window.__TASKS__.filter((t) => String(t.task_id) !== String(task.id));
+                });
+            }
+
+            // ✅ Only bind mark complete if NOT archived AND NOT manager-like
+            if (markBtn && !isManagerLike) {
+                const freshMarkBtn = markBtn.cloneNode(true);
+                markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
+
+                freshMarkBtn.addEventListener("click", async () => {
+                    const ok = confirm("Mark this task as complete? It will be moved to Review.");
+                    if (!ok) return;
+
+                    try {
+                        const tasksNorm = window.__TASKS_NORM__ || [];
+                        const t = tasksNorm.find((x) => String(x.id) === String(task.id));
+                        if (t) t.status = "review";
+
+                        if (Array.isArray(window.__TASKS__)) {
+                            const dbTask = window.__TASKS__.find((x) => String(x.task_id) === String(task.id));
+                            if (dbTask) dbTask.status = "review";
+                        }
+
+                        await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
+
+                        closeModal();
+                        showSuccessNotification("Task sent to Review!");
+                        renderTaskBoard(currentUser, getCurrentProjectId());
+                    } catch (err) {
+                        console.error(err);
+                        alert("Could not update task. Check console.");
                     }
-
-                    closeModal();
-                    showSuccessNotification("Task deleted successfully!");
-                    renderTaskBoard(currentUser, getCurrentProjectId());
-                } catch (err) {
-                    console.error(err);
-                    alert("Could not delete task. Check console.");
-                }
-            });
-        }
-
-        // Rebind mark complete button safely
-        if (markBtn) {
-            const freshMarkBtn = markBtn.cloneNode(true);
-            markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
-
-            freshMarkBtn.addEventListener("click", async () => {
-                const ok = confirm("Mark this task as complete? It will be moved to Review.");
-                if (!ok) return;
-
-                try {
-                    const tasksNorm = window.__TASKS_NORM__ || [];
-                    const t = tasksNorm.find((x) => String(x.id) === String(task.id));
-                    if (t) t.status = "review";
-
-                    if (Array.isArray(window.__TASKS__)) {
-                        const dbTask = window.__TASKS__.find((x) => String(x.task_id) === String(task.id));
-                        if (dbTask) dbTask.status = "review";
-                    }
-
-                    await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
-
-                    closeModal();
-                    showSuccessNotification("Task sent to Review!");
-                    renderTaskBoard(currentUser, getCurrentProjectId());
-                } catch (err) {
-                    console.error(err);
-                    alert("Could not update task. Check console.");
-                }
-            });
+                });
+            }
         }
 
         // Show modal
@@ -3719,12 +3731,19 @@ function renderCardMenu(cardEl, state) {
     if (!dropdown) return;
 
     if (state === "active") {
+        // Only show "Mark as complete" if progress is 100%
+        const progress = parseInt(cardEl.dataset.progress || "0", 10);
+        const isComplete = (progress >= 100);
+
         dropdown.innerHTML = `
-      <button type="button" class="card-menu-item" data-action="complete">
+      ${isComplete ? `<button type="button" class="card-menu-item" data-action="complete">
         Mark as complete
-      </button>
+      </button>` : ''}
       <button type="button" class="card-menu-item" data-action="archive">
         Move to archives
+      </button>
+      <button type="button" class="card-menu-item" data-action="update">
+        Update project
       </button>
     `;
     } else if (state === "archived") {
@@ -3735,7 +3754,7 @@ function renderCardMenu(cardEl, state) {
     `;
     }
 
-    dropdown.hidden = true; // always close after update
+    dropdown.hidden = true;
 }
 
 
@@ -3785,7 +3804,7 @@ function updateEmptyStates() {
 
 function restoreDeadlinePill(cardEl) {
     const deadlineStr = cardEl.dataset.deadline || "";
-    
+
     // ✅ Recalculate the deadline pill based on current date
     if (!deadlineStr) {
         const pill = cardEl.querySelector(".days-pill");
@@ -3838,7 +3857,7 @@ function insertCardInSortedPosition(card, grid, sortBy = "due") {
     if (!grid) return;
 
     const existingCards = Array.from(grid.querySelectorAll(".project-card:not(.empty-state)"));
-    
+
     // If no cards, just append
     if (existingCards.length === 0) {
         grid.appendChild(card);
@@ -3860,11 +3879,11 @@ function insertCardInSortedPosition(card, grid, sortBy = "due") {
 
         switch (sortBy) {
             case "due": {
-                const cardDate = card.dataset.deadline 
-                    ? new Date(card.dataset.deadline) 
+                const cardDate = card.dataset.deadline
+                    ? new Date(card.dataset.deadline)
                     : new Date('9999-12-31');
-                const existingDate = existingCard.dataset.deadline 
-                    ? new Date(existingCard.dataset.deadline) 
+                const existingDate = existingCard.dataset.deadline
+                    ? new Date(existingCard.dataset.deadline)
                     : new Date('9999-12-31');
                 shouldInsertBefore = cardDate < existingDate;
                 break;
@@ -3922,15 +3941,6 @@ function updateCardUIAfterAction(action, cardEl) {
     const activeGrid = document.querySelector("#active-section .projects-grid");
     const archivedGrid = document.querySelector("#archived-section .projects-grid");
 
-    // Helper: set progress to 100% visually
-    function setProgressTo100(card) {
-        const fill = card.querySelector(".progress-fill");
-        const text = card.querySelector(".progress-text");
-        if (fill) fill.style.width = "100%";
-        if (text) text.textContent = "100% complete";
-        card.dataset.progress = "100";
-    }
-
     // Helper: set status pill text
     function setPill(card, text, extraClass) {
         const pill = card.querySelector(".days-pill");
@@ -3962,8 +3972,10 @@ function updateCardUIAfterAction(action, cardEl) {
         archivedGrid.appendChild(cardEl);
 
         cardEl.classList.add("project-card--archived");
-        setProgressTo100(cardEl);
+
         setPill(cardEl, "Completed", "is-completed");
+
+        cardEl.dataset.wasCompleted = "true";
 
         const archivedSection = document.getElementById("archived-section");
         if (archivedSection) archivedSection.style.display = "";
@@ -3972,10 +3984,11 @@ function updateCardUIAfterAction(action, cardEl) {
         updateEmptyStates();
     }
 
+
     if (action === "reinstate") {
         // ✅ Remove empty state first
         activeGrid?.querySelector(".empty-state")?.remove();
-        
+
         // ✅ Remove archived styling
         cardEl.classList.remove("project-card--archived");
 
@@ -4590,9 +4603,9 @@ document.addEventListener("click", (e) => {
  * @param {string} todoBase - Relative path to the to-do actions directory, e.g. "../to-do/"
  */
 function injectTodoWidget(todoBase) {
-  // Inline styles (same as todo_widget.php)
-  const style = document.createElement('style');
-  style.textContent = `
+    // Inline styles (same as todo_widget.php)
+    const style = document.createElement('style');
+    style.textContent = `
     .todo-panel[hidden] { display:none; opacity:0; transform:translateY(10px) scale(0.95); }
     .floating-todo-item { position:relative; padding-right:40px !important; cursor:pointer; }
     .todo-delete-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#D93025; cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center; border-radius:4px; opacity:0.3; transition:opacity 0.2s; z-index:2; }
@@ -4600,11 +4613,11 @@ function injectTodoWidget(todoBase) {
     .todo-delete-btn:hover { background:#FFF1F0; }
     .floating-todo-checkbox { cursor:pointer; }
   `;
-  document.head.appendChild(style);
+    document.head.appendChild(style);
 
-  // Widget HTML
-  const wrapper = document.createElement('div');
-  wrapper.innerHTML = `
+    // Widget HTML
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
     <div class="floating-todo-widget" id="floating-todo-widget">
       <button class="todo-fab" id="todo-fab" aria-label="Toggle personal todos">
         <i data-feather="check-square"></i>
@@ -4635,122 +4648,122 @@ function injectTodoWidget(todoBase) {
       </div>
     </div>
   `;
-  document.body.insertBefore(wrapper.firstElementChild, document.body.firstChild);
+    document.body.insertBefore(wrapper.firstElementChild, document.body.firstChild);
 
-  // Widget logic
-  const TODO_BASE = todoBase;
-  const fab = document.getElementById('todo-fab');
-  const panel = document.getElementById('todo-panel');
-  const closeBtn = document.getElementById('todo-close-btn');
-  const todoList = document.getElementById('floating-todo-list');
-  const badge = document.getElementById('todo-badge');
-  const addForm = document.getElementById('quick-add-todo-form');
+    // Widget logic
+    const TODO_BASE = todoBase;
+    const fab = document.getElementById('todo-fab');
+    const panel = document.getElementById('todo-panel');
+    const closeBtn = document.getElementById('todo-close-btn');
+    const todoList = document.getElementById('floating-todo-list');
+    const badge = document.getElementById('todo-badge');
+    const addForm = document.getElementById('quick-add-todo-form');
 
-  async function toggleTaskStatus(todoId, currentStatus) {
-    try {
-      const res = await fetch(TODO_BASE + 'update_todo_status.php', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ todo_id: todoId, is_completed: currentStatus == 1 ? 0 : 1 })
-      });
-      const result = await res.json();
-      if (result.success) { await loadTodos(); await updateBadge(); }
-      else alert(result.message || 'Failed to update task');
-    } catch(e) { console.error('Toggle error:', e); }
-  }
-
-  async function deleteTask(todoId) {
-    if (!confirm("Delete this task?")) return;
-    try {
-      const res = await fetch(TODO_BASE + 'delete_todo.php', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ todo_id: todoId })
-      });
-      const result = await res.json();
-      if (result.success) { await loadTodos(); await updateBadge(); }
-      else alert(result.message || 'Failed to delete task');
-    } catch(e) { console.error('Delete error:', e); }
-  }
-
-  async function loadTodos() {
-    try {
-      const response = await fetch(TODO_BASE + 'get_personal_todos.php');
-      const data = await response.json();
-      if (data.error) {
-        todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="alert-triangle"></i><p>' + data.error + '</p></div>';
-        feather.replace(); return;
-      }
-      if (!data || data.length === 0) {
-        todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="clipboard"></i><p>All caught up!</p></div>';
-        feather.replace(); return;
-      }
-      todoList.innerHTML = data.map(todo => {
-        const isDone = todo.is_completed == 1;
-        const deadline = todo.deadline ? new Date(todo.deadline) : null;
-        const formattedDate = deadline ? deadline.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + deadline.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true}) : 'No deadline';
-        const isOverdue = deadline && deadline < new Date() && !isDone;
-        return '<div class="floating-todo-item ' + (isDone ? 'completed' : '') + '">' +
-          '<div class="floating-todo-checkbox ' + (isDone ? 'checked' : '') + '" onclick="event.stopPropagation(); window.todoApp.toggleTaskStatus(' + todo.personal_task_id + ',' + todo.is_completed + ')">' +
-            (isDone ? '<i data-feather="check" style="width:12px;height:12px;"></i>' : '') +
-          '</div>' +
-          '<div class="floating-todo-content">' +
-            '<div class="floating-todo-text">' + todo.task_name + '</div>' +
-            '<div class="floating-todo-meta"><span class="' + (isOverdue ? 'overdue' : '') + '">' + formattedDate + '</span></div>' +
-          '</div>' +
-          '<button class="todo-delete-btn" onclick="event.stopPropagation(); window.todoApp.deleteTask(' + todo.personal_task_id + ')">' +
-            '<i data-feather="trash-2" style="width:14px;height:14px;"></i>' +
-          '</button>' +
-        '</div>';
-      }).join('');
-      feather.replace();
-    } catch(e) {
-      console.error('Load error:', e);
-      todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="alert-triangle"></i><p>Error loading tasks</p></div>';
-      feather.replace();
+    async function toggleTaskStatus(todoId, currentStatus) {
+        try {
+            const res = await fetch(TODO_BASE + 'update_todo_status.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ todo_id: todoId, is_completed: currentStatus == 1 ? 0 : 1 })
+            });
+            const result = await res.json();
+            if (result.success) { await loadTodos(); await updateBadge(); }
+            else alert(result.message || 'Failed to update task');
+        } catch (e) { console.error('Toggle error:', e); }
     }
-  }
 
-  async function updateBadge() {
-    try {
-      const response = await fetch(TODO_BASE + 'count_incomplete_todos.php');
-      const data = await response.json();
-      if (data.error) return;
-      const count = data.count || 0;
-      if (count > 0) {
-        badge.textContent = count;
-        badge.classList.remove('hidden');
-        document.getElementById('todo-status-text').textContent = 'You have ' + count + ' pending tasks';
-      } else {
-        badge.classList.add('hidden');
-        document.getElementById('todo-status-text').textContent = 'All tasks completed!';
-      }
-    } catch(e) { console.error('Badge error:', e); }
-  }
+    async function deleteTask(todoId) {
+        if (!confirm("Delete this task?")) return;
+        try {
+            const res = await fetch(TODO_BASE + 'delete_todo.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ todo_id: todoId })
+            });
+            const result = await res.json();
+            if (result.success) { await loadTodos(); await updateBadge(); }
+            else alert(result.message || 'Failed to delete task');
+        } catch (e) { console.error('Delete error:', e); }
+    }
 
-  fab.addEventListener('click', () => {
-    if (panel.hasAttribute('hidden')) { panel.removeAttribute('hidden'); loadTodos(); }
-    else panel.setAttribute('hidden', '');
-  });
-  closeBtn.addEventListener('click', () => panel.setAttribute('hidden', ''));
+    async function loadTodos() {
+        try {
+            const response = await fetch(TODO_BASE + 'get_personal_todos.php');
+            const data = await response.json();
+            if (data.error) {
+                todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="alert-triangle"></i><p>' + data.error + '</p></div>';
+                feather.replace(); return;
+            }
+            if (!data || data.length === 0) {
+                todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="clipboard"></i><p>All caught up!</p></div>';
+                feather.replace(); return;
+            }
+            todoList.innerHTML = data.map(todo => {
+                const isDone = todo.is_completed == 1;
+                const deadline = todo.deadline ? new Date(todo.deadline) : null;
+                const formattedDate = deadline ? deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + deadline.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'No deadline';
+                const isOverdue = deadline && deadline < new Date() && !isDone;
+                return '<div class="floating-todo-item ' + (isDone ? 'completed' : '') + '">' +
+                    '<div class="floating-todo-checkbox ' + (isDone ? 'checked' : '') + '" onclick="event.stopPropagation(); window.todoApp.toggleTaskStatus(' + todo.personal_task_id + ',' + todo.is_completed + ')">' +
+                    (isDone ? '<i data-feather="check" style="width:12px;height:12px;"></i>' : '') +
+                    '</div>' +
+                    '<div class="floating-todo-content">' +
+                    '<div class="floating-todo-text">' + todo.task_name + '</div>' +
+                    '<div class="floating-todo-meta"><span class="' + (isOverdue ? 'overdue' : '') + '">' + formattedDate + '</span></div>' +
+                    '</div>' +
+                    '<button class="todo-delete-btn" onclick="event.stopPropagation(); window.todoApp.deleteTask(' + todo.personal_task_id + ')">' +
+                    '<i data-feather="trash-2" style="width:14px;height:14px;"></i>' +
+                    '</button>' +
+                    '</div>';
+            }).join('');
+            feather.replace();
+        } catch (e) {
+            console.error('Load error:', e);
+            todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="alert-triangle"></i><p>Error loading tasks</p></div>';
+            feather.replace();
+        }
+    }
 
-  addForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const nameInput = document.getElementById('new-todo-name');
-    const dateInput = document.getElementById('new-todo-date');
-    if (!nameInput.value.trim()) { alert('Please enter a task name'); return; }
-    try {
-      const res = await fetch(TODO_BASE + 'create_personal_todo.php', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ task_name: nameInput.value, deadline: dateInput.value || null })
-      });
-      const result = await res.json();
-      if (result.success) { nameInput.value = ''; dateInput.value = ''; await loadTodos(); await updateBadge(); }
-      else alert(result.message || 'Failed to create task');
-    } catch(e) { console.error('Create error:', e); }
-  });
+    async function updateBadge() {
+        try {
+            const response = await fetch(TODO_BASE + 'count_incomplete_todos.php');
+            const data = await response.json();
+            if (data.error) return;
+            const count = data.count || 0;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+                document.getElementById('todo-status-text').textContent = 'You have ' + count + ' pending tasks';
+            } else {
+                badge.classList.add('hidden');
+                document.getElementById('todo-status-text').textContent = 'All tasks completed!';
+            }
+        } catch (e) { console.error('Badge error:', e); }
+    }
 
-  window.todoApp = { toggleTaskStatus, deleteTask, loadTodos, updateBadge };
-  updateBadge();
-  feather.replace();
+    fab.addEventListener('click', () => {
+        if (panel.hasAttribute('hidden')) { panel.removeAttribute('hidden'); loadTodos(); }
+        else panel.setAttribute('hidden', '');
+    });
+    closeBtn.addEventListener('click', () => panel.setAttribute('hidden', ''));
+
+    addForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById('new-todo-name');
+        const dateInput = document.getElementById('new-todo-date');
+        if (!nameInput.value.trim()) { alert('Please enter a task name'); return; }
+        try {
+            const res = await fetch(TODO_BASE + 'create_personal_todo.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_name: nameInput.value, deadline: dateInput.value || null })
+            });
+            const result = await res.json();
+            if (result.success) { nameInput.value = ''; dateInput.value = ''; await loadTodos(); await updateBadge(); }
+            else alert(result.message || 'Failed to create task');
+        } catch (e) { console.error('Create error:', e); }
+    });
+
+    window.todoApp = { toggleTaskStatus, deleteTask, loadTodos, updateBadge };
+    updateBadge();
+    feather.replace();
 }
 
 
@@ -4816,17 +4829,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
     } else if (pageId === 'kb-post') {
-    // DB-driven post page uses post.js now
-  } else if (pageId === 'kb-create') {
-      await setupCreateForm(currentUser);
-  } else if (pageId === 'settings-page') {
-      loadSettingsPage(currentUser);
-  } else if (pageId === 'kb-topics-all') {
-      await loadAllTopicsPage(currentUser);
-  } else if (pageId === 'kb-create-topic') {
-      // Create Topic form page
-      setupCreateTopicForm(currentUser);
-  } else if (pageId === 'home-page') {
+        // DB-driven post page uses post.js now
+    } else if (pageId === 'kb-create') {
+        await setupCreateForm(currentUser);
+    } else if (pageId === 'settings-page') {
+        loadSettingsPage(currentUser);
+    } else if (pageId === 'kb-topics-all') {
+        await loadAllTopicsPage(currentUser);
+    } else if (pageId === 'kb-create-topic') {
+        // Create Topic form page
+        setupCreateTopicForm(currentUser);
+    } else if (pageId === 'home-page') {
         // Home page with to-do list
         loadHomePage(currentUser);
     } else if (pageId === 'progress-page') {
@@ -5116,15 +5129,15 @@ document.addEventListener("DOMContentLoaded", () => {
  * Helper: Get current user email from various sources
  */
 function getCurrentUserEmail() {
-  // Try from window object first (set by PHP)
-  if (window.__USER__?.email) return window.__USER__.email;
-  
-  // Try from URL parameter
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('user')) return params.get('user');
-  
-  // Default fallback (you might need to adjust this)
-  return 'user@make-it-all.co.uk';
+    // Try from window object first (set by PHP)
+    if (window.__USER__?.email) return window.__USER__.email;
+
+    // Try from URL parameter
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('user')) return params.get('user');
+
+    // Default fallback (you might need to adjust this)
+    return 'user@make-it-all.co.uk';
 }
 
 
@@ -5163,31 +5176,31 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 (function renderAnnouncements() {
-  const announcements = [
-    {
-      title: "🔧 Scheduled maintenance",
-      body: "The platform will be briefly unavailable on Sunday from 9:00–9:30 PM for routine updates. Please save any drafts beforehand.",
-      date: "9 Feb 2026"
-    },
-    {
-      title: "⏱ Response time expectations",
-      body: "Technical posts are usually answered by a specialist within 24–48 hours. If your issue is urgent, make sure your title clearly explains the problem.",
-      date: "6 Feb 2026"
-    },
-    {
-      title: "💙 Mental health & wellbeing support",
-      body: "If you’re feeling overwhelmed or struggling, confidential mental health support is available through our employee assistance programme. You’re not alone — reaching out is okay.",
-      date: "5 Feb 2026"
-    }
-  ];
+    const announcements = [
+        {
+            title: "🔧 Scheduled maintenance",
+            body: "The platform will be briefly unavailable on Sunday from 9:00–9:30 PM for routine updates. Please save any drafts beforehand.",
+            date: "9 Feb 2026"
+        },
+        {
+            title: "⏱ Response time expectations",
+            body: "Technical posts are usually answered by a specialist within 24–48 hours. If your issue is urgent, make sure your title clearly explains the problem.",
+            date: "6 Feb 2026"
+        },
+        {
+            title: "💙 Mental health & wellbeing support",
+            body: "If you’re feeling overwhelmed or struggling, confidential mental health support is available through our employee assistance programme. You’re not alone — reaching out is okay.",
+            date: "5 Feb 2026"
+        }
+    ];
 
-  const container = document.querySelector(".announcement-content-placeholder");
-  if (!container) return;
+    const container = document.querySelector(".announcement-content-placeholder");
+    if (!container) return;
 
-  // Show latest 3 announcements only (cleaner UI)
-  const latest = announcements.slice(0, 3);
+    // Show latest 3 announcements only (cleaner UI)
+    const latest = announcements.slice(0, 3);
 
-  container.innerHTML = latest.map(a => `
+    container.innerHTML = latest.map(a => `
     <div class="announcement-item">
       <strong class="announcement-title">${a.title}</strong>
       <p class="announcement-body">${a.body}</p>
@@ -5197,49 +5210,49 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 
 function setupKbLikeButtonsOnce() {
-  if (document.body.dataset.kbLikesBound === "1") return;
-  document.body.dataset.kbLikesBound = "1";
+    if (document.body.dataset.kbLikesBound === "1") return;
+    document.body.dataset.kbLikesBound = "1";
 
-  document.addEventListener("click", async (e) => {
-    const btn = e.target.closest(".kb-like-btn");
-    if (!btn) return;
+    document.addEventListener("click", async (e) => {
+        const btn = e.target.closest(".kb-like-btn");
+        if (!btn) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
 
-    const postId = parseInt(btn.dataset.postId, 10);
-    if (!postId) return;
+        const postId = parseInt(btn.dataset.postId, 10);
+        if (!postId) return;
 
-    const countEl = btn.querySelector(".kb-like-count");
-    const oldVal = countEl ? parseInt(countEl.textContent || "0", 10) : 0;
+        const countEl = btn.querySelector(".kb-like-count");
+        const oldVal = countEl ? parseInt(countEl.textContent || "0", 10) : 0;
 
-    // optimistic UI
-    if (countEl) countEl.textContent = String(oldVal + 1);
-    btn.disabled = true;
+        // optimistic UI
+        if (countEl) countEl.textContent = String(oldVal + 1);
+        btn.disabled = true;
 
-    try {
-      const fd = new FormData();
-      fd.append("post_id", String(postId));
+        try {
+            const fd = new FormData();
+            fd.append("post_id", String(postId));
 
-      const res = await fetch(`${KB_ACTIONS_BASE}/like_post.php`, {
-        method: "POST",
-        body: fd,
-        credentials: "include"
-      });
+            const res = await fetch(`${KB_ACTIONS_BASE}/like_post.php`, {
+                method: "POST",
+                body: fd,
+                credentials: "include"
+            });
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Like failed");
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || "Like failed");
 
-      // sync UI with DB value
-      if (countEl) countEl.textContent = String(data.view_count ?? (oldVal + 1));
-    } catch (err) {
-      // revert on fail
-      if (countEl) countEl.textContent = String(oldVal);
-      console.error(err);
-      alert("Could not like post. Please try again.");
-    } finally {
-      btn.disabled = false;
-      if (window.feather) feather.replace();
-    }
-  });
+            // sync UI with DB value
+            if (countEl) countEl.textContent = String(data.view_count ?? (oldVal + 1));
+        } catch (err) {
+            // revert on fail
+            if (countEl) countEl.textContent = String(oldVal);
+            console.error(err);
+            alert("Could not like post. Please try again.");
+        } finally {
+            btn.disabled = false;
+            if (window.feather) feather.replace();
+        }
+    });
 }

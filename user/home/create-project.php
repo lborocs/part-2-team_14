@@ -117,14 +117,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':uid' => $leaderId
     ]);
 
-    // ✅ NEW: Promote selected user to team_leader (but never downgrade manager)
+    // Promote ONLY team_member to team_leader (NEVER change technical_specialist, nver downgrade manager)
     $promote = $db->prepare("
         UPDATE users
         SET role = 'team_leader'
         WHERE user_id = :uid
-        AND role IN ('team_member','technical_specialist')
+        AND role = 'team_member'
     ");
     $promote->execute([':uid' => $leaderId]);
+
 
     $userEmail = $_SESSION['email'] ?? '';
     $redirect = "../project/projects.php?project_id=" . urlencode($newProjectId);
@@ -256,7 +257,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="../app.js"></script>
-    <script>feather.replace();</script>
+    <script>
+        feather.replace();
+    </script>
 </body>
 
 </html>

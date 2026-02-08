@@ -106,13 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
       $stmt = $db->prepare($sql);
       $stmt->execute([':id' => $projectId]);
     } elseif ($action === 'complete') {
-      // Mark complete AND archive (and set progress to 100)
       $sql = "UPDATE projects
-              SET status = 'archived',
-                  completed_date = COALESCE(completed_date, CURDATE()),
-                  completion_percentage = 100.00,
-                  archived_at = NOW()
-              WHERE project_id = :id";
+          SET status = 'archived',
+              completed_date = COALESCE(completed_date, CURDATE()),
+              archived_at = NOW()
+          WHERE project_id = :id";
       $stmt = $db->prepare($sql);
       $stmt->execute([':id' => $projectId]);
     } elseif ($action === 'reinstate') {
@@ -125,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
     } elseif ($action === 'update_project') {
 
       $name = trim($_POST['project_name'] ?? '');
-      $deadline = $_POST['deadline'] ?? null;
+      $deadline = $_POST['deadline'] ?? '';
       $desc = trim($_POST['description'] ?? '');
       $leaderId = isset($_POST['team_leader_id']) ? (int)$_POST['team_leader_id'] : 0;
 
@@ -134,16 +132,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
         exit;
       }
 
-      // allow blank deadline
-      if ($deadline === '') $deadline = null;
+      if ($deadline === '') {
+        echo json_encode(['success' => false, 'message' => 'Due date is required']);
+        exit;
+      }
 
-      // leader required (you can relax this if you want "unassigned")
       if ($leaderId <= 0) {
         echo json_encode(['success' => false, 'message' => 'Please select a team leader from suggestions']);
         exit;
       }
 
-      // Update project
+      // --- Find current leader so we can demote them in project_members ---
+      $oldLeaderStmt = $db->prepare("SELECT team_leader_id FROM projects WHERE project_id = :pid LIMIT 1");
+      $oldLeaderStmt->execute([':pid' => $projectId]);
+      $oldLeaderId = (int)($oldLeaderStmt->fetchColumn() ?? 0);
+
+      // --- Update project main fields ---
       $sql = "UPDATE projects
           SET project_name = :name,
               deadline = :deadline,
@@ -154,13 +158,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
       $stmt->execute([
         ':name' => $name,
         ':deadline' => $deadline,
-        ':descr' => $desc,
+        ':descr' => ($desc !== '' ? $desc : null),
         ':leader' => $leaderId,
         ':id' => $projectId
       ]);
 
+      // --- Ensure NEW leader exists in project_members and is marked as team_leader ---
+      // Insert if missing, otherwise update role
+      $pmUpsert = $db->prepare("
+        INSERT INTO project_members (project_id, user_id, project_role)
+        VALUES (:pid, :uid, 'team_leader')
+        ON DUPLICATE KEY UPDATE project_role = 'team_leader', left_at = NULL
+      ");
+      $pmUpsert->execute([':pid' => $projectId, ':uid' => $leaderId]);
+
+      // --- Demote OLD leader to member (but only if old leader exists and is different) ---
+      if ($oldLeaderId > 0 && $oldLeaderId !== $leaderId) {
+        $demote = $db->prepare("
+          UPDATE project_members
+          SET project_role = 'member'
+          WHERE project_id = :pid
+            AND user_id = :uid
+        ");
+        $demote->execute([':pid' => $projectId, ':uid' => $oldLeaderId]);
+      }
+
+      // --- Promote globally ONLY if the person is a team_member ---
+      $promote = $db->prepare("
+          UPDATE users
+          SET role = 'team_leader'
+          WHERE user_id = :uid
+            AND role = 'team_member'
+      ");
+      $promote->execute([':uid' => $leaderId]);
+
       // Return leader info for UI update
-      $u = $db->prepare("SELECT first_name, last_name, profile_picture FROM users WHERE user_id = :uid LIMIT 1");
+      $u = $db->prepare("SELECT first_name, last_name, profile_picture, role FROM users WHERE user_id = :uid LIMIT 1");
       $u->execute([':uid' => $leaderId]);
       $leader = $u->fetch(PDO::FETCH_ASSOC);
 
@@ -175,7 +208,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
           'description' => $desc,
           'team_leader_id' => $leaderId,
           'leader_name' => $leaderName,
-          'leader_picture' => $leader['profile_picture'] ?? ''
+          'leader_picture' => $leader['profile_picture'] ?? '',
+          'leader_role' => $leader['role'] ?? ''
         ]
       ]);
       exit;
@@ -209,23 +243,38 @@ function daysLeft(?string $estimated, ?string $deadline): ?int
 //gets active projects with sql statement
 $activeSql = "
   SELECT DISTINCT
-  p.project_id,
-  p.project_name,
-  p.description,
-  p.team_leader_id,
-  p.status,
-  p.priority,
-  p.deadline,
-  p.estimated_completion_date,
-  p.completion_percentage,
-  u.first_name AS leader_first_name,
-  u.last_name  AS leader_last_name,
-  u.profile_picture AS leader_picture
+    p.project_id,
+    p.project_name,
+    p.description,
+    p.team_leader_id,
+    p.status,
+    p.priority,
+    p.deadline,
+    p.estimated_completion_date,
+
+    -- live progress (doesn't rely on stored completion_percentage)
+    COALESCE(tp.completion_percentage, 0) AS completion_percentage,
+
+    u.first_name AS leader_first_name,
+    u.last_name  AS leader_last_name,
+    u.profile_picture AS leader_picture
 
   FROM projects p
   LEFT JOIN users u ON p.team_leader_id = u.user_id
-  LEFT JOIN project_members pm
-    ON pm.project_id = p.project_id
+  LEFT JOIN project_members pm ON pm.project_id = p.project_id
+
+  --  task progress subquery (1 row per project)
+  LEFT JOIN (
+    SELECT
+      project_id,
+      ROUND(
+        (SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(*), 0),
+        2
+      ) AS completion_percentage
+    FROM tasks
+    GROUP BY project_id
+  ) tp ON tp.project_id = p.project_id
+
   WHERE p.status IN ('active','planning','on_hold','completed')
     AND p.status <> 'archived'
     AND (
@@ -235,6 +284,7 @@ $activeSql = "
     )
   ORDER BY p.deadline ASC
 ";
+
 $activeStmt = $db->prepare($activeSql);
 $activeStmt->execute([':uid' => $currentUserId]);
 $activeProjects = $activeStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -251,14 +301,28 @@ if ($isManager) {
     p.priority,
     p.deadline,
     p.estimated_completion_date,
-    p.completion_percentage,
+
+    COALESCE(tp.completion_percentage, 0) AS completion_percentage,
+
     u.first_name AS leader_first_name,
     u.last_name  AS leader_last_name,
     u.profile_picture AS leader_picture
+
   FROM projects p
   LEFT JOIN users u ON p.team_leader_id = u.user_id
-  LEFT JOIN project_members pm
-    ON pm.project_id = p.project_id
+  LEFT JOIN project_members pm ON pm.project_id = p.project_id
+
+  LEFT JOIN (
+    SELECT
+      project_id,
+      ROUND(
+        (SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(*), 0),
+        2
+      ) AS completion_percentage
+    FROM tasks
+    GROUP BY project_id
+  ) tp ON tp.project_id = p.project_id
+
   WHERE p.status = 'archived'
     AND (
       p.created_by = :uid
@@ -327,8 +391,8 @@ if ($isManager) {
             <div>
 
               <a href="../home/create-project.php" class="create-new-project-button">
-                <i data-feather="plus"></i>
-                Create New Project
+                <i data-feather="folder-plus"></i>
+                Create Project
               </a>
             </div>
           <?php endif; ?>
@@ -430,10 +494,14 @@ if ($isManager) {
                       </button>
 
                       <div class="card-menu-dropdown" hidden>
-                        <button type="button" class="card-menu-item" data-action="complete">Mark as complete</button>
+                        <?php if ((int)$progress >= 100): ?>
+                          <button type="button" class="card-menu-item" data-action="complete">Mark as complete</button>
+                        <?php endif; ?>
+
                         <button type="button" class="card-menu-item" data-action="archive">Move to archives</button>
                         <button type="button" class="card-menu-item" data-action="update">Update project</button>
                       </div>
+
                     </div>
                   <?php endif; ?>
 
@@ -465,9 +533,11 @@ if ($isManager) {
                     <span class="leader-name"><?= htmlspecialchars($leaderName) ?></span>
                   </div>
 
-                  <div class="<?= $dateClass ?>">
-                    <i data-feather="clock"></i>
-                    <span><?= htmlspecialchars($dateText) ?></span>
+                  <div class="card-footer">
+                    <div class="<?= $dateClass ?>">
+                      <i data-feather="clock"></i>
+                      <span><?= htmlspecialchars($dateText) ?></span>
+                    </div>
                   </div>
                 </article>
               <?php endforeach; ?>
@@ -567,7 +637,13 @@ if ($isManager) {
 
                       <h3 class="project-title"><?= htmlspecialchars($p['project_name']) ?></h3>
 
-                      <div class="small-label">PROGRESS</div>
+                      <div class="progress-head">
+                        <span class="small-label">PROGRESS</span>
+                        <span class="priority-pill priority-<?= htmlspecialchars($priority) ?>">
+                          <?= ucfirst(htmlspecialchars($priority)) ?> priority
+                        </span>
+                      </div>
+
                       <div class="progress-track" aria-hidden="true">
                         <div class="progress-fill" style="width: <?= (int)round($progress) ?>%;"></div>
                       </div>

@@ -23,18 +23,19 @@ $bannerColors = [
     '#7D8FA0',  // Dusty Blue
 ];
 
-function getEmployeeColor($userId, $bannerColors, &$colorMap) {
+function getEmployeeColor($userId, $bannerColors, &$colorMap)
+{
     // If color already assigned in this session, return it
     if (isset($colorMap[$userId])) {
         return $colorMap[$userId];
     }
-    
+
     // Randomly assign one of the 10 colors
     $selectedColor = $bannerColors[array_rand($bannerColors)];
-    
+
     // Store in session for persistence
     $colorMap[$userId] = $selectedColor;
-    
+
     return $selectedColor;
 }
 
@@ -48,23 +49,23 @@ if (!isset($_SESSION['employee_colors'])) {
 // ===============================
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_employees') {
     header('Content-Type: application/json');
-    
+
     $employeeIds = $_GET['ids'] ?? '';
     if (empty($employeeIds)) {
         echo json_encode([]);
         exit;
     }
-    
+
     $ids = explode(',', $employeeIds);
     $ids = array_filter(array_map('intval', $ids));
-    
+
     if (empty($ids)) {
         echo json_encode([]);
         exit;
     }
-    
+
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    
+
     $stmt = $db->prepare("
         SELECT user_id, first_name, last_name, email, profile_picture
         FROM users
@@ -72,16 +73,16 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_employees') {
     ");
     $stmt->execute($ids);
     $employees = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // Format response with colors (matching add-to-project.php)
-    $response = array_map(function($emp) use ($bannerColors) {
+    $response = array_map(function ($emp) use ($bannerColors) {
         // Get color from session
         $color = getEmployeeColor(
-            $emp['user_id'], 
-            $bannerColors, 
+            $emp['user_id'],
+            $bannerColors,
             $_SESSION['employee_colors']
         );
-        
+
         return [
             'id' => (int)$emp['user_id'],
             'name' => $emp['first_name'] . ' ' . $emp['last_name'],
@@ -100,7 +101,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_employees') {
 // ===============================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json');
-    
+
     // Collect fields from form
     $projectName = trim($_POST['project_name'] ?? '');
     $priority    = $_POST['priority'] ?? 'medium';
@@ -163,12 +164,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ':uid' => $leaderId
         ]);
 
-        // Promote selected user to team_leader in users table
+        // Manager never demoted
+        // Promote ONLY team_member to team_leader in users table
+        // Technical specialists should NOT change global role.
         $promote = $db->prepare("
             UPDATE users
             SET role = 'team_leader'
             WHERE user_id = :uid
-            AND role IN ('team_member','technical_specialist')
+            AND role = 'team_member'
         ");
         $promote->execute([':uid' => $leaderId]);
 
@@ -184,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     WHERE project_id = :pid AND user_id = :uid AND left_at IS NULL
                 ");
                 $checkStmt->execute([':pid' => $newProjectId, ':uid' => $empId]);
-                
+
                 if ($checkStmt->fetchColumn() > 0) continue; // Already a member
 
                 // Insert as team member (NOT team leader)
@@ -206,7 +209,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'project_id' => $newProjectId,
             'message' => 'Project created successfully!'
         ]);
-
     } catch (PDOException $e) {
         $db->rollBack();
         echo json_encode([
@@ -214,7 +216,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'message' => 'Database error: ' . $e->getMessage()
         ]);
     }
-    
+
     exit;
 }
 
@@ -273,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="kb-layout-wrapper">
                 <div class="kb-main-content">
                     <form id="create-project-form" class="create-post-form">
-                        
+
                         <!-- Selected Employees Display -->
                         <div class="form-group">
                             <label>Selected Employees (<span id="employee-count">0</span>)</label>
@@ -288,13 +290,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <!-- Project Name -->
                         <div class="form-group">
                             <label for="project-name">Project Name</label>
-                            <input 
-                                type="text" 
-                                id="project-name" 
+                            <input
+                                type="text"
+                                id="project-name"
                                 name="project_name"
-                                placeholder="e.g., Q4 Marketing Campaign, Website Redesign" 
-                                required
-                            >
+                                placeholder="e.g., Q4 Marketing Campaign, Website Redesign"
+                                required>
                         </div>
 
                         <!-- Priority -->
@@ -311,24 +312,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <!-- Deadline -->
                         <div class="form-group">
                             <label for="project-deadline">Deadline</label>
-                            <input 
-                                type="date" 
-                                id="project-deadline" 
+                            <input
+                                type="date"
+                                id="project-deadline"
                                 name="deadline"
                                 min="<?= date('Y-m-d') ?>"
-                                required
-                            >
+                                required>
                         </div>
 
                         <!-- Description -->
                         <div class="form-group">
                             <label for="project-description">Description (Optional)</label>
-                            <textarea 
-                                id="project-description" 
+                            <textarea
+                                id="project-description"
                                 name="description"
-                                rows="5" 
-                                placeholder="Briefly describe this project's goals."
-                            ></textarea>
+                                rows="5"
+                                placeholder="Briefly describe this project's goals."></textarea>
                         </div>
 
                         <!-- Team Leader Selection -->
@@ -339,11 +338,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 id="leader-search"
                                 placeholder="Type a name or email..."
                                 autocomplete="off"
-                                required
-                            />
-                            
+                                required />
+
                             <input type="hidden" name="team_leader_id" id="team-leader-id" required />
-                            
+
                             <!-- Suggestions dropdown -->
                             <div id="leader-results" class="autocomplete-results" style="display:none;"></div>
                         </div>
@@ -368,7 +366,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="create-new-project.js"></script>
-    <script>feather.replace();</script>
+    <script>
+        feather.replace();
+    </script>
 </body>
 
 </html>
