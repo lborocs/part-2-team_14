@@ -7,9 +7,10 @@ body {
     margin: 0;
     height: 100vh;
     color: #1E1E1E;
-    overflow: hidden;
-    /* ADDED: Prevent body scroll */
+    overflow: hidden; /* Keep sidebar fixed on ALL pages */
 }
+
+/* Remove the page-specific body overflow rules - not needed */
 
 * {
     box-sizing: border-box;
@@ -114,10 +115,28 @@ body {
 .main-content {
     flex: 1;
     padding: 0;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     min-height: 0;
+    overflow-y: auto; /* Default: allow scrolling in main content */
+    height: 100vh;
+}
+
+/* Main content scrolling - specific overrides for pages that need no scroll */
+body#projects-page .main-content,
+body#manager-progress-page .main-content,
+body#progress-page .main-content {
+    overflow: hidden; /* These pages manage their own scroll in sub-containers */
+}
+
+/* All other pages (settings, home, knowledge base, etc.) scroll in main-content */
+body#settings-page .main-content,
+body#home-page .main-content,
+body#kb-index .main-content,
+body#kb-post .main-content,
+body#kb-create .main-content {
+    overflow-y: auto !important;
+    height: 100vh;
 }
 
 /* Project Header (Updated for proper top-right button alignment) */
@@ -868,7 +887,7 @@ body {
 }
 
 /* =============================
-   Project Header ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Right Actions
+   Project Header – Right Actions
 ============================= */
 .project-header-actions { 
     display: flex; 
@@ -1263,21 +1282,8 @@ html, body {
   height: 100%;
 }
 
-body {
-  height: 100%;
-  overflow: hidden; 
-}
-
 .dashboard-container {
   height: 100vh; 
-}
-
-.main-content {
-  height: 100%;
-  min-height: 0;     
-  overflow: hidden;  
-  display: flex;
-  flex-direction: column;
 }
 
 /*make sure task board fills remaining space and allows scrolling */

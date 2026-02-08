@@ -1,5 +1,6 @@
 /* Manager Progress Page Layout (match Progress page layout) */
-.manager-progress-layout {
+/* SCOPED TO PREVENT CONFLICTS WITH OTHER PAGES */
+#manager-progress-page .manager-progress-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 30px;
@@ -9,7 +10,7 @@
 }
 
 /* Make Team Progress card look like Upcoming Deadlines card */
-.member-progress-card{
+#manager-progress-page .member-progress-card{
   background: #fff;
   border-radius: 12px;
   padding: 30px;
@@ -18,26 +19,26 @@
 }
 
 /* Left + Right columns behave like normal grid columns */
-.manager-progress-left,
-.manager-progress-right {
+#manager-progress-page .manager-progress-left,
+#manager-progress-page .manager-progress-right {
     display: flex;
     flex-direction: column;
 }
 
 /* Optional: keep the top cards equal height if you want */
-.manager-progress-left > section,
-.manager-progress-right > section {
+#manager-progress-page .manager-progress-left > section,
+#manager-progress-page .manager-progress-right > section {
     width: 100%;
 }
 
-.member-progress-card h2{
+#manager-progress-page .member-progress-card h2{
   font-size: 22px;
   font-weight: 600;
   margin: 0;
 }
 
 /* Header layout: title left, search right */
-.member-progress-header{
+#manager-progress-page .member-progress-header{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -48,7 +49,7 @@
 
 
 /* Search bar wrapper matches your "Search tasks..." look */
-.member-progress-search-wrap {
+#manager-progress-page .member-progress-search-wrap {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -61,13 +62,13 @@
   margin-left: auto
 }
 
-.member-progress-search-wrap i {
+#manager-progress-page .member-progress-search-wrap i {
   width: 18px;
   height: 18px;
   color: #777;
 }
 
-.member-progress-search {
+#manager-progress-page .member-progress-search {
   border: 0;
   outline: 0;
   width: 100%;
@@ -76,20 +77,20 @@
   color: #111;
 }
 
-.member-progress-search::placeholder {
+#manager-progress-page .member-progress-search::placeholder {
   color: #8c8c8c;
   font-family: "Poppins", sans-serif;
   font-size: 14px;
 }
 
 /* Make the list scrollable */
-.member-progress-list{
+#manager-progress-page .member-progress-list{
   max-height: 160px;
   overflow-y: auto;
   padding-right: 8px;
 }
 
-.member-progress-row{
+#manager-progress-page .member-progress-row{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -103,13 +104,13 @@
 }
 
 /* Left side: name + completed text */
-.member-name-wrap{
+#manager-progress-page .member-name-wrap{
   min-width: 200px;   /* adjust if names are long */
   flex: 0 0 auto;
 }
 
 /* Right side: progress bar + % */
-.member-bar-wrap{
+#manager-progress-page .member-bar-wrap{
   flex: 1;
   display: flex;
   align-items: center;
@@ -117,26 +118,26 @@
 }
 
 /* Name + subtitle */
-.member-name {
+#manager-progress-page .member-name {
   font-weight: 600;
   font-size: 16px;
   color: #111;
 }
 
-.member-sub {
+#manager-progress-page .member-sub {
   font-size: 13px;
   color: #777;
   margin-top: 3px;
 }
 
 /* Bar smaller */
-.member-bar-wrap {
+#manager-progress-page .member-bar-wrap {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.member-bar{
+#manager-progress-page .member-bar{
   flex: 1;
   height: 8px;
   background: #ededed;
@@ -144,14 +145,14 @@
   overflow: hidden;
 }
 
-.member-bar-fill{
+#manager-progress-page .member-bar-fill{
   height: 100%;
   background: #FBC02D;
   border-radius: 999px;
 }
 
 /* Percent right side */
-.member-percent {
+#manager-progress-page .member-percent {
   font-weight: 700;
   font-size: 14px;
   color: #111;
@@ -161,7 +162,7 @@
 
 /* Responsive (same as your progress page) */
 @media (max-width: 1200px) {
-    .manager-progress-layout {
+    #manager-progress-page .manager-progress-layout {
         grid-template-columns: 1fr;
     }
 }
@@ -170,20 +171,20 @@
    DEADLINES CARD - 3 COLUMNS ONLY
    ======================================== */
 
-.deadlines-card {
+#manager-progress-page .deadlines-card {
   background: #fff;
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.deadlines-card h2 {
+#manager-progress-page .deadlines-card h2 {
   font-size: 22px;
   font-weight: 600;
   margin: 0 0 10px 0;
 }
 
-.deadlines-columns {
+#manager-progress-page .deadlines-columns {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 16px;
@@ -202,13 +203,13 @@
 
 
 /* Scrollable list */
-.deadlines-list {
+#manager-progress-page .deadlines-list {
   max-height: 130px;
   overflow-y: auto;
   padding-right: 10px;
 }
 
-.deadline-row {
+#manager-progress-page .deadline-row {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 16px;
@@ -221,17 +222,17 @@
 }
 
 
-.deadline-row:hover {
+#manager-progress-page .deadline-row:hover {
   background: #fafafa;
   transform: translateX(2px);
 }
 
-.deadline-row:active {
+#manager-progress-page .deadline-row:active {
   background: #f0f0f0;
 }
 
 /* Column styling */
-.col-task {
+#manager-progress-page .col-task {
   font-weight: 600;
   font-size: 15px;
   color: #111;
@@ -240,18 +241,23 @@
   text-overflow: ellipsis;
 }
 
-.col-due {
+#manager-progress-page .col-due {
   font-size: 14px;
   color: #666;
 }
 
-.col-activity {
+#manager-progress-page .col-due.overdue {
+  color: #ef5350;
+  font-weight: 600;
+}
+
+#manager-progress-page .col-activity {
   font-size: 14px;
   color: #999;
 }
 
 /* ONE scroll container (header + rows together) */
-.deadlines-scroll{
+#manager-progress-page .deadlines-scroll{
   max-height: 180px;     
   overflow-y: auto;
   overflow-x: hidden;
@@ -259,14 +265,14 @@
 }
 
 /* stop the inner list from scrolling */
-.deadlines-list{
+#manager-progress-page .deadlines-list{
   max-height: none;
   overflow: visible;
   padding-right: 0;
 }
 
-.deadlines-columns,
-.deadline-row{
+#manager-progress-page .deadlines-columns,
+#manager-progress-page .deadline-row{
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   column-gap: 16px;
@@ -274,19 +280,19 @@
 }
 
 /* make rows smaller so 3 fit */
-.deadline-row{
+#manager-progress-page .deadline-row{
   padding: 4px 16px;
 }
 
 /* hover back */
-.deadline-row:hover{
+#manager-progress-page .deadline-row:hover{
   background: #fafafa;
   transform: translateX(2px);
 }
 
 
 /* ========================================
-   TASK DETAIL MODAL - Matching progress.css
+   TASK DETAIL MODAL - Matching progress.css - FIXED LAYOUT
    ======================================== */
 
 #deadline-task-modal {
@@ -322,6 +328,8 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   animation: slideUp 0.3s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes slideUp {
@@ -342,6 +350,7 @@
   padding: 24px 28px 20px;
   border-bottom: 1px solid #f0f0f0;
   position: relative;
+  flex-shrink: 0;
 }
 
 .task-detail-header h3 {
@@ -448,11 +457,11 @@
 .menu-item-danger:hover {
   background: #fef2f2;
 }
-
 .task-detail-body {
-  padding: 24px 28px;
-  max-height: 60vh;
+  padding: 24px 28px 20px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .task-detail-row {
@@ -480,6 +489,7 @@
   color: #111;
   font-weight: 500;
   text-align: right;
+  max-width: 320px;
 }
 
 /* Status and Priority badges */
@@ -573,4 +583,512 @@
   line-height: 1.45;
   text-align: right;
   color: #111;
+}
+
+/* Task Edit Mode */
+.task-edit-input,
+.task-edit-textarea,
+.task-edit-select {
+  width: 100%;
+  max-width: 320px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #111;
+  background: #f9f9f9;
+}
+
+.task-edit-input:focus,
+.task-edit-textarea:focus,
+.task-edit-select:focus {
+  outline: none;
+  border-color: #FBC02D;
+  background: #fff;
+}
+
+.task-edit-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.task-edit-select {
+  cursor: pointer;
+}
+
+.task-edit-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 28px;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.task-edit-cancel,
+.task-edit-save {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.task-edit-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.task-edit-cancel:hover {
+  background: #e8e8e8;
+}
+
+.task-edit-save {
+  background: #FBC02D;
+  color: #111;
+}
+
+.task-edit-save:hover {
+  background: #F9B200;
+}
+
+/* ========================================
+   GANTT CHART - With Red/Amber/Green Colors
+   ======================================== */
+
+#manager-progress-page .gantt-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+#manager-progress-page .gantt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+#manager-progress-page .gantt-header h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+#manager-progress-page .gantt-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Date Navigation */
+#manager-progress-page .gantt-date-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f5f5f5;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+#manager-progress-page .gantt-nav-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+#manager-progress-page .gantt-nav-btn:hover {
+  background: #e8e8e8;
+}
+
+#manager-progress-page .gantt-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#manager-progress-page .gantt-nav-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+#manager-progress-page .gantt-current-period {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111;
+  min-width: 120px;
+  text-align: center;
+}
+
+#manager-progress-page .gantt-period-toggle {
+  display: flex;
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+#manager-progress-page .gantt-period-btn {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#manager-progress-page .gantt-period-btn.active {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Legend */
+#manager-progress-page .gantt-legend {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+#manager-progress-page .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #555;
+  font-weight: 500;
+}
+
+#manager-progress-page .legend-color {
+  width: 24px;
+  height: 10px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+#manager-progress-page .legend-color.status-red {
+  background: #ef5350;
+}
+
+#manager-progress-page .legend-color.status-amber {
+  background: #ffa726;
+}
+
+#manager-progress-page .legend-color.status-green {
+  background: #66bb6a;
+}
+
+/* Gantt Container - Dynamic Height */
+#manager-progress-page .gantt-container {
+  overflow: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fff;
+  position: relative;
+  max-height: 600px;
+}
+
+/* Gantt Grid */
+#manager-progress-page .gantt-grid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-width: 100%;
+}
+
+/* Left Column - Employee Names */
+#manager-progress-page .gantt-left-column {
+  background: #f8f9fa;
+  border-right: 2px solid #e0e0e0;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+}
+
+#manager-progress-page .gantt-left-header {
+  padding: 14px 16px;
+  font-weight: 600;
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e0e0e0;
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 11;
+  height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+/* UPDATED: Dynamic row height based on task count */
+#manager-progress-page .gantt-employee-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+  background: #fff;
+  transition: background 0.15s ease;
+}
+
+#manager-progress-page .gantt-employee-row:last-child {
+  border-bottom: none;
+}
+
+#manager-progress-page .gantt-employee-row:hover {
+  background: #f9f9f9;
+}
+
+#manager-progress-page .gantt-employee-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+#manager-progress-page .gantt-employee-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+#manager-progress-page .gantt-employee-info {
+  flex: 1;
+  min-width: 0;
+}
+
+#manager-progress-page .gantt-employee-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+#manager-progress-page .gantt-employee-task-count {
+  font-size: 12px;
+  color: #777;
+}
+
+/* Right Column - Timeline */
+#manager-progress-page .gantt-right-column {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+#manager-progress-page .gantt-timeline-header {
+  display: flex;
+  background: #f8f9fa;
+  border-bottom: 2px solid #e0e0e0;
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  height: 48px;
+}
+
+#manager-progress-page .gantt-month {
+  padding: 14px 16px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+  border-right: 1px solid #e0e0e0;
+  white-space: nowrap;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#manager-progress-page .gantt-month:last-child {
+  border-right: none;
+}
+
+/* Timeline Rows */
+#manager-progress-page .gantt-timeline-rows {
+  position: relative;
+}
+
+/* UPDATED: Dynamic row height based on task count */
+#manager-progress-page .gantt-timeline-row {
+  position: relative;
+  min-height: 72px;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background 0.15s ease;
+  display: flex;
+}
+
+#manager-progress-page .gantt-timeline-row:last-child {
+  border-bottom: none;
+}
+
+#manager-progress-page .gantt-timeline-row:hover {
+  background: #fafafa;
+}
+
+/* Month Columns in Timeline */
+#manager-progress-page .gantt-month-column {
+  flex: 1 1 0;
+  min-width: 0;
+  border-right: 1px solid #f0f0f0;
+  position: relative;
+  height: 100%;
+}
+
+#manager-progress-page .gantt-month-column:last-child {
+  border-right: none;
+}
+
+/* UPDATED: Task Bars - Red/Amber/Green Status Colors */
+#manager-progress-page .gantt-task-bar {
+  position: absolute;
+  height: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+
+#manager-progress-page .gantt-task-bar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  z-index: 20;
+  height: 12px;
+}
+
+/* Task Status Colors - Red/Amber/Green System */
+#manager-progress-page .gantt-task-bar.status-red {
+  background: #ef5350;
+}
+
+#manager-progress-page .gantt-task-bar.status-amber {
+  background: #ffa726;
+}
+
+#manager-progress-page .gantt-task-bar.status-green {
+  background: #66bb6a;
+}
+
+/* Task Tooltip */
+.gantt-tooltip {
+  position: fixed;
+  background: #2c3e50;
+  color: #fff;
+  padding: 14px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  min-width: 280px;
+  display: none;
+}
+
+.gantt-tooltip.show {
+  display: block;
+}
+
+.gantt-tooltip-title {
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 8px;
+}
+
+.gantt-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.gantt-tooltip-label {
+  color: #bdc3c7;
+  margin-right: 12px;
+}
+
+.gantt-tooltip-value {
+  font-weight: 500;
+  text-align: right;
+}
+
+/* Empty State */
+#manager-progress-page .gantt-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #999;
+}
+
+#manager-progress-page .gantt-empty svg {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+#manager-progress-page .gantt-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Scrollbar styling */
+#manager-progress-page .gantt-container::-webkit-scrollbar,
+#manager-progress-page .gantt-right-column::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#manager-progress-page .gantt-container::-webkit-scrollbar-track,
+#manager-progress-page .gantt-right-column::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+#manager-progress-page .gantt-container::-webkit-scrollbar-thumb,
+#manager-progress-page .gantt-right-column::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+#manager-progress-page .gantt-container::-webkit-scrollbar-thumb:hover,
+#manager-progress-page .gantt-right-column::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
