@@ -722,7 +722,11 @@ if ($role === 'team_member') {
                 }
 
                 row.innerHTML = `
-                    <td>${emp.full_name}</td>
+                    <td>
+                        <a class="employee-link" href="../employees/employee-profile.php?id=${encodeURIComponent(emp.user_id)}">
+                            ${emp.full_name}
+                        </a>
+                    </td>
                     <td>${projectsHTML}</td>
                     <td>${totalTasks}</td>
                     <td>${completedTasks}</td>
@@ -757,36 +761,6 @@ if ($role === 'team_member') {
                 noEmployeesMessage.style.display = "none";
                 tableContainer.style.display = "block";
                 renderEmployeeTable(allEmployees);
-                /**tableBody.innerHTML = "";
-
-                console.log(employees);
-                employees.forEach(emp => {
-                    const totalTasks = emp.total_tasks;
-                    const completedTasks = emp.completed_tasks;
-                    const onTimePercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-                    const row = document.createElement("tr");
-
-                    let percentClass = "";
-                    if (onTimePercent > 70){
-                        percentClass = "green-percent";
-                    } else if (onTimePercent >= 30 && onTimePercent <= 69){
-                        percentClass = "amber-percent";
-                    } else if (onTimePercent <= 29){
-                        percentClass = "red-percent";
-                    }
-
-                    row.innerHTML = `
-                        <td>${emp.full_name}</td>
-                        <td>${emp.projects}</td>
-                        <td>${totalTasks}</td>
-                        <td>${completedTasks}</td>
-                        <td>${emp.overdue_tasks}</td>
-                        <td class="${percentClass}">${onTimePercent}%</td>
-            `       ;
-
-                    tableBody.appendChild(row);
-                });**/
-
             } catch (error) {
                 console.error("Error fetching employees:", error);
                 tableBody.innerHTML = `<tr><td colspan="6">Error loading employees.</td></tr>`;
