@@ -445,13 +445,16 @@ tbody td:first-child {
 }
 
 .employee-link {
-    color: inherit;
+    color: #1a1a1a;
     text-decoration: none;
     font-weight: 600;
+    border-bottom: 1.5px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
 }
 
 .employee-link:hover {
-    text-decoration: underline;
+    color: #E69500;
+    border-bottom-color: #E69500;
 }
 
 .project-badge {
