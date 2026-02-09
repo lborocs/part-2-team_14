@@ -717,7 +717,7 @@ body.select-mode .employee-checkbox {
   position: fixed;
   bottom: 20px;
   left: 50%;
-  margin-left: 140px; /* Half of sidebar width (280px / 2) to center within main content */
+  margin-left: 155px; /* Half of sidebar width (280px / 2) to center within main content */
   transform: translateX(-50%);
   
   background: #fff;

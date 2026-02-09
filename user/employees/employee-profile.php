@@ -290,9 +290,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
 
         /* Banner Section */
         .profile-banner {
-            padding: 30px 20px;
+            padding: 24px 20px;
             border-radius: 0 0 16px 16px;
-            margin: 0 0 30px 0;
+            margin: 0 0 20px 0;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
@@ -313,8 +313,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         .profile-avatar-large {
-            width: 140px;
-            height: 140px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
             border: 4px solid rgba(255, 255, 255, 0.3);
             overflow: hidden;
@@ -399,8 +399,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .profile-layout {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 40px;
+            gap: 20px;
+            margin-bottom: 20px;
             width: 100%;
             max-width: none;
         }
@@ -408,27 +408,27 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .profile-left-column {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 16px;
         }
 
         .profile-right-column {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 16px;
         }
 
         /* Content Grid */
         .profile-content {
             display: grid !important;
             grid-template-columns: 1fr !important;
-            gap: 24px !important;
+            gap: 16px !important;
         }
 
         /* Specialties Card */
         .specialties-card {
             background: white;
             border-radius: 12px;
-            padding: 24px;
+            padding: 18px;
             border: 1px solid #EAECEE;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
@@ -459,7 +459,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .projects-card {
             background: white;
             border-radius: 12px;
-            padding: 24px;
+            padding: 18px;
             border: 1px solid #EAECEE;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
@@ -483,8 +483,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .projects-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            max-height: 240px;
+            gap: 8px;
+            max-height: 200px;
             overflow-y: auto;
             padding-right: 4px;
         }
@@ -610,18 +610,19 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .chart-card {
             background: white;
             border-radius: 12px;
-            padding: 24px;
+            padding: 18px;
             border: 1px solid #EAECEE;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
+            flex: 1;
         }
 
         .chart-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
 
         .chart-title {
@@ -684,14 +685,14 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .chart-body {
             display: flex;
             align-items: center;
-            gap: 40px;
+            gap: 30px;
             flex: 1;
         }
 
         .chart-wrapper {
             position: relative;
-            width: 220px;
-            height: 220px;
+            width: 180px;
+            height: 180px;
             flex-shrink: 0;
         }
 

@@ -355,7 +355,7 @@ function getMemberColor($uid, $bannerColors, &$colorMap) {
                             </p>
                             <?php if (!empty($specialties)): ?>
                                 <div class="member-specialties">
-                                    <?php foreach (array_slice($specialties, 0, 3) as $skill): ?>
+                                    <?php foreach ($specialties as $skill): ?>
                                         <?php $skillClass = $specialtyClassMap[trim($skill)] ?? 'spec-default'; ?>
                                         <span class="specialty-pill <?= $skillClass ?>">
                                             <?= htmlspecialchars(trim($skill)) ?>

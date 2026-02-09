@@ -75,6 +75,7 @@
 .member-card {
     display: flex;
     flex-direction: column;
+    min-height: 310px;
     border-radius: 12px;
     background: #fff;
     border: 1px solid #EAECEE;
@@ -97,9 +98,9 @@
 .member-card-top {
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
-    padding: 14px 12px;
+    padding: 28px 12px 14px;
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
 }
@@ -200,10 +201,21 @@
     flex-wrap: wrap;
     gap: 4px;
     justify-content: center;
-    margin-top: 6px;
-    max-height: 48px;
-    overflow: hidden;
     width: 100%;
+    margin-top: 6px;
+    border-top: 1px solid #EAECEE;
+    padding-top: 6px;
+    max-height: 56px;
+    overflow-y: auto;
+}
+
+.member-specialties::-webkit-scrollbar {
+    width: 3px;
+}
+
+.member-specialties::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 2px;
 }
 
 .member-specialties .specialty-pill {
