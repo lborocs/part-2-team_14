@@ -587,7 +587,7 @@ foreach ($users as $u) {
             <header class="project-header">
                 <div class="project-header-top">
                     <div class="breadcrumbs-title">
-                        <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></span></p>
+                        <p class="breadcrumbs"><a href="projects-overview.php">Projects</a> > <span id="project-name-breadcrumb"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></span></p>
                         <h1 id="project-name-header"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></h1>
                     </div>
                     <?php if ($canCloseProject): ?>

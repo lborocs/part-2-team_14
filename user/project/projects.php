@@ -508,18 +508,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
             exit;
         }
 
-        // 4) Insert new assignments
+        // 4) Insert new assignments + ensure assignees are active project members
         $ins = $db->prepare("
             INSERT INTO task_assignments (task_id, user_id, assigned_by)
             VALUES (:tid, :uid, :by)
         ");
 
+        $pmActiveCheck = $db->prepare("
+            SELECT 1 FROM project_members
+            WHERE project_id = :pid AND user_id = :uid AND left_at IS NULL
+            LIMIT 1
+        ");
+        $pmReactivate = $db->prepare("
+            UPDATE project_members SET left_at = NULL
+            WHERE project_id = :pid AND user_id = :uid AND left_at IS NOT NULL
+        ");
+        $pmInsert = $db->prepare("
+            INSERT INTO project_members (project_id, user_id, project_role, joined_at, left_at)
+            VALUES (:pid, :uid, 'member', NOW(), NULL)
+        ");
+
         foreach ($foundUsers as $fu) {
+            $assigneeId = (int)$fu['user_id'];
+
             $ins->execute([
                 ':tid' => $taskId,
-                ':uid' => (int)$fu['user_id'],
+                ':uid' => $assigneeId,
                 ':by'  => (int)$userId
             ]);
+
+            // Ensure assignee is an active project member
+            $pmActiveCheck->execute([':pid' => $projectId, ':uid' => $assigneeId]);
+            if (!$pmActiveCheck->fetchColumn()) {
+                $pmReactivate->execute([':pid' => $projectId, ':uid' => $assigneeId]);
+                if ($pmReactivate->rowCount() === 0) {
+                    $pmInsert->execute([':pid' => $projectId, ':uid' => $assigneeId]);
+                }
+            }
         }
 
         $db->commit();
@@ -1072,7 +1097,7 @@ foreach ($users as $u) {
                 <div class="project-header-top">
                     <div class="breadcrumbs-title">
                         <p class="breadcrumbs">
-                            Projects > <span id="project-name-breadcrumb"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></span>
+                            <a href="projects-overview.php">Projects</a> > <span id="project-name-breadcrumb"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></span>
                         </p>
                         <h1 id="project-name-header"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></h1>
 

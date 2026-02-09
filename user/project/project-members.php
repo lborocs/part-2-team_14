@@ -348,7 +348,7 @@ function getMemberColor($uid, $bannerColors, &$colorMap) {
         <header class="project-header">
             <div class="project-header-top">
                 <div class="breadcrumbs-title">
-                    <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb"><?= htmlspecialchars($project['project_name']) ?></span></p>
+                    <p class="breadcrumbs"><a href="projects-overview.php">Projects</a> > <span id="project-name-breadcrumb"><?= htmlspecialchars($project['project_name']) ?></span></p>
                     <h1 id="project-name-header"><?= htmlspecialchars($project['project_name']) ?></h1>
                 </div>
                 <button class="close-project-btn" id="close-project-btn" style="display:none;"><i data-feather="archive"></i> Close Project</button>

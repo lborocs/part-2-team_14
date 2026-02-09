@@ -413,7 +413,7 @@ function updateSidebarAndNav() {
     // 5) Example: manager-only button
     const closeProjectBtn = document.getElementById("close-project-btn");
     if (closeProjectBtn) {
-        closeProjectBtn.style.display = (role === "manager") ? "block" : "none";
+        closeProjectBtn.style.display = (role === "manager") ? "inline-flex" : "none";
     }
 }
 
@@ -679,7 +679,7 @@ function mapDbPostToUiPost(p) {
         fullContent: p.content || "",
         is_solved: Number(p.is_solved || 0),
         reactions: {
-            up: p.view_count ?? 0,
+            up: p.like_count ?? 0,
             lightbulb: 0,
             comments: p.comment_count ?? 0
         },

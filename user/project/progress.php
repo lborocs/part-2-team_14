@@ -123,7 +123,7 @@ foreach ($users as $u) {
                 <div class="project-header-top">
                     <div class="breadcrumbs-title">
                         <p class="breadcrumbs">
-                            Projects >
+                            <a href="projects-overview.php">Projects</a> >
                             <span id="project-name-breadcrumb">
                                 <?= htmlspecialchars($project['project_name'] ?? 'Project') ?>
                             </span>
