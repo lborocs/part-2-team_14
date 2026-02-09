@@ -231,6 +231,19 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 15px;
+    width: 100%; /* ADD THIS */
+}
+
+.post-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0; /* ADD THIS */
+}
+
+.post-action-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .post-card-avatar {
@@ -781,9 +794,10 @@ body#kb-topics-all .kb-layout-wrapper {
   display: flex;
   gap: 12px;
   align-items: center;
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
+/* Cancel Button - Styled to match Save button height/padding */
 .edit-cancel-btn {
   font-family: 'Poppins', sans-serif;
   font-size: 15px;
@@ -792,12 +806,40 @@ body#kb-topics-all .kb-layout-wrapper {
   border-radius: 8px;
   border: 1px solid #EAECEE;
   background: #fff;
+  color: #1E1E1E;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  
+  /* Match the create-post-btn display style */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Ensure consistent height */
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
 .edit-cancel-btn:hover {
   background: #F8F9FA;
+  border-color: #D0D0D0;
+}
+
+/* Ensure Save button (create-post-btn) matches inside edit-actions */
+.edit-actions .create-post-btn {
+  margin-bottom: 0;
+  font-size: 15px;
+  padding: 12px 20px;
+  
+  /* Match cancel button display */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  
+  /* Ensure consistent height */
+  min-height: 44px;
+  box-sizing: border-box;
 }
 
 /* Hide search bar on single post page */
