@@ -591,6 +591,12 @@ if ($isAjax) {
                             data-profile-url="employee-profile.php?id=<?= urlencode($employee['user_id']) ?>"
                             data-employee-id="<?= $employee['user_id'] ?>"
                         >
+                            <!-- Selection checkbox (hidden by default) -->
+                            <div class="employee-checkbox" data-employee-id="<?= $employee['user_id'] ?>">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
 
                             <div class="employee-card-top" style="background-color: <?= htmlspecialchars($employeeColor) ?>;">
                                 <div class="employee-avatar">
@@ -715,9 +721,9 @@ if ($isAjax) {
                         <i data-feather="user-plus"></i>
                         <span>Add to Project</span>
                     </button>
-                    <button class="action-btn" id="create-project-btn">
-                        <i data-feather="plus"></i>
-                        <span>Create New Project</span>
+                    <button class="create-post-btn" id="create-project-btn">
+                        <i data-feather="folder-plus"></i>
+                        Create Project
                     </button>
                 </div>
             </div>
