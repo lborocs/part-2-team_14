@@ -24,7 +24,7 @@ $pdo = $database->getConnection();
 // 1. FETCH EMPLOYEE BASIC INFO
 // ============================================
 $stmt = $pdo->prepare("
-    SELECT user_id, first_name, last_name, email, role, profile_picture, specialties
+    SELECT user_id, first_name, last_name, email, role, profile_picture, specialties, is_registered
     FROM users
     WHERE user_id = ?
 ");
@@ -37,6 +37,7 @@ if (!$employee) {
 
 $fullName = htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']);
 $roleDisplay = ucfirst(str_replace('_', ' ', $employee['role']));
+$isRegistered = $employee['is_registered'];
 
 // Same 10-color banner palette as employee directory
 $bannerColors = [
@@ -313,8 +314,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         .profile-avatar-large {
-            width: 120px;
-            height: 120px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
             border: 4px solid rgba(255, 255, 255, 0.3);
             overflow: hidden;
@@ -1127,6 +1128,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                             <p class="email">
                                 <i data-feather="mail"></i>
                                 <?= htmlspecialchars($employee['email']) ?>
+                            </p>
+                            <?php $isRegistered = (int)$employee['is_registered'] === 1;?>
+                            <p class="<?= $isRegistered ? 'registered-pill' : 'unregistered-pill' ?>">
+                                <?= $isRegistered ? 'Registered' : 'Unregistered' ?>
                             </p>
                         </div>
                     </div>
