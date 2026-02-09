@@ -400,11 +400,13 @@ function updateSidebarAndNav() {
                 : "";
 
         const resourcesActive = path.includes("project-resources.php") ? "active" : "";
+        const membersActive = path.includes("project-members.php") ? "active" : "";
 
         navLinks.innerHTML = `
       <a href="projects.php?project_id=${encodeURIComponent(projectId)}" class="${tasksActive}">Tasks</a>
       <a href="${progressPage}?project_id=${encodeURIComponent(projectId)}" class="${progressActive}">Progress</a>
       <a href="project-resources.php?project_id=${encodeURIComponent(projectId)}" class="${resourcesActive}">Resources</a>
+      <a href="project-members.php?project_id=${encodeURIComponent(projectId)}" class="${membersActive}">Members</a>
     `;
     }
 
@@ -4848,6 +4850,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (pageId === 'manager-progress-page') {
         // Manager Progress page
         await loadManagerProgressPage(currentUser);
+    } else if (pageId === 'project-members-page') {
+        // Project Members page
+        updateSidebarAndNav();
     } else if (pageId === 'project-resources-page') {
         // Project Resources page
         loadProjectResourcesPage(currentUser);
