@@ -32,6 +32,12 @@ body {
     color: #000;
 }
 
+/* Hide Microsoft Edge password reveal icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
 .forgot-password {
     margin-top: 3px !important;
     font-size: 13px;
