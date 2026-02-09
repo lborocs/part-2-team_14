@@ -45,12 +45,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if (!$user) {
-            echo json_encode(['success' => false, 'message' => 'Email not found in employee database. Contact HR.']);
+            echo json_encode(['success' => false, 'message' => 'Email not found in employee database. Contact HR']);
             exit();
         }
         
         if ($user['is_registered']) {
-            echo json_encode(['success' => false, 'message' => 'This email is already registered. Please login.']);
+            echo json_encode(['success' => false, 'message' => 'This email is already registered. Please log in']);
             exit();
         }
         

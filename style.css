@@ -39,7 +39,7 @@ input[type="password"]::-ms-clear {
 }
 
 .forgot-password {
-    margin-top: 3px !important;
+    margin-top: 15px !important;
     font-size: 13px;
     color: #8C8C8C;
     cursor: pointer;
