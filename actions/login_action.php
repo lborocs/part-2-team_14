@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $db = $database->getConnection();
         
         // Check if user exists and is registered
-        $query = "SELECT user_id, email, first_name, last_name, role, password_hash, is_registered 
+        $query = "SELECT user_id, email, first_name, last_name, role, password_hash, is_registered, profile_picture 
                   FROM users 
                   WHERE email = :email AND is_active = 1";
         
@@ -56,10 +56,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['email'] = $user['email'];
         $_SESSION['name'] = $user['first_name'] . ' ' . $user['last_name'];
         $_SESSION['role'] = $user['role'];
+        $_SESSION['profile_picture'] = $user['profile_picture'];
         
         // Determine redirect based on role
-        $redirect = ($user['role'] === 'manager')
-            ? 'user/home/home.html?user=' . urlencode($user['email'])
+        $redirect = ($user['role'] === 'manager' || $user['role'] === 'team_leader')
+            ? 'user/home/home.php?user=' . urlencode($user['email'])
             : 'user/project/projects-overview.php';
         
         echo json_encode([

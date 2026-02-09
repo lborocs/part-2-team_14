@@ -1,5 +1,6 @@
 <?php
 header('Content-Type: application/json');
+session_start();
 require_once('../../config/database.php');
 $database = new Database();
 $conn = $database->getConnection();
@@ -9,15 +10,25 @@ if (!$conn) {
     exit;
 }
 
-$managerId = isset($_GET['team_leader_id']) ? intval($_GET['team_leader_id']) : 0;
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Not authenticated']);
+    exit;
+}
+
+$userId = (int) $_SESSION['user_id'];
+$role = $_SESSION['role'] ?? '';
 
 try {
-    $sql = "SELECT *
-            FROM projects
-            WHERE team_leader_id = ?";
-
-    $stmt = $conn->prepare($sql);
-    $stmt->execute([$managerId]);
+    if ($role === 'manager') {
+        $sql = "SELECT * FROM projects WHERE created_by = ? OR team_leader_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$userId, $userId]);
+    } else {
+        $sql = "SELECT * FROM projects WHERE team_leader_id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$userId]);
+    }
 
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
 

@@ -124,11 +124,22 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.03);
 }
 
+/* Icons inside topic cards (works before & after feather.replace) */
+.topic-card i,
 .topic-card svg {
     width: 36px;
     height: 36px;
     color: #555;
+    display: inline-block;   /* important for <i> */
 }
+
+/* Feather SVGs are stroke-based */
+.topic-card svg {
+    stroke: currentColor;
+    fill: none;
+}
+
+
 
 .topic-card:hover {
     transform: translateY(-5px);
@@ -140,9 +151,12 @@
     background: #FFFBE5;
     border-color: #FBC02D;
 }
+
+.topic-card.active i,
 .topic-card.active svg {
     color: #F9A825;
 }
+
 
 .kb-layout-wrapper {
     padding: 0 40px 40px 40px;
@@ -223,10 +237,9 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    /* Using avatar colors from your dashboard.css */
+    object-fit: cover;
+    background: #E0E0E0;
 }
-.post-card-avatar.avatar-1 { background: #FFAB91; }
-.post-card-avatar.avatar-4 { background: #CE93D8; }
 
 .post-card-author {
     font-weight: 600;
@@ -442,8 +455,9 @@ a, u {
     height: 36px;
     border-radius: 50%;
     flex-shrink: 0;
+    object-fit: cover;
+    background: #E0E0E0;
 }
-.reply-avatar.avatar-4 { background: #CE93D8; }
 
 .reply-content {
     background: #F8F9FA;
@@ -721,3 +735,184 @@ body#kb-topics-all .kb-layout-wrapper {
         opacity: 0;
     }
 }
+
+.topic-emoji {
+  font-size: 34px;
+  line-height: 1;
+}
+.post-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.post-action-btn {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #EAECEE;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.post-action-btn--edit {
+  border-color: #FBC02D;
+  color: #1E1E1E;
+}
+
+.post-action-btn--edit:hover {
+  background: #FFFBE5;
+}
+
+.post-action-btn--delete {
+  border-color: #D93025;
+  color: #D93025;
+}
+
+.post-action-btn--delete:hover {
+  background: #FFEBEB;
+}
+
+/* --- Inline Edit Post form actions --- */
+.edit-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.edit-cancel-btn {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: 1px solid #EAECEE;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.edit-cancel-btn:hover {
+  background: #F8F9FA;
+}
+
+/* Hide search bar on single post page */
+body#kb-post .kb-header .search-bar {
+  display: none;
+}
+
+.kb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.kb-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0; /* prevents weird overflow */
+}
+
+.post-page-title {
+  margin: 0;
+  line-height: 1.1;
+}
+
+/* Hide Related Topics ONLY on topic pages (All Posts view) */
+body[data-topics-view="topic"] #related-topics-widget {
+  display: none !important;
+}
+
+.announcement-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.announcement-item:last-child {
+  border-bottom: none;
+}
+
+.announcement-title {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.announcement-body {
+  font-size: 13px;
+  color: #555;
+  margin: 0 0 6px;
+  line-height: 1.5;
+}
+
+.announcement-date {
+  font-size: 12px;
+  color: #999;
+}
+
+.kb-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+}
+
+.kb-like-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.kb-like-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font: inherit;
+  color: inherit;
+}
+
+.kb-like-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.kb-solved-badge{
+  font-family: 'Poppins', sans-serif;
+  display:inline-flex;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#E8F5E9;
+  color:#1B5E20;
+  font-size:12px;
+  font-weight:600;
+  border:1px solid #C8E6C9;
+  margin-left:8px;
+}
+
+.kb-solve-btn{
+  font-family: 'Poppins', sans-serif;
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid #D0D5DD;
+  background:#fff;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.kb-solve-btn:hover{ background:#F8FAFC; }
+

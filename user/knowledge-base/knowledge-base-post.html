@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body id="kb-post"> <div class="dashboard-container">
@@ -18,34 +19,39 @@
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon"> 
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+                    <li id="nav-home" style="display:none;"><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <li id="nav-employees" style="display:none;"><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
                     <li class="active-parent"><a href="knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
                 </ul>
             </div>
             <div class="nav-footer">
     <ul>
-        <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+        <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
     </ul>
 </div>
         </nav>
 
         <main class="main-content">
             <header class="kb-header">
-                 <p class="breadcrumbs" id="post-breadcrumbs">Knowledge Base > ...</p>
-                <h1 id="post-title-placeholder">Loading post...</h1>
-                <div class="search-bar">
-                    <i data-feather="search"></i>
-                    <input type="text" placeholder="Search posts...">
-                </div>
+            <div class="kb-header-left">
+                <p class="breadcrumbs" id="post-breadcrumbs">Knowledge Base > ...</p>
+                <h1 id="post-title-placeholder" class="post-page-title">Loading post...</h1>
+            </div>
+
+            <div class="search-bar">
+                <i data-feather="search"></i>
+                <input type="text" placeholder="Search posts...">
+            </div>
             </header>
+
 
             <div class="kb-layout-wrapper">
                 <div class="kb-main-content">
 
                     <div id="post-full-content"></div>
 
-                    <div classs="post-replies-section">
+                    <div class="post-replies-section">
                         <h2>Replies</h2>
                         <div id="post-replies-list">
                             </div>
@@ -60,26 +66,29 @@
                 </div>
 
                 <aside class="kb-sidebar">
-                    <div class="kb-sidebar-widget">
-                        <h3>Related Topics</h3>
-                        <div class="related-topics-list">
-                            <span class="topic-tag">Hardware</span>
-                            <span class="topic-tag">Security</span>
-                            <span class="topic-tag">Network</span>
-                        </div>
-                    </div>
-                    <div class="kb-sidebar-widget">
-                        <h3>Best Practices</h3>
-                        <ul class="best-practices-list">
-                            <li><strong>Restart after updates:</strong> A quick restart helps apply changes.</li>
-                            <li><strong>Keep software updated:</strong> Regular updates improve stability.</li>
-                            </ul>
-                    </div>
+                <div class="kb-sidebar-widget" id="related-topics-widget">
+                    <h3>Related Topics</h3>
+                    <div class="related-topics-list" id="related-topics-list"></div>
+                </div>
+
+                <div class="kb-sidebar-widget" id="best-practices-widget">
+                    <h3>Best Practices</h3>
+                    <ul class="best-practices-list">
+                    <li><strong>Restart after updates:</strong> A quick restart helps apply changes.</li>
+                    <li><strong>Keep software updated:</strong> Regular updates improve stability.</li>
+                    <li><strong>Search before posting:</strong> Check for existing answers.</li>
+                    <li><strong>Engage with posts:</strong> React or comment to support others.</li>
+                    <li><strong>Add detail in reports:</strong> Include error messages or steps.</li>
+                    </ul>
+                </div>
                 </aside>
+
+
             </div>
         </main>
     </div>
 
     <script src="../app.js"></script>
+    <script src="post.js"></script>
 </body>
 </html>

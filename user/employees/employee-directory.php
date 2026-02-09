@@ -2,12 +2,70 @@
 /* ============================
    BOOTSTRAP & DATABASE
    ============================ */
+// Start session
+session_start();
+
 // Load database configuration
 require_once __DIR__ . "/../../config/database.php";
 
 // Create DB instance & PDO connection
 $database = new Database();
 $pdo = $database->getConnection();
+
+/* ============================
+   ACCESS CONTROL
+   ============================ */
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../../login.html');
+    exit();
+}
+
+// Check if user is a manager
+if ($_SESSION['role'] !== 'manager') {
+    http_response_code(403);
+    die('Access denied. This page is only available to managers.');
+}
+
+/* =============================
+   EMPLOYEE CARD COLOR ASSIGNMENT SYSTEM
+   ============================= */
+
+
+// Define 10-color banner palette
+$bannerColors = [
+    '#5B9BD5',  // Soft Blue
+    '#7FB069',  // Sage Green
+    '#9B59B6',  // Muted Purple
+    '#D4926F',  // Muted Orange
+    '#45B7B8',  // Teal
+    '#6C8EAD',  // Slate Blue
+    '#2A9D8F',  // Deep Teal
+    '#B56576',  // Mauve/Rose
+    '#52796F',  // Forest Green
+    '#7D8FA0',  // Dusty Blue
+];
+
+// Initialize color map in session if not exists
+if (!isset($_SESSION['employee_colors'])) {
+    $_SESSION['employee_colors'] = [];
+}
+
+// Function to get or assign color for employee
+function getEmployeeColor($userId, $bannerColors, &$colorMap) {
+    // If color already assigned in this session, return it
+    if (isset($colorMap[$userId])) {
+        return $colorMap[$userId];
+    }
+    
+    // Randomly assign one of the 10 colors
+    $selectedColor = $bannerColors[array_rand($bannerColors)];
+    
+    // Store in session for persistence
+    $colorMap[$userId] = $selectedColor;
+    
+    return $selectedColor;
+}
 
 /* =============================
    FILTER OPTIONS (Specialties + Projects)
@@ -85,6 +143,9 @@ $orderBy = $allowedSorts[$sortKey] ?? $allowedSorts['name_asc'];
 $selectedSpecialties = $_GET['specialty'] ?? [];
 $selectedProjects    = $_GET['project'] ?? [];
 
+// Read the search query from URL
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+
 if (!is_array($selectedSpecialties)) {
     $selectedSpecialties = [$selectedSpecialties];
 }
@@ -116,6 +177,16 @@ $countSql = "
 ";
 
 $countParams = [];
+
+/* ---------- Search filter ---------- */
+if (!empty($searchQuery)) {
+    $countSql .= " AND (
+        CONCAT(u.first_name, ' ', u.last_name) LIKE :search
+        OR u.specialties LIKE :search_specialty
+    )";
+    $countParams[':search'] = '%' . $searchQuery . '%';
+    $countParams[':search_specialty'] = '%' . $searchQuery . '%';
+}
 
 /* ---------- Specialty filter ---------- */
 if (!empty($selectedSpecialties)) {
@@ -190,6 +261,16 @@ WHERE u.is_active = TRUE
 ";
 
 $params = [];
+
+// Search filter (name or specialty)
+if (!empty($searchQuery)) {
+    $sql .= " AND (
+        CONCAT(u.first_name, ' ', u.last_name) LIKE :search
+        OR u.specialties LIKE :search_specialty
+    )";
+    $params[':search'] = '%' . $searchQuery . '%';
+    $params[':search_specialty'] = '%' . $searchQuery . '%';
+}
 
 // specialty filter (ALL selected specialties must match)
 if (!empty($selectedSpecialties)) {
@@ -299,11 +380,15 @@ if ($isAjax) {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+
     <script src="https://unpkg.com/feather-icons"></script>
 
 </head>
 <body>
-
+    <?php include '../to-do/todo_widget.php'; ?>
     <div class="dashboard-container">
 
         <!-- Sidebar -->
@@ -313,17 +398,21 @@ if ($isAjax) {
                     <img src="../logo.png" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
-                    <li><a href="../project/projects.html"><i data-feather="folder"></i>Projects</a></li>
-                    <li class="active-parent">
-                        <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
-                    </li>
+                    <?php if (isset($_SESSION['role']) && ($_SESSION['role'] === 'manager' || $_SESSION['role'] === 'team_leader')): ?>
+                        <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+                    <?php endif; ?>
+                    <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
+                        <li class="active-parent">
+                            <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
+                        </li>
+                    <?php endif; ?>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
                 </ul>
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                    <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
         </nav>
 
@@ -347,8 +436,10 @@ if ($isAjax) {
                     <i data-feather="search"></i>
                     <input
                         type="text"
+                        id="employee-search-input"
                         name="search"
                         placeholder="Search employees by name or speciality"
+                        value="<?= htmlspecialchars($searchQuery) ?>"
                     >
                 </div>
 
@@ -378,9 +469,9 @@ if ($isAjax) {
                     <div class="sort-wrap">
                         <span class="sort-label">Sort by:</span>
                         <select class="sort-dropdown" id="sortEmployees">
-                            <option value="name_asc">Name (A-Z)</option>
-                            <option value="projects_asc">Project Count (Low → High)</option>
-                            <option value="projects_desc">Project Count (High → Low)</option>
+                            <option value="name_asc" <?= $sortKey === 'name_asc' ? 'selected' : '' ?>>Name (A-Z)</option>
+                            <option value="projects_asc" <?= $sortKey === 'projects_asc' ? 'selected' : '' ?>>Project Count (Low → High)</option>
+                            <option value="projects_desc" <?= $sortKey === 'projects_desc' ? 'selected' : '' ?>>Project Count (High → Low)</option>
                         </select>
                     </div>
 
@@ -480,6 +571,12 @@ if ($isAjax) {
                     <?php foreach ($employees as $employee): ?>
 
                         <?php
+                            // Get color for this employee (randomly assigned once per session)
+                            $employeeColor = getEmployeeColor(
+                                $employee['user_id'], 
+                                $bannerColors, 
+                                $_SESSION['employee_colors']
+                            );
 
                             // Decode specialties (stored as JSON or comma text)
                             $specialties = [];
@@ -494,8 +591,14 @@ if ($isAjax) {
                             data-profile-url="employee-profile.php?id=<?= urlencode($employee['user_id']) ?>"
                             data-employee-id="<?= $employee['user_id'] ?>"
                         >
+                            <!-- Selection checkbox (hidden by default) -->
+                            <div class="employee-checkbox" data-employee-id="<?= $employee['user_id'] ?>">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
 
-                            <div class="employee-card-top">
+                            <div class="employee-card-top" style="background-color: <?= htmlspecialchars($employeeColor) ?>;">
                                 <div class="employee-avatar">
                                     <img
                                         src="<?= htmlspecialchars($employee['profile_picture']) ?>"
@@ -526,7 +629,7 @@ if ($isAjax) {
 
                                     </div>
 
-                                    <button type="button" class="see-more-btn" hidden>...</button>
+                                    <button type="button" class="see-more-btn" hidden>Show More</button>
                                 </div>
 
                                 <div class="employee-card-footer">
@@ -618,9 +721,9 @@ if ($isAjax) {
                         <i data-feather="user-plus"></i>
                         <span>Add to Project</span>
                     </button>
-                    <button class="action-btn" id="create-project-btn">
-                        <i data-feather="plus"></i>
-                        <span>Create New Project</span>
+                    <button class="create-post-btn" id="create-project-btn">
+                        <i data-feather="folder-plus"></i>
+                        Create Project
                     </button>
                 </div>
             </div>

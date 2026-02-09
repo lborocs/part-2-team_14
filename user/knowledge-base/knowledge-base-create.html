@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 <body id="kb-create">
@@ -19,15 +20,15 @@
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon"> 
                 </div>
                 <ul class="nav-main">
-                    <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+                    <li id="nav-home" style="display:none;"><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+                    <li id="nav-employees" style="display:none;"><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
                     <li class="active-parent"><a href="knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
-
                 </ul>
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                    <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>
         </nav>
@@ -48,12 +49,24 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="post-topic">Topic</label>
-                            <select id="post-topic" required>
-                                <option value="">Select a topic...</option>
-                                <!-- JS fills all topics (main + added) -->
-                            </select>
+                        <label for="post-topic-input">Topic</label>
+
+                        <input
+                            id="post-topic-input"
+                            list="topics-datalist"
+                            placeholder="Search a topic..."
+                            required
+                            autocomplete="off"
+                        />
+
+                        <datalist id="topics-datalist"></datalist>
+
+                        <input type="hidden" id="post-topic" />
+                        <p id="topic-error" style="display:none; margin-top:8px; color:#b42318; font-size:13px;">
+                            Please pick a valid topic from the list.
+                        </p>
                         </div>
+
 
                         <div class="form-group">
                             <label for="post-details">Details</label>

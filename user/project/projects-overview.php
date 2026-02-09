@@ -10,6 +10,45 @@ if (!$db) {
   die("Database connection failed.");
 }
 
+// AJAX: leaders search for autocomplete
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'leaders') {
+  header('Content-Type: application/json');
+
+  $q = trim($_GET['q'] ?? '');
+  if (strlen($q) < 2) {
+    echo json_encode([]);
+    exit;
+  }
+
+  $stmt = $db->prepare("
+    SELECT user_id, first_name, last_name, email
+    FROM users
+    WHERE is_active = 1
+      AND (
+        first_name LIKE :q
+        OR last_name LIKE :q
+        OR email LIKE :q
+      )
+    ORDER BY first_name ASC
+    LIMIT 10
+  ");
+  $stmt->execute([':q' => "%$q%"]);
+
+  $out = [];
+  while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $full = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
+    $label = $full !== '' ? "$full ({$row['email']})" : $row['email'];
+
+    $out[] = [
+      'id' => (int)$row['user_id'],
+      'label' => $label
+    ];
+  }
+
+  echo json_encode($out);
+  exit;
+}
+
 //DEV BYPASS
 $isLoggedIn = isset($_SESSION['role'], $_SESSION['email'], $_SESSION['user_id']);
 
@@ -67,13 +106,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
       $stmt = $db->prepare($sql);
       $stmt->execute([':id' => $projectId]);
     } elseif ($action === 'complete') {
-      // Mark complete AND archive (and set progress to 100)
       $sql = "UPDATE projects
-              SET status = 'archived',
-                  completed_date = COALESCE(completed_date, CURDATE()),
-                  completion_percentage = 100.00,
-                  archived_at = NOW()
-              WHERE project_id = :id";
+          SET status = 'archived',
+              completed_date = COALESCE(completed_date, CURDATE()),
+              archived_at = NOW()
+          WHERE project_id = :id";
       $stmt = $db->prepare($sql);
       $stmt->execute([':id' => $projectId]);
     } elseif ($action === 'reinstate') {
@@ -83,6 +120,99 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
               WHERE project_id = :id";
       $stmt = $db->prepare($sql);
       $stmt->execute([':id' => $projectId]);
+    } elseif ($action === 'update_project') {
+
+      $name = trim($_POST['project_name'] ?? '');
+      $deadline = $_POST['deadline'] ?? '';
+      $desc = trim($_POST['description'] ?? '');
+      $leaderId = isset($_POST['team_leader_id']) ? (int)$_POST['team_leader_id'] : 0;
+
+      if ($name === '') {
+        echo json_encode(['success' => false, 'message' => 'Project name is required']);
+        exit;
+      }
+
+      if ($deadline === '') {
+        echo json_encode(['success' => false, 'message' => 'Due date is required']);
+        exit;
+      }
+
+      if ($leaderId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Please select a team leader from suggestions']);
+        exit;
+      }
+
+      // --- Find current leader so we can demote them in project_members ---
+      $oldLeaderStmt = $db->prepare("SELECT team_leader_id FROM projects WHERE project_id = :pid LIMIT 1");
+      $oldLeaderStmt->execute([':pid' => $projectId]);
+      $oldLeaderId = (int)($oldLeaderStmt->fetchColumn() ?? 0);
+
+      // --- Update project main fields ---
+      $sql = "UPDATE projects
+          SET project_name = :name,
+              deadline = :deadline,
+              description = :descr,
+              team_leader_id = :leader
+          WHERE project_id = :id";
+      $stmt = $db->prepare($sql);
+      $stmt->execute([
+        ':name' => $name,
+        ':deadline' => $deadline,
+        ':descr' => ($desc !== '' ? $desc : null),
+        ':leader' => $leaderId,
+        ':id' => $projectId
+      ]);
+
+      // --- Ensure NEW leader exists in project_members and is marked as team_leader ---
+      // Insert if missing, otherwise update role
+      $pmUpsert = $db->prepare("
+        INSERT INTO project_members (project_id, user_id, project_role)
+        VALUES (:pid, :uid, 'team_leader')
+        ON DUPLICATE KEY UPDATE project_role = 'team_leader', left_at = NULL
+      ");
+      $pmUpsert->execute([':pid' => $projectId, ':uid' => $leaderId]);
+
+      // --- Demote OLD leader to member (but only if old leader exists and is different) ---
+      if ($oldLeaderId > 0 && $oldLeaderId !== $leaderId) {
+        $demote = $db->prepare("
+          UPDATE project_members
+          SET project_role = 'member'
+          WHERE project_id = :pid
+            AND user_id = :uid
+        ");
+        $demote->execute([':pid' => $projectId, ':uid' => $oldLeaderId]);
+      }
+
+      // --- Promote globally ONLY if the person is a team_member ---
+      $promote = $db->prepare("
+          UPDATE users
+          SET role = 'team_leader'
+          WHERE user_id = :uid
+            AND role = 'team_member'
+      ");
+      $promote->execute([':uid' => $leaderId]);
+
+      // Return leader info for UI update
+      $u = $db->prepare("SELECT first_name, last_name, profile_picture, role FROM users WHERE user_id = :uid LIMIT 1");
+      $u->execute([':uid' => $leaderId]);
+      $leader = $u->fetch(PDO::FETCH_ASSOC);
+
+      $leaderName = trim(($leader['first_name'] ?? '') . ' ' . ($leader['last_name'] ?? ''));
+      if ($leaderName === '') $leaderName = 'Unassigned';
+
+      echo json_encode([
+        'success' => true,
+        'updated' => [
+          'project_name' => $name,
+          'deadline' => $deadline,
+          'description' => $desc,
+          'team_leader_id' => $leaderId,
+          'leader_name' => $leaderName,
+          'leader_picture' => $leader['profile_picture'] ?? '',
+          'leader_role' => $leader['role'] ?? ''
+        ]
+      ]);
+      exit;
     } else {
       echo json_encode(['success' => false, 'message' => 'Unknown action']);
       exit;
@@ -115,18 +245,36 @@ $activeSql = "
   SELECT DISTINCT
     p.project_id,
     p.project_name,
+    p.description,
+    p.team_leader_id,
     p.status,
     p.priority,
     p.deadline,
     p.estimated_completion_date,
-    p.completion_percentage,
+
+    -- live progress (doesn't rely on stored completion_percentage)
+    COALESCE(tp.completion_percentage, 0) AS completion_percentage,
+
     u.first_name AS leader_first_name,
     u.last_name  AS leader_last_name,
     u.profile_picture AS leader_picture
+
   FROM projects p
   LEFT JOIN users u ON p.team_leader_id = u.user_id
-  LEFT JOIN project_members pm
-    ON pm.project_id = p.project_id
+  LEFT JOIN project_members pm ON pm.project_id = p.project_id
+
+  --  task progress subquery (1 row per project)
+  LEFT JOIN (
+    SELECT
+      project_id,
+      ROUND(
+        (SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(*), 0),
+        2
+      ) AS completion_percentage
+    FROM tasks
+    GROUP BY project_id
+  ) tp ON tp.project_id = p.project_id
+
   WHERE p.status IN ('active','planning','on_hold','completed')
     AND p.status <> 'archived'
     AND (
@@ -136,6 +284,7 @@ $activeSql = "
     )
   ORDER BY p.deadline ASC
 ";
+
 $activeStmt = $db->prepare($activeSql);
 $activeStmt->execute([':uid' => $currentUserId]);
 $activeProjects = $activeStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -152,14 +301,28 @@ if ($isManager) {
     p.priority,
     p.deadline,
     p.estimated_completion_date,
-    p.completion_percentage,
+
+    COALESCE(tp.completion_percentage, 0) AS completion_percentage,
+
     u.first_name AS leader_first_name,
     u.last_name  AS leader_last_name,
     u.profile_picture AS leader_picture
+
   FROM projects p
   LEFT JOIN users u ON p.team_leader_id = u.user_id
-  LEFT JOIN project_members pm
-    ON pm.project_id = p.project_id
+  LEFT JOIN project_members pm ON pm.project_id = p.project_id
+
+  LEFT JOIN (
+    SELECT
+      project_id,
+      ROUND(
+        (SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) * 100.0) / NULLIF(COUNT(*), 0),
+        2
+      ) AS completion_percentage
+    FROM tasks
+    GROUP BY project_id
+  ) tp ON tp.project_id = p.project_id
+
   WHERE p.status = 'archived'
     AND (
       p.created_by = :uid
@@ -186,6 +349,7 @@ if ($isManager) {
   <link rel="stylesheet" href="projects-overview.css">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/favicon.png">
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="../app.js" defer></script>
 
@@ -193,6 +357,7 @@ if ($isManager) {
 </head>
 
 <body id="projects-overview-page">
+  <?php include '../to-do/todo_widget.php'; ?>
   <div class="dashboard-container">
     <nav class="sidebar">
       <div class="nav-top">
@@ -200,14 +365,19 @@ if ($isManager) {
           <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
         </div>
         <ul class="nav-main">
-          <li><a href="../home/home.html"><i data-feather="home"></i>Home</a></li>
+          <?php if ($role === 'manager' || $role === 'team_leader'): ?>
+            <li><a href="../home/home.php"><i data-feather="home"></i>Home</a></li>
+          <?php endif; ?>
           <li class="active-parent"><a href="projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
+          <?php if ($role === 'manager'): ?>
+            <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+          <?php endif; ?>
           <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
         </ul>
       </div>
       <div class="nav-footer">
         <ul>
-          <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+          <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
         </ul>
       </div>
     </nav>
@@ -221,8 +391,8 @@ if ($isManager) {
             <div>
 
               <a href="../home/create-project.php" class="create-new-project-button">
-                <i data-feather="plus"></i>
-                Create New Project
+                <i data-feather="folder-plus"></i>
+                Create Project
               </a>
             </div>
           <?php endif; ?>
@@ -237,6 +407,7 @@ if ($isManager) {
       </header>
 
       <!-- ACTIVE -->
+      <!-- ACTIVE -->
       <section class="projects-section" id="active-section">
         <div class="section-top">
           <h2 class="active-projects-title">Active Projects</h2>
@@ -250,19 +421,19 @@ if ($isManager) {
               <option value="name">Name (A-Z)</option>
               <option value="priorityHigh">Priority (High → Low)</option>
               <option value="priorityLow">Priority (Low → High)</option>
-
             </select>
           </div>
         </div>
 
-        <?php if (count($activeProjects) === 0): ?>
-          <div class="empty-state">
-            <i data-feather="inbox"></i>
-            <p>No current active projects</p>
-          </div>
-        <?php else: ?>
-          <div class="projects-grid-scroll">
-            <div class="projects-grid">
+        <div class="projects-grid-scroll">
+          <div class="projects-grid">
+            <?php if (count($activeProjects) === 0): ?>
+              <!-- Empty state -->
+              <div class="empty-state">
+                <i data-feather="inbox"></i>
+                <p>No current active projects</p>
+              </div>
+            <?php else: ?>
               <!-- Project cards display -->
               <?php foreach ($activeProjects as $p): ?>
                 <?php
@@ -297,11 +468,11 @@ if ($isManager) {
                   $dateText = $days . ' days left';
                   $dateClass = 'days-pill';
                 }
+
+                $priority = strtolower($p['priority'] ?? 'medium');
                 ?>
 
                 <!-- Project cards design -->
-
-                <?php $priority = strtolower($p['priority'] ?? 'medium'); ?>
                 <article
                   class="project-card"
                   data-name="<?= strtolower(htmlspecialchars($p['project_name'])) ?>"
@@ -310,7 +481,10 @@ if ($isManager) {
                   data-project-id="<?= htmlspecialchars($p['project_id'] ?? '') ?>"
                   data-deadline-text="<?= htmlspecialchars($dateText) ?>"
                   data-deadline-class="<?= htmlspecialchars($dateClass) ?>"
-                  data-priority="<?= htmlspecialchars($priority) ?>">
+                  data-priority="<?= htmlspecialchars($priority) ?>"
+                  data-description="<?= htmlspecialchars($p['description'] ?? '') ?>"
+                  data-team-leader-id="<?= htmlspecialchars($p['team_leader_id'] ?? '') ?>"
+                  data-team-leader-name="<?= htmlspecialchars($leaderName) ?>">
 
                   <!-- 3 dots for moving projects to archive -->
                   <?php if ($isManager): ?>
@@ -320,26 +494,26 @@ if ($isManager) {
                       </button>
 
                       <div class="card-menu-dropdown" hidden>
-                        <button type="button" class="card-menu-item" data-action="complete">Mark as complete</button>
+                        <?php if ((int)$progress >= 100): ?>
+                          <button type="button" class="card-menu-item" data-action="complete">Mark as complete</button>
+                        <?php endif; ?>
+
                         <button type="button" class="card-menu-item" data-action="archive">Move to archives</button>
+                        <button type="button" class="card-menu-item" data-action="update">Update project</button>
                       </div>
+
                     </div>
                   <?php endif; ?>
-
 
                   <h3 class="project-title"><?= htmlspecialchars($p['project_name']) ?></h3>
 
                   <!-- Priority label and progress pill -->
-
                   <div class="progress-head">
                     <span class="small-label">PROGRESS</span>
-
                     <span class="priority-pill priority-<?= htmlspecialchars($priority) ?>">
                       <?= ucfirst(htmlspecialchars($priority)) ?> priority
                     </span>
                   </div>
-
-
 
                   <div class="progress-track" aria-hidden="true">
                     <div class="progress-fill" style="width: <?= (int)round($progress) ?>%;"></div>
@@ -359,15 +533,17 @@ if ($isManager) {
                     <span class="leader-name"><?= htmlspecialchars($leaderName) ?></span>
                   </div>
 
-                  <div class="<?= $dateClass ?>">
-                    <i data-feather="clock"></i>
-                    <span><?= htmlspecialchars($dateText) ?></span>
+                  <div class="card-footer">
+                    <div class="<?= $dateClass ?>">
+                      <i data-feather="clock"></i>
+                      <span><?= htmlspecialchars($dateText) ?></span>
+                    </div>
                   </div>
                 </article>
               <?php endforeach; ?>
-            </div>
+            <?php endif; ?>
           </div>
-        <?php endif; ?>
+        </div>
       </section>
 
       <!-- ARCHIVED (MANAGER ONLY) -->
@@ -407,9 +583,28 @@ if ($isManager) {
                     if ($leaderName === '') $leaderName = 'Unassigned';
 
                     $avatar = $p['leader_picture'] ?? '';
+                    $priority = strtolower($p['priority'] ?? 'medium'); // ✅ Get priority
 
                     $dateText = 'Archived';
                     $dateClass = 'days-pill';
+
+                    // ✅ Calculate the REAL deadline text for when it's reinstated
+                    $days = daysLeft($p['estimated_completion_date'] ?? null, $p['deadline'] ?? null);
+                    $realDeadlineText = 'No date set';
+                    $realDeadlineClass = 'days-pill';
+
+                    if ($days !== null) {
+                      if ($days < 0) {
+                        $realDeadlineText = abs($days) . ' days overdue';
+                        $realDeadlineClass = 'days-pill is-overdue';
+                      } elseif ($days === 0) {
+                        $realDeadlineText = 'Due today';
+                        $realDeadlineClass = 'days-pill is-due';
+                      } else {
+                        $realDeadlineText = $days . ' days left';
+                        $realDeadlineClass = 'days-pill';
+                      }
+                    }
                     ?>
 
                     <article
@@ -418,11 +613,12 @@ if ($isManager) {
                       data-progress="<?= (int)$progress ?>"
                       data-deadline="<?= htmlspecialchars($p['deadline'] ?? '') ?>"
                       data-project-id="<?= htmlspecialchars($p['project_id']) ?>"
-                      data-pill-text="<?= htmlspecialchars($dateText) ?>"
-                      data-pill-class="<?= htmlspecialchars($dateClass) ?>"
-                      data-deadline-text="<?= htmlspecialchars($dateText) ?>"
-                      data-deadline-class="<?= htmlspecialchars($dateClass) ?>"
-                      data-priority="<?= htmlspecialchars($priority) ?>">
+                      data-priority="<?= htmlspecialchars($priority) ?>"
+                      data-description="<?= htmlspecialchars($p['description'] ?? '') ?>"
+                      data-team-leader-id="<?= htmlspecialchars($p['team_leader_id'] ?? '') ?>"
+                      data-team-leader-name="<?= htmlspecialchars($leaderName) ?>"
+                      data-deadline-text="<?= htmlspecialchars($realDeadlineText) ?>"
+                      data-deadline-class="<?= htmlspecialchars($realDeadlineClass) ?>">
 
                       <!-- 3 dots menu -->
                       <div class="card-menu">
@@ -441,7 +637,13 @@ if ($isManager) {
 
                       <h3 class="project-title"><?= htmlspecialchars($p['project_name']) ?></h3>
 
-                      <div class="small-label">PROGRESS</div>
+                      <div class="progress-head">
+                        <span class="small-label">PROGRESS</span>
+                        <span class="priority-pill priority-<?= htmlspecialchars($priority) ?>">
+                          <?= ucfirst(htmlspecialchars($priority)) ?> priority
+                        </span>
+                      </div>
+
                       <div class="progress-track" aria-hidden="true">
                         <div class="progress-fill" style="width: <?= (int)round($progress) ?>%;"></div>
                       </div>
@@ -480,6 +682,52 @@ if ($isManager) {
 
     </main>
   </div>
+
+  <!-- UPDATE PROJECT MODAL -->
+  <div class="modal-overlay" id="update-project-modal" style="display:none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Update Project</h2>
+        <button type="button" class="close-btn" id="update-project-close-btn">
+          <i data-feather="x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <form id="update-project-form" class="create-post-form" onsubmit="return false;">
+          <input type="hidden" id="update-project-id" />
+
+          <div class="form-group">
+            <label for="update-project-name">Project Name</label>
+            <input type="text" id="update-project-name" required />
+          </div>
+
+          <div class="form-group">
+            <label for="update-project-deadline">Due Date</label>
+            <input type="date" id="update-project-deadline" required />
+          </div>
+
+          <div class="form-group">
+            <label for="update-project-description">Description</label>
+            <textarea id="update-project-description" rows="4"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="update-leader-search">Team Leader</label>
+
+            <!-- same pattern as create-project page -->
+            <input type="text" id="update-leader-search" placeholder="Search team leader…" autocomplete="off" required />
+            <input type="hidden" id="update-team-leader-id" />
+
+            <div id="update-leader-results" class="autocomplete-results" style="display:none;"></div>
+          </div>
+
+          <button type="submit" class="create-post-btn">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script>
     feather.replace();
   </script>

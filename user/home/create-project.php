@@ -117,14 +117,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ':uid' => $leaderId
     ]);
 
-    // ✅ NEW: Promote selected user to team_leader (but never downgrade manager)
+    // Promote ONLY team_member to team_leader (NEVER change technical_specialist, nver downgrade manager)
     $promote = $db->prepare("
         UPDATE users
         SET role = 'team_leader'
         WHERE user_id = :uid
-        AND role IN ('team_member','technical_specialist')
+        AND role = 'team_member'
     ");
     $promote->execute([':uid' => $leaderId]);
+
 
     $userEmail = $_SESSION['email'] ?? '';
     $redirect = "../project/projects.php?project_id=" . urlencode($newProjectId);
@@ -151,12 +152,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="/favicon.png">
     <script src="https://unpkg.com/feather-icons"></script>
     <link rel="stylesheet" href="create-project.css">
 
 </head>
 
 <body id="create-project-page">
+    <?php include '../to-do/todo_widget.php'; ?>
     <div class="dashboard-container">
         <nav class="sidebar">
             <div class="nav-top">
@@ -164,15 +167,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <img src="../logo.png" alt="Make-It-All Logo" class="logo-icon">
                 </div>
                 <ul class="nav-main">
-                    <li class="active-parent"><a href="home.html"><i data-feather="home"></i>Home</a></li>
+                    <?php if (isset($_SESSION['role']) && ($_SESSION['role'] === 'manager' || $_SESSION['role'] === 'team_leader')): ?>
+                        <li class="active-parent"><a href="home.php"><i data-feather="home"></i>Home</a></li>
+                    <?php endif; ?>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
-                    <li id="nav-archive" style="display: none;"><a href="../project/project-archive.html"><i data-feather="archive"></i>Project Archive</a></li>
+                    <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
+                        <li><a href="../employees/employee-directory.php"><i data-feather="users"></i>Employees</a></li>
+                    <?php endif; ?>
                     <li><a href="../knowledge-base/knowledge-base.html"><i data-feather="book-open"></i>Knowledge Base</a></li>
                 </ul>
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                    <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>
         </nav>
@@ -250,6 +257,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script src="../app.js"></script>
+    <script>
+        feather.replace();
+    </script>
 </body>
 
 </html>

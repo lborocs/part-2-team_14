@@ -32,12 +32,34 @@
 
 .project-health-content {
     width: 100%;
+    padding: 5px 0;
 }
 
 .project-health-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: flex;
     gap: 25px;
+    overflow-x: auto;
+    padding: 15px 5px 20px 5px;
+    margin: -15px -5px -20px -5px;
+    scroll-behavior: smooth;
+}
+
+.project-health-grid::-webkit-scrollbar {
+    height: 8px;
+}
+
+.project-health-grid::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.project-health-grid::-webkit-scrollbar-thumb {
+    background: #bfbfbf;
+    border-radius: 4px;
+}
+
+.project-health-grid::-webkit-scrollbar-thumb:hover {
+    background: #8c8c8c;
 }
 
 .project-card{
@@ -47,11 +69,15 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     transition: transform 0.2s, box-shadow 0.2s;
     border-left: 4px solid;
+    min-width: 320px;
+    flex-shrink: 0;
+    cursor: pointer;
 }
 
 .project-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    border-left-width: 6px;
 }
 
 .health-indicator-container{
@@ -62,9 +88,19 @@
     padding: 6px 12px;
     gap: 15px;
     width: 100%;
-    border: 2px solid #fde68a;
-    background-color: #fef9e7;
     border-radius: 6px;
+}
+
+.health-indicator-container.health-good{
+    border: 2px solid #10b981
+}
+
+.health-indicator-container.health-medium{
+    border: 2px solid #ffc107;
+}
+
+.health-indicator-container.health-poor{
+    border: 2px solid #ff5252;
 }
 
 .health-label{
@@ -90,13 +126,18 @@
     transition: all 0.3s ease;
 }
 
-.project-card.high-priority {
+.project-card.health-poor{
     border-left-color: #ff5252;
 }
 
-.project-card.medium-priority {
+.project-card.health-medium{
     border-left-color: #ffc107;
 }
+
+.project-card.health-good{
+    border-left-color: #10b981;
+}
+
 
 .project-card h3{
     font-size: 20px;
@@ -346,7 +387,12 @@ select:hover {
     background: rgba(146, 64, 14, 0.1);
 }
 
+.employee-table{
+    padding-top: 30px;
+}
+
 table {
+    padding-top: 15px;
     background: white;
     width: 100%;
     border-collapse: separate;
@@ -398,6 +444,19 @@ tbody td:first-child {
     color: #333;
 }
 
+.employee-link {
+    color: #1a1a1a;
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 1.5px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.employee-link:hover {
+    color: #E69500;
+    border-bottom-color: #E69500;
+}
+
 .project-badge {
     display: inline-block;
     background-color: #e0e0e0;
@@ -405,6 +464,7 @@ tbody td:first-child {
     padding: 2px 6px;
     border-radius: 4px;
     margin-right: 4px;
+    margin-top: 10px;
     font-size: 0.85em;
 }
 

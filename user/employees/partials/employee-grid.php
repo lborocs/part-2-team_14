@@ -39,6 +39,12 @@ $specialtyClassMap = [
 <?php foreach ($employees as $employee): ?>
 
     <?php
+        $employeeColor = getEmployeeColor(
+            $employee['user_id'], 
+            $bannerColors, 
+            $_SESSION['employee_colors']
+        );
+
         $specialties = [];
         if (!empty($employee['specialties'])) {
             $specialties = json_decode($employee['specialties'], true)
@@ -58,7 +64,7 @@ $specialtyClassMap = [
             </svg>
         </div>
         
-        <div class="employee-card-top">
+        <div class="employee-card-top" style="background-color: <?= htmlspecialchars($employeeColor) ?>;">
             <div class="employee-avatar">
                 <img src="<?= htmlspecialchars($employee['profile_picture']) ?>" alt="">
             </div>
@@ -85,7 +91,7 @@ $specialtyClassMap = [
                 </div>
 
 
-                <button type="button" class="see-more-btn" hidden>...</button>
+                <button type="button" class="see-more-btn" hidden>Show More</button>
             </div>
 
 

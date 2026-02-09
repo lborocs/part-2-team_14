@@ -7,6 +7,9 @@
  * Shows a success notification message that auto-dismisses after 3 seconds
  * @param {string} message - The message to display
  */
+
+const IS_ARCHIVED = !!window.__IS_ARCHIVED__;
+
 function showSuccessNotification(message) {
     // Create notification element
     const notification = document.createElement('div');
@@ -37,6 +40,31 @@ function getUsersMap() {
 
     // Final fallback
     return {};
+}
+
+// Default feather icon for known topics (fallback when DB icon is missing/corrupted)
+const DEFAULT_TOPIC_ICONS = {
+    'Technical Support': 'tool',
+    'HR Policies': 'users',
+    'Project Best Practices': 'bar-chart-2',
+    'Development Guidelines': 'code',
+};
+
+function renderTopicIcon(iconValue, topicName) {
+    const val = (iconValue || '').trim();
+
+    // feather icon name (like "tool", "users", "code")
+    const featherPattern = /^[a-z0-9-]+$/;
+    if (val && featherPattern.test(val)) return `<i data-feather="${val}"></i>`;
+
+    // emoji (non-ascii, not corrupted "?")
+    if (val && val !== '?' && /[^\u0000-\u007F]/.test(val)) {
+        return `<span class="topic-emoji">${val}</span>`;
+    }
+
+    // fallback: use default icon for known topics, or a generic icon
+    const fallback = (topicName && DEFAULT_TOPIC_ICONS[topicName]) || 'help-circle';
+    return `<i data-feather="${fallback}"></i>`;
 }
 
 
@@ -179,43 +207,6 @@ function saveProjects() {
     localStorage.setItem('simProjects', JSON.stringify(simProjects));
 }
 
-// *** ADDED: MOCK ARCHIVED PROJECTS DATA ***
-const simArchivedProjects = [
-    {
-        name: 'Project Alpha',
-        teamLeader: 'Alice Brown',
-        avatarClass: 'avatar-brown',
-        description: 'UI Design',
-        createdDate: '20 Jun 2025',
-        closedDate: '15 Oct 2025'
-    },
-    {
-        name: 'Project Beta',
-        teamLeader: 'Levi Jones',
-        avatarClass: 'avatar-orange',
-        description: 'Testing',
-        createdDate: '5 March 2025',
-        closedDate: '1 May 2025'
-    },
-    {
-        name: 'Project 12',
-        teamLeader: 'Bill Smith',
-        avatarClass: 'avatar-green',
-        description: 'Requirements',
-        createdDate: '6 March 2025',
-        closedDate: '29 April 2025'
-    },
-    {
-        name: 'Project 13',
-        teamLeader: 'Eva Smith',
-        avatarClass: 'avatar-green',
-        description: 'Stakeholder Engagement',
-        createdDate: '27 November 2024',
-        closedDate: '10 April 2025'
-    }
-];
-// *** END ADDED DATA ***
-
 // Personal to-do items (created by users themselves)
 const initialPersonalTodos = [
     // Steve Adams (user@make-it-all.co.uk)
@@ -293,7 +284,8 @@ function savePersonalTodos() {
  */
 async function getCurrentUser() {
     try {
-        const response = await fetch('../../actions/login_sync.php', {
+        const actionsBase = window.__ACTIONS_BASE__ || '../../actions/';
+        const response = await fetch(actionsBase + 'login_sync.php', {
             credentials: 'include'
         });
 
@@ -407,12 +399,14 @@ function updateSidebarAndNav() {
                 ? "active"
                 : "";
 
-        const resourcesActive = path.includes("project-resources.html") ? "active" : "";
+        const resourcesActive = path.includes("project-resources.php") ? "active" : "";
+        const membersActive = path.includes("project-members.php") ? "active" : "";
 
         navLinks.innerHTML = `
       <a href="projects.php?project_id=${encodeURIComponent(projectId)}" class="${tasksActive}">Tasks</a>
       <a href="${progressPage}?project_id=${encodeURIComponent(projectId)}" class="${progressActive}">Progress</a>
-      <a href="project-resources.html?project_id=${encodeURIComponent(projectId)}" class="${resourcesActive}">Resources</a>
+      <a href="project-resources.php?project_id=${encodeURIComponent(projectId)}" class="${resourcesActive}">Resources</a>
+      <a href="project-members.php?project_id=${encodeURIComponent(projectId)}" class="${membersActive}">Members</a>
     `;
     }
 
@@ -431,55 +425,47 @@ function updateSidebarAndNav() {
  * @param {string} currentUserEmail - The email of the current user.
  */
 function createPostCardHTML(post, currentUserEmail) {
-    const postLink = `knowledge-base-post.html?id=${post.id}&user=${currentUserEmail}`;
-    const topicClass = post.topic.toLowerCase().split(' ')[0]; // 'software issues' -> 'software'
+    const postLink = `knowledge-base-post.html?post_id=${post.id}`;
+    const topicClass = post.topic.toLowerCase().split(' ')[0];
 
-    // Determine avatar class
-    let avatarClass = 'avatar-3'; // Default avatar
-    if (post.authorEmail === 'user@make-it-all.co.uk') avatarClass = 'avatar-1';
-    if (post.authorEmail === 'specialist@make-it-all.co.uk') avatarClass = 'avatar-4';
-    if (post.authorEmail === 'manager@make-it-all.co.uk') avatarClass = 'avatar-2';
+    const avatarSrc = post.profilePicture || '../../default-avatar.png';
+
+    const solvedBadge = Number(post.is_solved) === 1
+        ? `<span class="kb-solved-badge">Solved</span>`
+        : "";
 
     return `
-        <div class="post-card">
-            <div class="post-card-header">
-                <div class="post-card-avatar ${avatarClass}"></div>
-                <div>
-                    <span class="post-card-author">${post.author}</span>
-                    <span class="post-card-date">${post.date}</span>
-                </div>
-                <span class="post-card-tag ${topicClass}">${post.topic}</span>
-            </div>
-            <a href="${postLink}" class="post-card-body">
-                <h3>${post.title}</h3>
-                <p>${post.content}</p>
-            </a>
-            <div class="post-card-footer">
-                <span><i data-feather="thumbs-up"></i> ${post.reactions.up}</span>
-                <span><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
-            </div>
+    <div class="post-card">
+      <div class="post-card-header">
+        <img class="post-card-avatar" src="${avatarSrc}" alt="${post.author}" onerror="this.src='../../default-avatar.png'">
+        <div>
+          <span class="post-card-author">${post.author}</span>
+          <span class="post-card-date">${post.date}</span>
         </div>
-    `;
+
+        <span class="post-card-tag ${topicClass}">${post.topic}</span>
+        ${solvedBadge}
+      </div>
+
+      <a href="${postLink}" class="post-card-body">
+        <h3>${post.title}</h3>
+        <p>${post.content}</p>
+      </a>
+
+      <div class="post-card-footer">
+        <span><i data-feather="thumbs-up"></i> ${post.reactions.up}</span>
+        <span><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
+      </div>
+    </div>
+  `;
 }
+
 
 /**
  * Saves the current state of simPosts to localStorage.
  */
 function savePosts() {
     localStorage.setItem('simPosts', JSON.stringify(simPosts));
-}
-
-/* ===========================
-   TOPICS STORE (persist custom topics)
-   =========================== */
-const MAIN_TOPICS = ["Printing", "Software Issues", "Network", "Security", "Database", "Finance"];
-let customTopics = JSON.parse(localStorage.getItem('customTopics')) || [];
-
-function getAllTopics() {
-    return [...MAIN_TOPICS, ...customTopics];
-}
-function saveCustomTopics() {
-    localStorage.setItem('customTopics', JSON.stringify(customTopics));
 }
 
 
@@ -506,12 +492,18 @@ function renderPostList(posts, currentUserEmail) {
     feather.replace();
 }
 
+let KB_ACTIVE_TOPIC = null;      // string or null
+let KB_ACTIVE_POSTS = [];        // array of posts currently in that topic
+
 /**
  * Switches the main KB page to show a specific topic.
  * @param {string} topicName - The name of the topic, e.g., "Software Issues".
  * @param {object} currentUser - The current user object.
  */
-function showTopicView(topicName, currentUser) {
+async function showTopicView(topicName, currentUser) {
+    // tell CSS we’re in “topic page” mode
+    document.body.dataset.topicsView = "topic";
+
     // 1. Hide the topic grid and its parent section
     document.getElementById('kb-topics-section').style.display = 'none';
 
@@ -543,9 +535,15 @@ function showTopicView(topicName, currentUser) {
     document.getElementById('posts-list-title').textContent = 'All Posts';
     document.getElementById('post-tabs-container').style.display = 'none';
 
-    // 7. Filter and render the posts for this topic
-    const topicPosts = simPosts.filter(post => post.topic === topicName);
+    // 7. Fetch posts from DB for this topic
+    const all = await fetchKbPostsFromDb("new", 50); // get latest + filter
+    const topicPosts = all.filter(p => p.topic === topicName);
+
+    KB_ACTIVE_TOPIC = topicName;
+    KB_ACTIVE_POSTS = topicPosts;
+
     renderPostList(topicPosts, currentUser.email);
+
 }
 
 /**
@@ -553,144 +551,364 @@ function showTopicView(topicName, currentUser) {
  * @param {boolean} showAll If true, render all topics (unused for main page now). If false, render main topics only.
  * @param {object} currentUser Current user (for click-through)
  */
-function renderTopicGrid(showAll, currentUser) {
+async function renderTopicGrid(showAll, currentUser) {
     const grid = document.getElementById('topic-grid');
     if (!grid) return;
 
-    // For main page we always show only MAIN_TOPICS
-    const topics = MAIN_TOPICS;
+    await ensureKbTopicsLoaded();
 
-    // Build cards
-    const topicCardsHtml = topics.map(t => `
-        <a href="#" class="topic-card" data-topic="${t}">
-            <i data-feather="${iconForTopic(t)}"></i>
-            <span>${t}</span>
-        </a>
-    `).join('');
+    // Main KB page: ONLY show original topics (ones with icons)
+    const publicTopics = KB_TOPICS.filter(t => String(t.is_public) === "1");
 
-    // “Add New Topic” card
+    // originals = ones that have a DB icon set OR a known default
+    const originalTopics = publicTopics.filter(t =>
+        (t.icon && t.icon.trim() !== "" && t.icon.trim() !== "?") || DEFAULT_TOPIC_ICONS[t.topic_name]
+    );
+
+    // main page shows originals only
+    const topicsToShow = showAll ? publicTopics : originalTopics;
+
+
+    const topicCardsHtml = topicsToShow.map(t => `
+    <a href="#" class="topic-card" data-topic="${t.topic_name}">
+      ${renderTopicIcon(t.icon, t.topic_name)}
+      <span>${t.topic_name}</span>
+    </a>
+  `).join('');
+
     const addCardHtml = `
-        <a href="knowledge-base-create-topic.html?user=${currentUser.email}" class="topic-card add-topic-card" id="add-topic-card">
-            <i data-feather="plus"></i>
-            <span>Add New Topic</span>
-        </a>
-    `;
+    <a href="knowledge-base-create-topic.html?user=${currentUser.email}" class="topic-card add-topic-card" id="add-topic-card">
+      <i data-feather="plus"></i>
+      <span>Add New Topic</span>
+    </a>
+  `;
 
     grid.innerHTML = topicCardsHtml + addCardHtml;
 
-    // Hook up topic clicks
     grid.querySelectorAll('.topic-card:not(.add-topic-card)').forEach(card => {
-        card.addEventListener('click', (e) => {
+        card.addEventListener('click', async (e) => {
             e.preventDefault();
             const topicName = card.dataset.topic;
-            showTopicView(topicName, currentUser);
+            await showTopicView(topicName, currentUser);
         });
     });
-
-    // Note: Add New Topic now links to form page instead of prompt
 
     feather.replace();
 }
 
-/** Pick an icon per topic (fallback: tag) */
-function iconForTopic(topic) {
-    const map = {
-        "Printing": "printer",
-        "Software Issues": "alert-triangle",
-        "Network": "wifi",
-        "Security": "shield",
-        "Database": "database",
-        "Finance": "shopping-cart"
-    };
-    return map[topic] || "tag";
+
+/* ===========================
+   KB DB BACKEND (PHP actions)
+   =========================== */
+const KB_ACTIONS_BASE = "actions";
+
+// ===========================
+// TOPICS (DB-driven)
+// ===========================
+let KB_TOPICS = [];                 // array of {topic_id, topic_name, description, icon, ...}
+let TOPIC_ID_TO_NAME = {};          // { [id]: name }
+let TOPIC_NAME_TO_ID = {};          // { [name]: id }
+let TOPIC_NAME_TO_ICON = {};        // { [name]: icon }
+
+async function fetchKbTopicsFromDb() {
+    const res = await fetch(`${KB_ACTIONS_BASE}/fetch_topics.php`, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
+
+    return data.topics || [];
 }
 
-/**
- * Runs on the Knowledge Base Index page (knowledge-base.html)
- */
-function loadKbIndex(currentUser) {
+async function createKbTopicInDb({ topic_name, description, icon }) {
+    const fd = new FormData();
+    fd.append("topic_name", topic_name);
+    fd.append("description", description || "");
+    fd.append("icon", icon || "");
+
+
+    const res = await fetch(`${KB_ACTIONS_BASE}/create_topic.php`, {
+        method: "POST",
+        body: fd,
+        credentials: "include"
+    });
+
+    return await res.json();
+}
+
+
+async function ensureKbTopicsLoaded() {
+    if (KB_TOPICS.length) return;
+
+    KB_TOPICS = await fetchKbTopicsFromDb();
+
+    TOPIC_ID_TO_NAME = {};
+    TOPIC_NAME_TO_ID = {};
+    TOPIC_NAME_TO_ICON = {};
+
+    KB_TOPICS.forEach(t => {
+        TOPIC_ID_TO_NAME[t.topic_id] = t.topic_name;
+        TOPIC_NAME_TO_ID[t.topic_name] = t.topic_id;
+        TOPIC_NAME_TO_ICON[t.topic_name] = t.icon || "";
+
+    });
+}
+
+function getTopicIdFromName(name) {
+    return TOPIC_NAME_TO_ID[name] || 0;
+}
+
+
+// Format MySQL datetime -> "3 October 2025"
+function formatKbMysqlDate(mysqlDate) {
+    if (!mysqlDate) return "";
+    const d = new Date(String(mysqlDate).replace(" ", "T"));
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function mapDbPostToUiPost(p) {
+    const topicName = p.topic_name || TOPIC_ID_TO_NAME[p.topic_id] || "General";
+
+    return {
+        id: p.post_id,
+        topic: topicName,
+        title: p.title,
+        author: p.author_name || "Unknown",
+        authorEmail: "",
+        profilePicture: p.profile_picture || null,
+        date: formatKbMysqlDate(p.created_at),
+        content: p.snippet || "",
+        fullContent: p.content || "",
+        is_solved: Number(p.is_solved || 0),
+        reactions: {
+            up: p.view_count ?? 0,
+            lightbulb: 0,
+            comments: p.comment_count ?? 0
+        },
+        replies: []
+    };
+}
+
+
+async function fetchKbPostsFromDb(type = "popular", limit = 20, search = "") {
+    const url =
+        `${KB_ACTIONS_BASE}/fetch_posts.php?type=${encodeURIComponent(type)}&limit=${encodeURIComponent(limit)}&search=${encodeURIComponent(search)}`;
+
+    const res = await fetch(url, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
+    return (data.posts || []).map(mapDbPostToUiPost);
+}
+
+
+async function createKbPostInDb({ title, topicName, details }) {
+    const topicId = getTopicIdFromName(topicName);
+    const fd = new FormData();
+    fd.append("title", title);
+    fd.append("topic_id", String(topicId));
+    fd.append("content", details);
+
+    const res = await fetch(`${KB_ACTIONS_BASE}/create_post.php`, {
+        method: "POST",
+        body: fd,
+        credentials: "include"
+    });
+
+    const data = await res.json();
+    return data; // {success, post_id} or {success:false,message}
+}
+
+async function loadKbIndex(currentUser) {
     // Make sure the Create Post button is visible
     const createBtn = document.getElementById('create-post-btn-topic');
     if (createBtn) createBtn.style.display = 'inline-flex';
 
-    // Load and render popular posts
-    const popularPosts = [...simPosts].sort((a, b) => b.reactions.up - a.reactions.up);
-    renderPostList(popularPosts, currentUser.email);
-
-    // Render the main topics grid (main topics + Add New Topic)
+    // Render topics (keep existing)
     document.body.dataset.topicsView = 'main';
-    renderTopicGrid(false, currentUser);
+    await renderTopicGrid(false, currentUser);
 
-    // Update "View more topics" link to All Topics page
+
+    // Update "View more topics" link
     const viewMoreLink = document.getElementById('view-more-topics');
     if (viewMoreLink) {
         viewMoreLink.setAttribute('href', 'all-topics.html');
     }
-}
 
-/**
- * Runs on the Create Post page (knowledge-base-create.html)
- */
-function setupCreateForm(currentUser) {
-    const form = document.getElementById('create-post-form');
-    const topicSelect = document.getElementById('post-topic');
+    // Load popular posts from DB
+    const posts = await fetchKbPostsFromDb("popular", 20);
+    renderPostList(posts, currentUser.email);
 
-    if (!form || !topicSelect) return;
+    KB_ACTIVE_TOPIC = null;
+    KB_ACTIVE_POSTS = [];
 
-    // Populate the topic dropdown with all topics (main + custom)
-    const allTopics = getAllTopics();
-    topicSelect.innerHTML = '<option value="">Select a topic...</option>';
-    allTopics.forEach(topic => {
-        const option = document.createElement('option');
-        option.value = topic;
-        option.textContent = topic;
-        topicSelect.appendChild(option);
-    });
+    // Make Popular/New tabs actually fetch DB versions
+    const tabsContainer = document.getElementById("post-tabs-container");
+    if (tabsContainer) {
+        const buttons = tabsContainer.querySelectorAll("button");
+        const popularBtn = buttons[0];
+        const newBtn = buttons[1];
 
-    // Check if a topic was passed via URL parameter (from topic view)
-    const urlParams = new URLSearchParams(window.location.search);
-    const preselectedTopic = urlParams.get('topic');
-    if (preselectedTopic) {
-        topicSelect.value = preselectedTopic;
+        if (popularBtn && newBtn) {
+            popularBtn.addEventListener("click", async () => {
+                popularBtn.classList.add("active");
+                newBtn.classList.remove("active");
+                const p = await fetchKbPostsFromDb("popular", 20);
+                renderPostList(p, currentUser.email);
+            });
+
+            newBtn.addEventListener("click", async () => {
+                newBtn.classList.add("active");
+                popularBtn.classList.remove("active");
+                const n = await fetchKbPostsFromDb("new", 20);
+                renderPostList(n, currentUser.email);
+            });
+        }
     }
 
-    // Handle form submission
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
+    setupKbSearch(currentUser);
 
-        const title = document.getElementById('post-title').value.trim();
-        const topic = document.getElementById('post-topic').value;
-        const details = document.getElementById('post-details').value.trim();
+}
 
-        if (!title || !topic || !details) {
-            alert('Please fill out all required fields.');
+function setupKbSearch(currentUser) {
+    const input = document.getElementById("kb-search-input");
+    if (!input) return;
+
+    const tabsContainer = document.getElementById("post-tabs-container");
+    const buttons = tabsContainer ? tabsContainer.querySelectorAll("button") : [];
+    const popularBtn = buttons[0];
+    const newBtn = buttons[1];
+
+    function getActiveType() {
+        return newBtn && newBtn.classList.contains("active") ? "new" : "popular";
+    }
+
+    let t = null;
+
+    async function runSearch() {
+        const q = input.value.trim();
+
+        // if search cleared, restore the current view
+        if (q === "") {
+            if (KB_ACTIVE_TOPIC) {
+                renderPostList(KB_ACTIVE_POSTS, currentUser.email);
+            } else {
+                const type = getActiveType();
+                const posts = await fetchKbPostsFromDb(type, 20, "");
+                renderPostList(posts, currentUser.email);
+            }
             return;
         }
 
-        // Create new post object
-        const newPost = {
-            id: new Date().getTime(),
-            topic: topic,
-            title: title,
-            author: currentUser.name,
-            authorEmail: currentUser.email,
-            date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-            content: details,
-            reactions: { up: 0, lightbulb: 0, comments: 0 },
-            replies: []
-        };
+        // if in a topic, filter locally (DON'T hit DB)
+        if (KB_ACTIVE_TOPIC) {
+            const qLower = q.toLowerCase();
+            const filtered = KB_ACTIVE_POSTS.filter(p =>
+                (p.title || "").toLowerCase().includes(qLower) ||
+                (p.content || "").toLowerCase().includes(qLower) ||
+                (p.author || "").toLowerCase().includes(qLower)
+            );
+            renderPostList(filtered, currentUser.email);
+            return;
+        }
 
-        // Add to posts array and save
-        simPosts.push(newPost);
-        savePosts();
+        // normal global search (DB)
+        const type = getActiveType();
+        const posts = await fetchKbPostsFromDb(type, 20, q);
+        renderPostList(posts, currentUser.email);
+    }
 
-        // Store success message
-        sessionStorage.setItem('postCreated', `Post "${title}" created successfully!`);
+    // prevent double-binding if loadKbIndex is called again
+    if (input.dataset.bound === "1") return;
+    input.dataset.bound = "1";
 
-        // Redirect back to knowledge base
+    input.addEventListener("input", () => {
+        clearTimeout(t);
+        t = setTimeout(runSearch, 250);
+    });
+}
+
+
+/**
+ * Runs on the Create Post page 
+ */
+async function setupCreateForm(currentUser) {
+    const form = document.getElementById("create-post-form");
+
+    // NEW elements (searchable)
+    const topicInput = document.getElementById("post-topic-input");   // visible
+    const topicsList = document.getElementById("topics-datalist");    // datalist
+    const topicHidden = document.getElementById("post-topic");        // hidden (submitted)
+    const topicError = document.getElementById("topic-error");        // optional msg
+
+    if (!form || !topicInput || !topicsList || !topicHidden) return;
+
+    await ensureKbTopicsLoaded();
+
+    // only public topics
+    const topicNames = KB_TOPICS
+        .filter(t => String(t.is_public) === "1")
+        .map(t => String(t.topic_name || "").trim())
+        .filter(Boolean);
+
+    // fill datalist
+    topicsList.innerHTML = topicNames
+        .map(name => `<option value="${escapeHtml(name)}"></option>`)
+        .join("");
+
+    // Preselect if topic passed in URL (?topic=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectedTopic = urlParams.get("topic");
+    if (preselectedTopic) {
+        topicInput.value = preselectedTopic;
+        topicHidden.value = topicNames.includes(preselectedTopic) ? preselectedTopic : "";
+    }
+
+    function syncTopic() {
+        const v = String(topicInput.value || "").trim();
+        const ok = topicNames.includes(v);
+
+        topicHidden.value = ok ? v : "";
+
+        if (topicError) {
+            topicError.style.display = (v && !ok) ? "block" : "none";
+        }
+    }
+
+    topicInput.addEventListener("input", syncTopic);
+    topicInput.addEventListener("blur", syncTopic);
+
+    // Handle form submission
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById("post-title").value.trim();
+        const topic = topicHidden.value;
+        const details = document.getElementById("post-details").value.trim();
+
+        if (!title || !topic || !details) {
+            alert("Please fill out all required fields (and pick a valid topic).");
+            return;
+        }
+
+        const result = await createKbPostInDb({ title, topicName: topic, details });
+
+        if (!result.success) {
+            alert(result.message || "Could not create post.");
+            return;
+        }
+
+        sessionStorage.setItem("postCreated", `Post "${title}" created successfully!`);
         window.location.href = `knowledge-base.html?user=${currentUser.email}`;
     });
 }
+
+function escapeHtml(str) {
+    return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
 
 /**
  * Runs on the single Knowledge Base Post page (knowledge-base-post.html)
@@ -836,9 +1054,7 @@ function setupCreateProjectPage(currentUser) {
         inputId: "leader-search",
         hiddenId: "team-leader-id",
         resultsId: "leader-results",
-        // If you made the endpoint INSIDE create-project.php:
         endpointUrl: "create-project.php?ajax=leaders",
-        // If you instead created a separate file, use:
         // endpointUrl: "search_leaders.php",
         formId: "create-project-form",
     });
@@ -859,47 +1075,119 @@ function setupCreateProjectPage(currentUser) {
 
 
 /**
- * Runs on the Settings page (settings.html)
+ * Runs on the Settings page (settings.php)
  */
 function loadSettingsPage(currentUser) {
-    // 1. Populate user data
     document.getElementById('profile-name').value = currentUser.name;
     document.getElementById('profile-email').value = currentUser.email;
-
-    // Format the role (capitalise and replace underscroll)
     const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     document.getElementById('profile-role').value = role;
 
-    // 2. Add form submit listeners (prototype alerts)
-    document.getElementById('profile-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        // In a real app, you'd save this new name
-        const newName = document.getElementById('profile-name').value;
-        alert(`Profile updated! (Name changed to ${newName})`);
+    // Upload a new profile picture
+    const uploadBtn = document.getElementById("upload-image-btn");
+    const fileInput = document.getElementById("profile-image-input");
+    const profileImg = document.getElementById("profile-picture");
+
+    uploadBtn.addEventListener("click", () => {
+        fileInput.click();
     });
 
-    document.getElementById('password-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        alert('Password updated! (This is a demo)');
+    fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // Update the image on the page
+        const reader = new FileReader();
+        reader.onload = e => {
+            profileImg.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // Use file name as the database path
+        const simulatedPath = `/${file.name}`;
+
+        fetch("settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile_picture: simulatedPath })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture updated in DB!");
+            } else {
+                console.error("Failed to update profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
     });
 
+    // Delete current profile picture
+    const deleteBtn = document.getElementById("delete-image-btn");
+
+    deleteBtn.addEventListener("click", () => {
+        const defaultPath = "/default-avatar.png";
+        profileImg.src = defaultPath;
+
+        fetch("settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profile_picture: defaultPath })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Profile picture reset to default in DB!");
+            } else {
+                console.error("Failed to reset profile picture in DB.");
+            }
+        })
+        .catch(err => console.error(err));
+    });
+
+    // Change password
+    document.getElementById('password-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const current_password = document.getElementById('current-password').value;
+        const new_password = document.getElementById('new-password').value;
+        const confirm_password = document.getElementById('confirm-password').value;
+
+        const res = await fetch(`${window.__ACTIONS_BASE__}change_password.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                current_password,
+                new_password,
+                confirm_password
+            })
+        });
+
+        const data = await res.json();
+        alert(data.message);
+
+        if (data.success) {
+            e.target.reset();
+        }
+    });
+
+    // Update notification preferences
     document.getElementById('notifications-form').addEventListener('submit', (e) => {
         e.preventDefault();
         alert('Notification preferences saved!');
     });
 
-    // 3. Add Sign Out logic
+    // Sign Out logic
     document.getElementById('sign-out-btn').addEventListener('click', (e) => {
         e.preventDefault();
 
         // Clear the simulated session
-        // This clears the posts you created, etc.
         localStorage.clear();
         sessionStorage.clear();
 
         alert('Signing out...');
 
-        // Redirect to the login page (assuming it's index.html)
+        // Redirect to the login page
         window.location.href = '../index.html';
     });
 }
@@ -911,7 +1199,7 @@ function loadSettingsPage(currentUser) {
  * Runs on All Topics page (all-topics.html)
  * Shows a plain list (no buttons) of all topics: main + custom.
  */
-function loadAllTopicsPage(currentUser) {
+async function loadAllTopicsPage(currentUser) {
     // Title + breadcrumbs
     const titleContainer = document.getElementById('kb-title-container');
     if (titleContainer) {
@@ -926,7 +1214,48 @@ function loadAllTopicsPage(currentUser) {
     // Build clickable rows
     const listEl = document.getElementById('all-topics-list');
     if (listEl) {
-        const topics = getAllTopics();
+        await ensureKbTopicsLoaded();
+        const allTopics = KB_TOPICS
+            .filter(t => String(t.is_public) === "1")
+            .map(t => String(t.topic_name || "").trim())
+            .filter(Boolean);
+
+        function renderTopicsList(topicNames) {
+        if (!listEl) return;
+
+        if (!topicNames.length) {
+            listEl.innerHTML = '<p>No topics found.</p>';
+            return;
+        }
+
+        listEl.innerHTML = topicNames
+            .map(t => `
+            <div class="topic-row" data-topic="${escapeHtml(t)}">
+                <span class="topic-name">${escapeHtml(t)}</span>
+                <i data-feather="arrow-right"></i>
+            </div>
+            `)
+            .join('');
+
+        // Re-bind click handlers every re-render
+        listEl.querySelectorAll('.topic-row').forEach((row) => {
+            row.addEventListener('click', () => {
+            const topicName = row.dataset.topic;
+            sessionStorage.setItem('returnToTopic', topicName);
+            window.location.href = `knowledge-base.html?user=${currentUser.email}`;
+            });
+        });
+
+        feather.replace();
+        }
+
+        // initial render
+        renderTopicsList(allTopics);
+
+        // bind search
+        setupAllTopicsSearch(allTopics, renderTopicsList);
+
+
         if (topics.length === 0) {
             listEl.innerHTML = '<p>No topics yet.</p>';
         } else {
@@ -955,8 +1284,36 @@ function loadAllTopicsPage(currentUser) {
     feather.replace();
 }
 
+function setupAllTopicsSearch(allTopics, renderFn) {
+  const input = document.getElementById("kb-topics-search-input");
+  if (!input) return;
+
+  if (input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+
+  let t = null;
+
+  input.addEventListener("input", () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const q = String(input.value || "").trim().toLowerCase();
+
+      if (!q) {
+        renderFn(allTopics);
+        return;
+      }
+
+      const filtered = allTopics.filter(name =>
+        name.toLowerCase().includes(q)
+      );
+
+      renderFn(filtered);
+    }, 200);
+  });
+}
+
 /**
- * Runs on the Home page (home/home.html)
+ * Runs on the Home page (home/home.php)
  */
 function loadHomePage(currentUser) {
     // Update page label based on role
@@ -1282,43 +1639,36 @@ function renderTodoItems(tasks, currentUser) {
     feather.replace();
 }
 
-/**
- * Renders trending posts
- */
-function renderTrendingPosts(currentUser) {
+async function renderTrendingPosts(currentUser) {
     const trendingPostsList = document.getElementById('trending-posts-list');
-    const topPosts = [...simPosts].sort((a, b) => b.reactions.up - a.reactions.up).slice(0, 3);
+    if (!trendingPostsList) return;
 
-    trendingPostsList.innerHTML = topPosts.map(post => {
-        let avatarClass = 'avatar-3';
-        if (post.authorEmail === 'user@make-it-all.co.uk') avatarClass = 'avatar-1';
-        if (post.authorEmail === 'specialist@make-it-all.co.uk') avatarClass = 'avatar-4';
-        if (post.authorEmail === 'manager@make-it-all.co.uk') avatarClass = 'avatar-2';
-
+    const posts = await fetchKbPostsFromDb("popular", 3); // DB
+    trendingPostsList.innerHTML = posts.map(post => {
         const topicClass = post.topic.toLowerCase().split(' ')[0];
-
         return `
-            <div class="trending-post">
-                <div class="post-header">
-                    <div class="post-avatar ${avatarClass}">${post.author.split(' ').map(n => n[0]).join('')}</div>
-                    <div class="post-author-info">
-                        <p class="post-author-name">${post.author}</p>
-                        <span class="post-date">${post.date.split(' ').slice(0, 2).join(' ')}</span>
-                    </div>
-                    <span class="post-tag ${topicClass}">${post.topic}</span>
-                </div>
-                <h3 class="post-title">${post.title}</h3>
-                <p class="post-excerpt">${post.content.substring(0, 100)}...</p>
-                <div class="post-stats">
-                    <span class="post-stat"><i data-feather="thumbs-up"></i> ${post.reactions.up}</span>
-                    <span class="post-stat"><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
-                </div>
-            </div>
-        `;
-    }).join('');
+      <div class="trending-post">
+        <div class="post-header">
+          <div class="post-avatar ${post.avatarClass || 'avatar-3'}"></div>
+          <div class="post-author-info">
+            <p class="post-author-name">${post.author}</p>
+            <span class="post-date">${post.date}</span>
+          </div>
+          <span class="post-tag ${topicClass}">${post.topic}</span>
+        </div>
+        <h3 class="post-title">${post.title}</h3>
+        <p class="post-excerpt">${post.content.substring(0, 100)}...</p>
+        <div class="post-stats">
+          <span class="post-stat"><i data-feather="eye"></i> ${post.reactions.up}</span>
+          <span class="post-stat"><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
+        </div>
+      </div>
+    `;
+    }).join("");
 
     feather.replace();
 }
+
 
 /**
  * Renders notifications
@@ -1625,39 +1975,49 @@ function renderTaskDistributionChart(userTasks) {
     }
 }
 
-/**
- * Runs on the Create Topic page (knowledge-base-create-topic.html)
- */
 function setupCreateTopicForm(currentUser) {
     const createTopicForm = document.getElementById('create-topic-form');
-
     if (!createTopicForm) return;
 
-    createTopicForm.addEventListener('submit', (e) => {
+    createTopicForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        await ensureKbTopicsLoaded();
 
         const topicName = document.getElementById('topic-name').value.trim();
         const topicDescription = document.getElementById('topic-description').value.trim();
+
+        // If you have an icon input, use it. If not, default to "tag".
+        const iconInput = document.getElementById('topic-icon');
+        const topicIcon = iconInput ? iconInput.value.trim() : "";
 
         if (!topicName) {
             alert('Please enter a topic name.');
             return;
         }
 
-        // Check for duplicates (case-insensitive)
-        if (getAllTopics().some(t => t.toLowerCase() === topicName.toLowerCase())) {
+        // duplicate check (case-insensitive) against DB-loaded topics
+        const exists = KB_TOPICS.some(t => t.topic_name.toLowerCase() === topicName.toLowerCase());
+        if (exists) {
             alert('A topic with that name already exists. Please choose a different name.');
             return;
         }
 
-        // Add the new topic to custom topics
-        customTopics.push(topicName);
-        saveCustomTopics();
+        const result = await createKbTopicInDb({
+            topic_name: topicName,
+            description: topicDescription,
+            icon: topicIcon || ""
+        });
 
-        // Store success message to show on next page
+        if (!result.success) {
+            alert(result.message || "Could not create topic.");
+            return;
+        }
+
+        // reset cache so homepage loads new topic instantly
+        KB_TOPICS = [];
         sessionStorage.setItem('topicCreated', `Topic "${topicName}" created successfully!`);
 
-        // Redirect to knowledge base
         window.location.href = `knowledge-base.html?user=${currentUser.email}`;
     });
 }
@@ -1776,7 +2136,6 @@ function setupAssignTaskForm() {
 }
 
 
-
 /**
  * Runs on the Create Project page (create-project.html)
  */
@@ -1887,7 +2246,7 @@ function createTaskCardHTML(task, currentUser) {
 
     const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
 
-    const isDraggable = isManagerView && !isLeaderOnApollo;
+    const isDraggable = isManagerView && !isLeaderOnApollo && !IS_ARCHIVED;
     const showMoveBtn = isManagerView && !isLeaderOnApollo;
 
     const usersMap = getUsersMap();
@@ -1943,7 +2302,7 @@ function createTaskCardHTML(task, currentUser) {
     <span class="priority ${task.priority}">${priorityText}</span>
     <h3 class="task-title">${task.title}</h3>
 
-    ${isManagerView ? renderStatusPill(task) : ""}
+    ${(isManagerView && !IS_ARCHIVED) ? renderStatusPill(task) : ""}
 
     <div class="task-footer">
       <div class="${dueDateClass}">
@@ -2094,13 +2453,22 @@ async function updateTaskStatusInDb(taskId, newStatus) {
         })
     });
 
-    const raw = await res.text(); // helpful for debugging
+    const raw = await res.text();
     let data;
-    try { data = JSON.parse(raw); } catch { throw new Error("Server did not return JSON: " + raw); }
+    try { data = JSON.parse(raw); }
+    catch { throw new Error("Server did not return JSON: " + raw); }
 
     if (!res.ok || !data.success) {
         throw new Error(data.message || `Update failed (${res.status})`);
     }
+
+    // ✅ Trigger UI refresh after successful update
+    const currentUser = window.__CURRENT_USER__;
+    const projectId = getCurrentProjectId();
+    if (currentUser && projectId) {
+        renderTaskBoard(currentUser, projectId);
+    }
+
     return data;
 }
 async function updateTaskPriorityInDb(taskId, priority) {
@@ -2434,94 +2802,96 @@ function updateSelectedCount() {
  * Initializes drag and drop functionality for the board
  */
 function setupBoardDnDOnce(currentUser, currentProjectId) {
-    const board = document.querySelector(".task-board");
-    if (!board) return;
+    if (!IS_ARCHIVED) {
+        const board = document.querySelector(".task-board");
+        if (!board) return;
 
-    // Prevent double-binding
-    if (board.dataset.dndBound === "1") return;
-    board.dataset.dndBound = "1";
+        // Prevent double-binding
+        if (board.dataset.dndBound === "1") return;
+        board.dataset.dndBound = "1";
 
-    // 1) dragstart/dragend using event delegation
-    board.addEventListener("dragstart", (e) => {
-        const card = e.target.closest('.task-card[draggable="true"]');
-        if (!card) return;
+        // 1) dragstart/dragend using event delegation
+        board.addEventListener("dragstart", (e) => {
+            const card = e.target.closest('.task-card[draggable="true"]');
+            if (!card) return;
 
-        e.dataTransfer.setData("text/plain", card.dataset.taskId);
-        e.dataTransfer.effectAllowed = "move";
-        setTimeout(() => card.classList.add("dragging"), 0);
-    });
+            e.dataTransfer.setData("text/plain", card.dataset.taskId);
+            e.dataTransfer.effectAllowed = "move";
+            setTimeout(() => card.classList.add("dragging"), 0);
+        });
 
-    board.addEventListener("dragend", (e) => {
-        const card = e.target.closest(".task-card");
-        if (card) card.classList.remove("dragging");
+        board.addEventListener("dragend", (e) => {
+            const card = e.target.closest(".task-card");
+            if (card) card.classList.remove("dragging");
 
-        board.querySelectorAll(".task-list.drag-over")
-            .forEach((l) => l.classList.remove("drag-over"));
-    });
+            board.querySelectorAll(".task-list.drag-over")
+                .forEach((l) => l.classList.remove("drag-over"));
+        });
 
-    // 2) dragover/dragleave/drop delegation for columns/lists
-    board.addEventListener("dragover", (e) => {
-        const col = e.target.closest(".task-column");
-        if (!col) return;
+        // 2) dragover/dragleave/drop delegation for columns/lists
+        board.addEventListener("dragover", (e) => {
+            const col = e.target.closest(".task-column");
+            if (!col) return;
 
-        e.preventDefault(); // required
-        e.dataTransfer.dropEffect = "move";
+            e.preventDefault(); // required
+            e.dataTransfer.dropEffect = "move";
 
-        const list = col.querySelector(".task-list");
-        if (list) list.classList.add("drag-over");
-    });
+            const list = col.querySelector(".task-list");
+            if (list) list.classList.add("drag-over");
+        });
 
-    board.addEventListener("dragleave", (e) => {
-        const col = e.target.closest(".task-column");
-        if (!col) return;
+        board.addEventListener("dragleave", (e) => {
+            const col = e.target.closest(".task-column");
+            if (!col) return;
 
-        const related = e.relatedTarget;
-        // if still inside the same column, ignore
-        if (related && col.contains(related)) return;
+            const related = e.relatedTarget;
+            // if still inside the same column, ignore
+            if (related && col.contains(related)) return;
 
-        const list = col.querySelector(".task-list");
-        if (list) list.classList.remove("drag-over");
-    });
+            const list = col.querySelector(".task-list");
+            if (list) list.classList.remove("drag-over");
+        });
 
-    board.addEventListener("drop", async (e) => {
-        const col = e.target.closest(".task-column");
-        if (!col) return;
+        board.addEventListener("drop", async (e) => {
+            const col = e.target.closest(".task-column");
+            if (!col) return;
 
-        e.preventDefault();
+            e.preventDefault();
 
-        const list = col.querySelector(".task-list");
-        if (list) list.classList.remove("drag-over");
+            const list = col.querySelector(".task-list");
+            if (list) list.classList.remove("drag-over");
 
-        const taskId = e.dataTransfer.getData("text/plain");
-        const newStatus = col.dataset.status;
+            const taskId = e.dataTransfer.getData("text/plain");
+            const newStatus = col.dataset.status;
 
-        const tasksNorm = window.__TASKS_NORM__ || [];
-        const normTask = tasksNorm.find(t => String(t.id) === String(taskId));
-        if (!normTask) return;
+            const tasksNorm = window.__TASKS_NORM__ || [];
+            const normTask = tasksNorm.find(t => String(t.id) === String(taskId));
+            if (!normTask) return;
 
-        const oldStatus = normTask.status;
-        if (oldStatus === newStatus) return;
+            const oldStatus = normTask.status;
+            if (oldStatus === newStatus) return;
 
-        // optimistic update
-        normTask.status = newStatus;
+            // optimistic update
+            normTask.status = newStatus;
 
-        // keep __TASKS__ in sync too (so refresh/rerender doesn't snap back)
-        if (Array.isArray(window.__TASKS__)) {
-            const dbTask = window.__TASKS__.find(t => String(t.task_id) === String(taskId));
-            if (dbTask) dbTask.status = denormalizeStatus(newStatus);
-        }
+            // keep __TASKS__ in sync too (so refresh/rerender doesn't snap back)
+            if (Array.isArray(window.__TASKS__)) {
+                const dbTask = window.__TASKS__.find(t => String(t.task_id) === String(taskId));
+                if (dbTask) dbTask.status = denormalizeStatus(newStatus);
+            }
 
-        try {
-            await updateTaskStatusInDb(taskId, denormalizeStatus(newStatus));
-        } catch (err) {
-            console.error(err);
-            normTask.status = oldStatus; // revert
-            alert("Could not save change. Please try again.");
-        }
+            try {
+                await updateTaskStatusInDb(taskId, denormalizeStatus(newStatus));
+            } catch (err) {
+                console.error(err);
+                normTask.status = oldStatus; // revert
+                alert("Could not save change. Please try again.");
+            }
 
-        // rerender after drop
-        renderTaskBoard(currentUser, currentProjectId);
-    });
+            // rerender after drop
+            renderTaskBoard(currentUser, currentProjectId);
+        });
+    }
 }
 
 function ensureTaskDetailsMenuUI(detailsModal) {
@@ -2677,6 +3047,7 @@ function initTaskDetailsModal(currentUser) {
         }
 
         // Buttons
+        // Buttons
         const markBtn = document.getElementById("project-complete-btn");
         const deleteBtn = document.getElementById("delete-task-btn");
 
@@ -2796,17 +3167,17 @@ function initTaskDetailsModal(currentUser) {
                 const ok = confirm("Mark this task as complete? It will be moved to Review.");
                 if (!ok) return;
 
-                try {
-                    const tasksNorm = window.__TASKS_NORM__ || [];
-                    const t = tasksNorm.find((x) => String(x.id) === String(task.id));
-                    if (t) t.status = "review";
+                    try {
+                        const tasksNorm = window.__TASKS_NORM__ || [];
+                        const t = tasksNorm.find((x) => String(x.id) === String(task.id));
+                        if (t) t.status = "review";
 
-                    if (Array.isArray(window.__TASKS__)) {
-                        const dbTask = window.__TASKS__.find((x) => String(x.task_id) === String(task.id));
-                        if (dbTask) dbTask.status = "review";
-                    }
+                        if (Array.isArray(window.__TASKS__)) {
+                            const dbTask = window.__TASKS__.find((x) => String(x.task_id) === String(task.id));
+                            if (dbTask) dbTask.status = "review";
+                        }
 
-                    await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
+                        await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
 
                     detailsModal.style.display = "none";
                     document.body.style.overflow = "";
@@ -3114,8 +3485,13 @@ function loadProjectsPage(currentUser) {
 
     feather.replace();
 
-
+    // Initial render of task board
+    renderTaskBoard(currentUser, currentProjectId);
+    setupBoardDnDOnce(currentUser, currentProjectId);
+    initTaskDetailsModal(currentUser);
+    updateAddTaskButtonsVisibility();
 }
+
 
 function openAssignTaskModal(status = "todo") {
     const modal = document.getElementById("assign-task-modal");
@@ -3174,6 +3550,7 @@ function openAssignTaskModal(status = "todo") {
     document.body.style.overflow = "hidden";
     feather.replace();
 }
+
 
 function initManagerMemberProgressList() {
     const listEl = document.getElementById("member-progress-list");
@@ -3260,7 +3637,6 @@ function initManagerMemberProgressList() {
         render(filtered);
     });
 }
-
 
 /**
  * Runs on the Manager Progress page (manager-progress-page)
@@ -3515,76 +3891,67 @@ function renderTasksPerMemberChart(projectTasks) {
 }
 
 /**
- * Runs on the Project Resources page (project-resources.html)
+ * Runs on the Project Resources page (project-resources.php)
  */
-function loadProjectResourcesPage(currentUser) {
-    const currentProjectId = getCurrentProjectId();
+async function loadProjectResourcesPage(currentUser) {
     updateSidebarAndNav();
 
-    const project = simProjects.find(p => p.id === currentProjectId);
+    const res = await fetch('project-resources.php?action=list', {
+        headers: { 'Accept': 'application/json' }
+    });
 
-    if (project) {
-        // --- Fill in basic project details ---
-        document.getElementById('project-created-date').textContent =
-            new Date(project.createdDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('project-description').textContent =
-            project.description || 'No description provided for this project.';
-
-        // --- Build project contacts dynamically ---
-        const contactsList = document.getElementById('project-contacts-list');
-        if (contactsList) {
-            contactsList.innerHTML = ''; // clear any old content
-
-            const contacts = [];
-
-            // Always include the project manager (creator)
-            if (project.createdBy && simUsers[project.createdBy]) {
-                const manager = simUsers[project.createdBy];
-                contacts.push({
-                    name: manager.name,
-                    role: 'Project Manager',
-                    email: project.createdBy,
-                    avatarClass: manager.avatarClass
-                });
-            }
-
-            // Add team leader if exists
-            if (project.teamLeader && simUsers[project.teamLeader]) {
-                const leader = simUsers[project.teamLeader];
-                contacts.push({
-                    name: leader.name,
-                    role: 'Team Leader',
-                    email: project.teamLeader,
-                    avatarClass: leader.avatarClass
-                });
-            }
-
-            // Render both contacts
-            contactsList.innerHTML = contacts.map(c => `
-                 <div class="contact-item">
-                     <span class="avatar ${c.avatarClass}">
-                         ${c.name.split(' ').map(n => n[0]).join('')}
-                     </span>
-                     <div class="contact-info">
-                         <span class="contact-name">${c.name}</span>
-                         <span class="contact-role">${c.role}</span>
-                         <a href="mailto:${c.email}">${c.email}</a>
-                     </div>
-                 </div>
-             `).join('');
-        }
+    const data = await res.json();
+    if (!data.success) {
+        console.error(data.message);
+        return;
     }
 
-    // --- Show upload button for managers or leaders ---
-    if (currentUser.role === 'manager' || currentUser.role === 'team_leader') {
-        const uploadBtn = document.getElementById('upload-btn');
-        if (uploadBtn) {
-            uploadBtn.style.display = 'inline-flex';
-            uploadBtn.addEventListener('click', () => {
-                alert('This is a prototype demo feature. File upload is not functional.');
-            });
-        }
+    const project = data.project;
+
+    // Fill in project details
+    document.getElementById('project-created-date').textContent =
+        new Date(project.created_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+    document.getElementById('project-description').textContent =
+        project.description || 'No description provided for this project.';
+
+    // Build project contacts
+    const contactsList = document.getElementById('project-contacts-list');
+    contactsList.innerHTML = '';
+
+    const contacts = [];
+
+    if (project.manager_first_name) {
+        contacts.push({
+            name: `${project.manager_first_name} ${project.manager_last_name}`,
+            role: 'Project Manager',
+            avatar: project.manager_avatar || '/default-avatar.png'
+        });
     }
+
+    if (project.team_leader_first_name) {
+        contacts.push({
+            name: `${project.team_leader_first_name} ${project.team_leader_last_name}`,
+            role: 'Team Leader',
+            avatar: project.team_leader_avatar || '/default-avatar.png'
+        });
+    }
+
+    contactsList.innerHTML = contacts.map(c => `
+        <div class="contact-item">
+            <div class="avatar">
+                ${c.avatar ? `<img src="${c.avatar}" alt="${c.name}">` : `<span class="avatar-fallback">${c.name.split(' ').map(n => n[0]).join('')}</span>`}
+            </div>
+            <div class="contact-info">
+                <span class="contact-name">${c.name}</span>
+                <span class="contact-role">${c.role}</span>
+            </div>
+        </div>
+    `).join('');
 }
 
 
@@ -3638,47 +4005,10 @@ function setupCreateTodoForm(currentUser) {
         savePersonalTodos();
 
         sessionStorage.setItem('taskCreated', 'Personal to-do added!');
-        window.location.href = `home.html?user=${currentUser.email}`;
+        window.location.href = `home.php?user=${currentUser.email}`;
     });
 }
 
-
-// *** ADDED: New function to load Project Archive page ***
-function loadProjectArchivePage(currentUser) {
-    const gridContainer = document.getElementById('archive-grid-container');
-    if (!gridContainer) return;
-
-    // Generate HTML for each card from mock data
-    gridContainer.innerHTML = simArchivedProjects.map(project => {
-        return `
-            <div class="archive-card">
-                <h2>${project.name}</h2>
-                <ul>
-                    <li>
-                        <strong>Team Leader:</strong>
-                        <span>${project.teamLeader}</span>
-                        <span class="team-leader-avatar ${project.avatarClass}">
-                            ${project.teamLeader.split(' ').map(n => n[0]).join('')}
-                        </span>
-                    </li>
-                    <li>
-                        <strong>Description:</strong>
-                        <span>${project.description}</span>
-                    </li>
-                    <li>
-                        <strong>Date Created:</strong>
-                        <span>${project.createdDate}</span>
-                    </li>
-                    <li>
-                        <strong>Date Closed:</strong>
-                        <span>${project.closedDate}</span>
-                    </li>
-                </ul>
-            </div>
-        `;
-    }).join('');
-}
-// *** END ADDED FUNCTION ***
 
 function sortProjects() {
     const sortSelect = document.getElementById('sortProjects');
@@ -3785,20 +4115,27 @@ function setupProjectCardMenus() {
             return;
         }
 
-        // If user clicked an option in the menu (Mark complete / Archive / Reinstate)
+        // If user clicked an option in the menu (Mark complete / Archive / Reinstate / Update)
         if (menuItem) {
             const card = menuItem.closest(".project-card");
-            const projectId = card.dataset.projectId; // from data-project-id
-            const action = menuItem.dataset.action;   // "complete", "archive", "reinstate"
+            const projectId = card.dataset.projectId;
+            const action = menuItem.dataset.action;
 
             // Close menu immediately
             const menu = card.querySelector(".card-menu-dropdown");
             if (menu) menu.hidden = true;
 
-            // Send request to PHP (same page)
+            // ✅ Update opens modal (no DB call here)
+            if (action === "update") {
+                openUpdateProjectModal(card);
+                return;
+            }
+
+            // others go to PHP action handler
             runProjectAction(projectId, action, card);
             return;
         }
+
 
         // If user clicked anywhere else, close all menus
         document.querySelectorAll(".card-menu-dropdown").forEach((m) => (m.hidden = true));
@@ -3851,12 +4188,19 @@ function renderCardMenu(cardEl, state) {
     if (!dropdown) return;
 
     if (state === "active") {
+        // Only show "Mark as complete" if progress is 100%
+        const progress = parseInt(cardEl.dataset.progress || "0", 10);
+        const isComplete = (progress >= 100);
+
         dropdown.innerHTML = `
-      <button type="button" class="card-menu-item" data-action="complete">
+      ${isComplete ? `<button type="button" class="card-menu-item" data-action="complete">
         Mark as complete
-      </button>
+      </button>` : ''}
       <button type="button" class="card-menu-item" data-action="archive">
         Move to archives
+      </button>
+      <button type="button" class="card-menu-item" data-action="update">
+        Update project
       </button>
     `;
     } else if (state === "archived") {
@@ -3867,45 +4211,185 @@ function renderCardMenu(cardEl, state) {
     `;
     }
 
-    dropdown.hidden = true; // always close after update
+    dropdown.hidden = true;
 }
 
 
-function updateArchivedEmptyState() {
-    const archivedGrid = document.querySelector("#archived-section .projects-grid");
-    if (!archivedGrid) return;
+function updateEmptyStates() {
+    // Update Active empty state
+    const activeGrid = document.querySelector("#active-section .projects-grid");
+    if (activeGrid) {
+        const hasActiveCards = activeGrid.querySelector(".project-card:not(.project-card--archived)") !== null;
+        const existingActiveEmpty = activeGrid.querySelector(".empty-state");
 
-    const hasArchivedCards = archivedGrid.querySelector(".project-card") !== null;
-    const existingEmpty = archivedGrid.querySelector(".empty-state");
-
-    if (!hasArchivedCards) {
-        if (!existingEmpty) {
-            archivedGrid.insertAdjacentHTML("beforeend", `
-        <div class="empty-state">
-          <i data-feather="archive"></i>
-          <p>No archived projects</p>
-        </div>
-      `);
-
-            // Re-render feather icon inside the new empty state
-            if (window.feather) feather.replace();
+        if (!hasActiveCards) {
+            if (!existingActiveEmpty) {
+                activeGrid.innerHTML = `
+          <div class="empty-state">
+            <i data-feather="inbox"></i>
+            <p>No current active projects</p>
+          </div>
+        `;
+                if (window.feather) feather.replace();
+            }
+        } else {
+            existingActiveEmpty?.remove();
         }
-    } else {
-        existingEmpty?.remove();
+    }
+
+    // Update Archived empty state
+    const archivedGrid = document.querySelector("#archived-section .projects-grid");
+    if (archivedGrid) {
+        const hasArchivedCards = archivedGrid.querySelector(".project-card") !== null;
+        const existingArchivedEmpty = archivedGrid.querySelector(".empty-state");
+
+        if (!hasArchivedCards) {
+            if (!existingArchivedEmpty) {
+                archivedGrid.innerHTML = `
+          <div class="empty-state">
+            <i data-feather="archive"></i>
+            <p>No archived projects</p>
+          </div>
+        `;
+                if (window.feather) feather.replace();
+            }
+        } else {
+            existingArchivedEmpty?.remove();
+        }
     }
 }
 
 function restoreDeadlinePill(cardEl) {
-    const text = cardEl.dataset.deadlineText || "";
-    const cls = cardEl.dataset.deadlineClass || "days-pill";
+    const deadlineStr = cardEl.dataset.deadline || "";
 
+    // ✅ Recalculate the deadline pill based on current date
+    if (!deadlineStr) {
+        const pill = cardEl.querySelector(".days-pill");
+        if (pill) {
+            pill.className = "days-pill";
+            const span = pill.querySelector("span");
+            if (span) span.textContent = "No date set";
+        }
+        cardEl.dataset.deadlineText = "No date set";
+        cardEl.dataset.deadlineClass = "days-pill";
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const d = new Date(deadlineStr);
+    d.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((d - today) / (1000 * 60 * 60 * 24));
+
+    let text = "";
+    let cls = "days-pill";
+
+    if (diffDays < 0) {
+        text = `${Math.abs(diffDays)} days overdue`;
+        cls = "days-pill is-overdue";
+    } else if (diffDays === 0) {
+        text = "Due today";
+        cls = "days-pill is-due";
+    } else {
+        text = `${diffDays} days left`;
+        cls = "days-pill";
+    }
+
+    // ✅ Update the pill in the DOM
     const pill = cardEl.querySelector(".days-pill");
-    if (!pill) return;
+    if (pill) {
+        pill.className = cls;
+        const span = pill.querySelector("span");
+        if (span) span.textContent = text;
+    }
 
-    pill.className = cls;
+    // ✅ Update datasets for future reference
+    cardEl.dataset.deadlineText = text;
+    cardEl.dataset.deadlineClass = cls;
+}
 
-    const span = pill.querySelector("span");
-    if (span) span.textContent = text;
+function insertCardInSortedPosition(card, grid, sortBy = "due") {
+    if (!grid) return;
+
+    const existingCards = Array.from(grid.querySelectorAll(".project-card:not(.empty-state)"));
+
+    // If no cards, just append
+    if (existingCards.length === 0) {
+        grid.appendChild(card);
+        return;
+    }
+
+    const priorityRank = (p) => {
+        if (p === 'high') return 3;
+        if (p === 'medium') return 2;
+        if (p === 'low') return 1;
+        return 0;
+    };
+
+    // Find the correct position based on current sort
+    let insertBeforeCard = null;
+
+    for (const existingCard of existingCards) {
+        let shouldInsertBefore = false;
+
+        switch (sortBy) {
+            case "due": {
+                const cardDate = card.dataset.deadline
+                    ? new Date(card.dataset.deadline)
+                    : new Date('9999-12-31');
+                const existingDate = existingCard.dataset.deadline
+                    ? new Date(existingCard.dataset.deadline)
+                    : new Date('9999-12-31');
+                shouldInsertBefore = cardDate < existingDate;
+                break;
+            }
+
+            case "progress": {
+                const cardProgress = Number(card.dataset.progress) || 0;
+                const existingProgress = Number(existingCard.dataset.progress) || 0;
+                shouldInsertBefore = cardProgress > existingProgress; // Higher % first
+                break;
+            }
+
+            case "name": {
+                const cardName = (card.dataset.name || "").toLowerCase();
+                const existingName = (existingCard.dataset.name || "").toLowerCase();
+                shouldInsertBefore = cardName < existingName;
+                break;
+            }
+
+            case "priorityHigh": {
+                const cardPriority = priorityRank(card.dataset.priority || "");
+                const existingPriority = priorityRank(existingCard.dataset.priority || "");
+                shouldInsertBefore = cardPriority > existingPriority;
+                break;
+            }
+
+            case "priorityLow": {
+                const cardPriority = priorityRank(card.dataset.priority || "");
+                const existingPriority = priorityRank(existingCard.dataset.priority || "");
+                shouldInsertBefore = cardPriority < existingPriority;
+                break;
+            }
+
+            default:
+                shouldInsertBefore = false;
+        }
+
+        if (shouldInsertBefore) {
+            insertBeforeCard = existingCard;
+            break;
+        }
+    }
+
+    // Insert at the correct position
+    if (insertBeforeCard) {
+        grid.insertBefore(card, insertBeforeCard);
+    } else {
+        grid.appendChild(card);
+    }
 }
 
 
@@ -3914,30 +4398,17 @@ function updateCardUIAfterAction(action, cardEl) {
     const activeGrid = document.querySelector("#active-section .projects-grid");
     const archivedGrid = document.querySelector("#archived-section .projects-grid");
 
-    // Helper: set progress to 100% visually
-    function setProgressTo100(card) {
-        const fill = card.querySelector(".progress-fill");
-        const text = card.querySelector(".progress-text");
-        if (fill) fill.style.width = "100%";
-        if (text) text.textContent = "100% complete";
-
-        // Also update dataset so sorting works later
-        card.dataset.progress = "100";
-    }
-
     // Helper: set status pill text
     function setPill(card, text, extraClass) {
         const pill = card.querySelector(".days-pill");
         if (!pill) return;
 
-        pill.className = "days-pill"; // reset
+        pill.className = "days-pill";
         if (extraClass) pill.classList.add(extraClass);
 
         const span = pill.querySelector("span");
         if (span) span.textContent = text;
     }
-
-    console.log("archivedGrid is", archivedGrid);
 
     if (action === "archive") {
         archivedGrid?.querySelector(".empty-state")?.remove();
@@ -3950,50 +4421,316 @@ function updateCardUIAfterAction(action, cardEl) {
         if (archivedSection) archivedSection.style.display = "";
 
         renderCardMenu(cardEl, "archived");
-        updateArchivedEmptyState();
+        updateEmptyStates();
     }
 
-
     if (action === "complete") {
-        // Remove empty state if this is the first archived item
         archivedGrid?.querySelector(".empty-state")?.remove();
-
-        // Move card to archived grid
         archivedGrid.appendChild(cardEl);
 
-        // Mark card as archived + completed
         cardEl.classList.add("project-card--archived");
 
-        // Set progress to 100%
-        setProgressTo100(cardEl);
-
-        // Update status pill
         setPill(cardEl, "Completed", "is-completed");
 
-        // Make sure archived section is visible
+        cardEl.dataset.wasCompleted = "true";
+
         const archivedSection = document.getElementById("archived-section");
         if (archivedSection) archivedSection.style.display = "";
 
-        // Switch menu to "Reinstate"
         renderCardMenu(cardEl, "archived");
-        updateArchivedEmptyState();
+        updateEmptyStates();
     }
 
 
     if (action === "reinstate") {
-        if (activeGrid) activeGrid.appendChild(cardEl);
-        cardEl.classList.remove("project-card--archived");
-        const originalText = cardEl.dataset.pillText || "Active";
-        const originalClass = cardEl.dataset.pillClass || "days-pill";
-        setPill(cardEl, originalText);
-        cardEl.querySelector(".days-pill").className = originalClass;
+        // ✅ Remove empty state first
+        activeGrid?.querySelector(".empty-state")?.remove();
 
-        renderCardMenu(cardEl, "active");
+        // ✅ Remove archived styling
+        cardEl.classList.remove("project-card--archived");
+
+        // ✅ CRITICAL: Restore the deadline pill BEFORE moving the card
         restoreDeadlinePill(cardEl);
-        updateArchivedEmptyState();
+
+        // ✅ Update the menu to show active options
+        renderCardMenu(cardEl, "active");
+
+        // ✅ Insert card in the correct sorted position
+        const deadline = cardEl.dataset.deadline || "";
+        const sortDropdown = document.getElementById("sortProjects");
+        const currentSort = sortDropdown ? sortDropdown.value : "due";
+
+        insertCardInSortedPosition(cardEl, activeGrid, currentSort);
+
+        // ✅ Update empty states
+        updateEmptyStates();
+    }
+
+    if (window.feather) feather.replace();
+}
+
+function refreshProjectsGrid() {
+    const grid = document.querySelector(".projects-grid");
+    if (!grid) return;
+
+    const cards = Array.from(grid.querySelectorAll(".project-card"));
+
+    // Clear grid safely
+    grid.innerHTML = "";
+
+    // Re-append cards (single source of truth)
+    cards.forEach(card => grid.appendChild(card));
+
+    feather.replace();
+}
+
+
+function openUpdateProjectModal(card) {
+    const modal = document.getElementById("update-project-modal");
+    const closeBtn = document.getElementById("update-project-close-btn");
+    const form = document.getElementById("update-project-form");
+
+    if (!modal || !form) return;
+
+    // Prefill from card dataset
+    const projectId = card.dataset.projectId || "";
+    const name = card.querySelector(".project-title")?.textContent?.trim() || "";
+    const deadline = card.dataset.deadline || "";
+    const desc = card.dataset.description || "";
+    const leaderId = card.dataset.teamLeaderId || "";
+    const leaderName = card.dataset.teamLeaderName || "";
+
+    document.getElementById("update-project-id").value = projectId;
+    document.getElementById("update-project-name").value = name;
+    document.getElementById("update-project-deadline").value = deadline;
+    document.getElementById("update-project-description").value = desc;
+
+    // leader fields
+    const leaderSearch = document.getElementById("update-leader-search");
+    const leaderHidden = document.getElementById("update-team-leader-id");
+    if (leaderSearch) leaderSearch.value = leaderName !== "Unassigned" ? leaderName : "";
+    if (leaderHidden) leaderHidden.value = leaderId;
+
+    // Setup autocomplete once
+    if (form.dataset.autocompleteBound !== "1") {
+        form.dataset.autocompleteBound = "1";
+
+        setupLeaderAutocomplete({
+            inputId: "update-leader-search",
+            hiddenId: "update-team-leader-id",
+            resultsId: "update-leader-results",
+            endpointUrl: "projects-overview.php?ajax=leaders",
+            formId: "update-project-form",
+        });
+    }
+
+    // open / close
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+    if (window.feather) feather.replace();
+
+    const close = () => {
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+    };
+
+    // Prevent double binding
+    if (modal.dataset.bound !== "1") {
+        modal.dataset.bound = "1";
+
+        // ONLY close via X button
+        closeBtn?.addEventListener("click", close);
+    }
+
+
+    // Submit once
+    if (form.dataset.submitBound !== "1") {
+        form.dataset.submitBound = "1";
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const pid = document.getElementById("update-project-id").value;
+            const projectName = document.getElementById("update-project-name").value.trim();
+            const deadline = document.getElementById("update-project-deadline").value;
+            const description = document.getElementById("update-project-description").value.trim();
+            const teamLeaderId = document.getElementById("update-team-leader-id").value;
+
+            if (!projectName) {
+                alert("Project name is required.");
+                return;
+            }
+            if (!teamLeaderId) {
+                alert("Please select a Team Leader from the suggestions.");
+                return;
+            }
+
+            try {
+                const res = await fetch(window.location.href, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({
+                        action: "update_project",
+                        project_id: pid,
+                        project_name: projectName,
+                        deadline: deadline,
+                        description: description,
+                        team_leader_id: teamLeaderId
+                    })
+                });
+
+                const raw = await res.text();
+                let data;
+                try {
+                    data = JSON.parse(raw);
+                } catch {
+                    console.error("Non-JSON response:", raw);
+                    alert("Server did not return JSON. Check console.");
+                    return;
+                }
+
+                if (!data.success) {
+                    alert(data.message || "Update failed");
+                    return;
+                }
+
+                // ✅ Find the card and update it
+                const card = document.querySelector(`[data-project-id="${pid}"]`);
+                if (card) {
+                    applyUpdatedProjectToCard(card, data.updated);
+                }
+
+                // ✅ Close modal
+                modal.style.display = "none";
+                document.body.style.overflow = "";
+
+                // ✅ Show success message
+                showSuccessNotification("Project updated successfully!");
+
+                // ✅ Re-render feather icons
+                if (window.feather) feather.replace();
+
+            } catch (err) {
+                console.error(err);
+                alert("Network/server error updating project.");
+            }
+        });
     }
 
 }
+
+function applyUpdatedProjectToCard(card, updated) {
+    if (!card || !updated) return;
+
+    // ✅ Update title
+    const titleEl = card.querySelector(".project-title");
+    if (titleEl) titleEl.textContent = updated.project_name;
+
+    // ✅ Update description (if displayed anywhere)
+    const descEl = card.querySelector(".project-description");
+    if (descEl) descEl.textContent = updated.description || "";
+
+    // ✅ Update datasets
+    card.dataset.name = String(updated.project_name || "").toLowerCase();
+    card.dataset.deadline = updated.deadline || "";
+    card.dataset.description = updated.description || "";
+    card.dataset.teamLeaderId = updated.team_leader_id || "";
+    card.dataset.teamLeaderName = updated.leader_name || "Unassigned";
+
+    // ✅ Update leader name
+    const leaderNameEl = card.querySelector(".leader-name");
+    if (leaderNameEl) leaderNameEl.textContent = updated.leader_name || "Unassigned";
+
+    // ✅ Update leader avatar
+    const leaderRow = card.querySelector(".leader-row");
+    const avatarImg = card.querySelector("img.leader-avatar");
+    const avatarDefault = card.querySelector(".leader-avatar--default");
+
+    if (updated.leader_picture) {
+        // Remove default avatar if it exists
+        if (avatarDefault) avatarDefault.remove();
+
+        if (avatarImg) {
+            // Update existing image
+            avatarImg.src = updated.leader_picture;
+        } else {
+            // Create new image
+            if (leaderRow) {
+                const firstChild = leaderRow.firstElementChild;
+                leaderRow.insertAdjacentHTML(
+                    "afterbegin",
+                    `<img class="leader-avatar" src="${updated.leader_picture}" alt="Leader pfp">`
+                );
+            }
+        }
+    } else {
+        // No picture - show default avatar
+        if (avatarImg) avatarImg.remove();
+
+        if (!avatarDefault && leaderRow) {
+            leaderRow.insertAdjacentHTML(
+                "afterbegin",
+                `<div class="leader-avatar leader-avatar--default" aria-hidden="true">
+                    <i data-feather="user"></i>
+                </div>`
+            );
+        }
+    }
+
+    // ✅ Update deadline pill
+    updateDeadlinePillUI(card, updated.deadline);
+
+    // ✅ Re-render icons
+    if (window.feather) feather.replace();
+}
+
+function updateDeadlinePillUI(card, deadlineStr) {
+    const pill = card.querySelector(".days-pill");
+    if (!pill) return;
+
+    // if no deadline
+    if (!deadlineStr) {
+        pill.className = "days-pill";
+        const span = pill.querySelector("span");
+        if (span) span.textContent = "No date set";
+        card.dataset.deadlineText = "No date set";
+        card.dataset.deadlineClass = "days-pill";
+        return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const d = new Date(deadlineStr);
+    d.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((d - today) / (1000 * 60 * 60 * 24));
+
+    let text = "";
+    let cls = "days-pill";
+
+    if (diffDays < 0) {
+        text = `${Math.abs(diffDays)} days overdue`;
+        cls = "days-pill is-overdue";
+    } else if (diffDays === 0) {
+        text = "Due today";
+        cls = "days-pill is-due";
+    } else {
+        text = `${diffDays} days left`;
+        cls = "days-pill";
+    }
+
+    pill.className = cls;
+    const span = pill.querySelector("span");
+    if (span) span.textContent = text;
+
+    // keep datasets in sync for restore + future
+    card.dataset.deadlineText = text;
+    card.dataset.deadlineClass = cls;
+}
+
+
 
 function setupLeaderAutocomplete({
     inputId,
@@ -4317,6 +5054,175 @@ document.addEventListener("click", (e) => {
 });
 
 // ===============================================
+/**
+ * Injects the floating To-Do widget into a page (for static HTML pages that can't use PHP include).
+ * @param {string} todoBase - Relative path to the to-do actions directory, e.g. "../to-do/"
+ */
+function injectTodoWidget(todoBase) {
+    // Inline styles (same as todo_widget.php)
+    const style = document.createElement('style');
+    style.textContent = `
+    .todo-panel[hidden] { display:none; opacity:0; transform:translateY(10px) scale(0.95); }
+    .floating-todo-item { position:relative; padding-right:40px !important; cursor:pointer; }
+    .todo-delete-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#D93025; cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center; border-radius:4px; opacity:0.3; transition:opacity 0.2s; z-index:2; }
+    .floating-todo-item:hover .todo-delete-btn { opacity:1; }
+    .todo-delete-btn:hover { background:#FFF1F0; }
+    .floating-todo-checkbox { cursor:pointer; }
+  `;
+    document.head.appendChild(style);
+
+    // Widget HTML
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
+    <div class="floating-todo-widget" id="floating-todo-widget">
+      <button class="todo-fab" id="todo-fab" aria-label="Toggle personal todos">
+        <i data-feather="check-square"></i>
+        <span class="todo-badge hidden" id="todo-badge">0</span>
+      </button>
+      <div class="todo-panel" id="todo-panel" hidden>
+        <div class="todo-panel-header">
+          <h3>My To-Dos</h3>
+          <button class="todo-close-btn" id="todo-close-btn"><i data-feather="x"></i></button>
+        </div>
+        <div class="todo-panel-content">
+          <div style="padding:15px; border-bottom:1px solid #E8E4D9; background:#FEFBF4;">
+            <form id="quick-add-todo-form" style="display:flex; flex-direction:column; gap:8px;">
+              <input type="text" id="new-todo-name" placeholder="Quick add task..." required style="padding:10px; border:1px solid #D4CDB8; border-radius:8px; font-size:13px; font-family:inherit; width:100%;">
+              <div style="display:flex; gap:8px;">
+                <input type="datetime-local" id="new-todo-date" style="padding:8px; border:1px solid #D4CDB8; border-radius:8px; font-size:11px; flex-grow:1; font-family:inherit;">
+                <button type="submit" class="todo-add-btn" style="width:auto; padding:0 15px; height:35px; margin:0;">Add</button>
+              </div>
+            </form>
+          </div>
+          <div class="todo-panel-list" id="floating-todo-list">
+            <div class="floating-todo-empty"><i data-feather="loader"></i><p>Loading...</p></div>
+          </div>
+          <div class="todo-panel-footer" style="text-align:center;">
+            <small style="color:#8C8C8C; font-size:11px;" id="todo-status-text">Ready to work!</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+    document.body.insertBefore(wrapper.firstElementChild, document.body.firstChild);
+
+    // Widget logic
+    const TODO_BASE = todoBase;
+    const fab = document.getElementById('todo-fab');
+    const panel = document.getElementById('todo-panel');
+    const closeBtn = document.getElementById('todo-close-btn');
+    const todoList = document.getElementById('floating-todo-list');
+    const badge = document.getElementById('todo-badge');
+    const addForm = document.getElementById('quick-add-todo-form');
+
+    async function toggleTaskStatus(todoId, currentStatus) {
+        try {
+            const res = await fetch(TODO_BASE + 'update_todo_status.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ todo_id: todoId, is_completed: currentStatus == 1 ? 0 : 1 })
+            });
+            const result = await res.json();
+            if (result.success) { await loadTodos(); await updateBadge(); }
+            else alert(result.message || 'Failed to update task');
+        } catch (e) { console.error('Toggle error:', e); }
+    }
+
+    async function deleteTask(todoId) {
+        if (!confirm("Delete this task?")) return;
+        try {
+            const res = await fetch(TODO_BASE + 'delete_todo.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ todo_id: todoId })
+            });
+            const result = await res.json();
+            if (result.success) { await loadTodos(); await updateBadge(); }
+            else alert(result.message || 'Failed to delete task');
+        } catch (e) { console.error('Delete error:', e); }
+    }
+
+    async function loadTodos() {
+        try {
+            const response = await fetch(TODO_BASE + 'get_personal_todos.php');
+            const data = await response.json();
+            if (data.error) {
+                todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="alert-triangle"></i><p>' + data.error + '</p></div>';
+                feather.replace(); return;
+            }
+            if (!data || data.length === 0) {
+                todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="clipboard"></i><p>All caught up!</p></div>';
+                feather.replace(); return;
+            }
+            todoList.innerHTML = data.map(todo => {
+                const isDone = todo.is_completed == 1;
+                const deadline = todo.deadline ? new Date(todo.deadline) : null;
+                const formattedDate = deadline ? deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + deadline.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : 'No deadline';
+                const isOverdue = deadline && deadline < new Date() && !isDone;
+                return '<div class="floating-todo-item ' + (isDone ? 'completed' : '') + '">' +
+                    '<div class="floating-todo-checkbox ' + (isDone ? 'checked' : '') + '" onclick="event.stopPropagation(); window.todoApp.toggleTaskStatus(' + todo.personal_task_id + ',' + todo.is_completed + ')">' +
+                    (isDone ? '<i data-feather="check" style="width:12px;height:12px;"></i>' : '') +
+                    '</div>' +
+                    '<div class="floating-todo-content">' +
+                    '<div class="floating-todo-text">' + todo.task_name + '</div>' +
+                    '<div class="floating-todo-meta"><span class="' + (isOverdue ? 'overdue' : '') + '">' + formattedDate + '</span></div>' +
+                    '</div>' +
+                    '<button class="todo-delete-btn" onclick="event.stopPropagation(); window.todoApp.deleteTask(' + todo.personal_task_id + ')">' +
+                    '<i data-feather="trash-2" style="width:14px;height:14px;"></i>' +
+                    '</button>' +
+                    '</div>';
+            }).join('');
+            feather.replace();
+        } catch (e) {
+            console.error('Load error:', e);
+            todoList.innerHTML = '<div class="floating-todo-empty"><i data-feather="alert-triangle"></i><p>Error loading tasks</p></div>';
+            feather.replace();
+        }
+    }
+
+    async function updateBadge() {
+        try {
+            const response = await fetch(TODO_BASE + 'count_incomplete_todos.php');
+            const data = await response.json();
+            if (data.error) return;
+            const count = data.count || 0;
+            if (count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+                document.getElementById('todo-status-text').textContent = 'You have ' + count + ' pending tasks';
+            } else {
+                badge.classList.add('hidden');
+                document.getElementById('todo-status-text').textContent = 'All tasks completed!';
+            }
+        } catch (e) { console.error('Badge error:', e); }
+    }
+
+    fab.addEventListener('click', () => {
+        if (panel.hasAttribute('hidden')) { panel.removeAttribute('hidden'); loadTodos(); }
+        else panel.setAttribute('hidden', '');
+    });
+    closeBtn.addEventListener('click', () => panel.setAttribute('hidden', ''));
+
+    addForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nameInput = document.getElementById('new-todo-name');
+        const dateInput = document.getElementById('new-todo-date');
+        if (!nameInput.value.trim()) { alert('Please enter a task name'); return; }
+        try {
+            const res = await fetch(TODO_BASE + 'create_personal_todo.php', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ task_name: nameInput.value, deadline: dateInput.value || null })
+            });
+            const result = await res.json();
+            if (result.success) { nameInput.value = ''; dateInput.value = ''; await loadTodos(); await updateBadge(); }
+            else alert(result.message || 'Failed to create task');
+        } catch (e) { console.error('Create error:', e); }
+    });
+
+    window.todoApp = { toggleTaskStatus, deleteTask, loadTodos, updateBadge };
+    updateBadge();
+    feather.replace();
+}
+
+
 // === DOCUMENT LOAD =============================
 // ===============================================
 
@@ -4329,20 +5235,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.__CURRENT_USER__ = currentUser;
 
 
-    // *** ADDED: Show "Project Archive" in sidebar for managers ***
-    const navArchive = document.getElementById('nav-archive');
-    if (navArchive && currentUser.role === 'manager') {
-        navArchive.style.display = 'block';
+    // Store user in window object for floating widget
+    window.__USER__ = currentUser;
+    window.__CURRENT_USER__ = currentUser; // Also set for task board rendering
+
+    // Sync sidebar nav items based on role (for static HTML KB pages)
+    const role = (currentUser.role || '').toLowerCase();
+    const navHome = document.getElementById('nav-home');
+    const navEmployees = document.getElementById('nav-employees');
+    if (role === 'manager' || role === 'team_leader') {
+        if (navHome) navHome.style.display = '';
     }
-    // *** END ADDED CODE-- fixing conficts-Simi ***
+    if (role === 'manager') {
+        if (navEmployees) navEmployees.style.display = '';
+    }
 
     // Run page-specific logic based on body ID
     const pageId = document.body.id;
+
+    // Inject the floating To-Do widget on KB pages (HTML pages can't use PHP include)
+    const kbPages = ['kb-index', 'kb-post', 'kb-create', 'kb-create-topic', 'kb-topics-all'];
+    if (kbPages.includes(pageId)) {
+        injectTodoWidget('../to-do/');
+    }
 
     if (pageId === 'kb-index') {
         const returnTopic = sessionStorage.getItem('returnToTopic');
         const showCreatedNotification = sessionStorage.getItem('topicCreated');
         const showPostNotification = sessionStorage.getItem('postCreated');
+        setupKbLikeButtonsOnce();
 
         // Show any pending notifications
         if (showCreatedNotification) {
@@ -4355,21 +5276,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (returnTopic) {
-            sessionStorage.removeItem('returnToTopic'); // Clear it after use
-            loadKbIndex(currentUser); // Load index to attach listeners
-            showTopicView(returnTopic, currentUser); // Immediately switch to topic view
+            sessionStorage.removeItem('returnToTopic');
+
+            await loadKbIndex(currentUser);          // attach listeners + load posts/topics
+            await showTopicView(returnTopic, currentUser); // then switch view safely
         } else {
-            loadKbIndex(currentUser);
+            await loadKbIndex(currentUser);
         }
+
     } else if (pageId === 'kb-post') {
-        loadKbPost(currentUser);
+        // DB-driven post page uses post.js now
     } else if (pageId === 'kb-create') {
-        setupCreateForm(currentUser);
+        await setupCreateForm(currentUser);
     } else if (pageId === 'settings-page') {
         loadSettingsPage(currentUser);
     } else if (pageId === 'kb-topics-all') {
-        // dedicated "All Topics" page
-        loadAllTopicsPage(currentUser);
+        await loadAllTopicsPage(currentUser);
     } else if (pageId === 'kb-create-topic') {
         // Create Topic form page
         setupCreateTopicForm(currentUser);
@@ -4382,6 +5304,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (pageId === 'manager-progress-page') {
         // Manager Progress page
         await loadManagerProgressPage(currentUser);
+    } else if (pageId === 'project-members-page') {
+        // Project Members page
+        updateSidebarAndNav();
     } else if (pageId === 'project-resources-page') {
         // Project Resources page
         loadProjectResourcesPage(currentUser);
@@ -4396,11 +5321,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (pageId === 'projects-page') {
         // Project Kanban Board
         loadProjectsPage(currentUser);
-    } else if (pageId === 'project-archive-page') {
-        // *** ADDED: Load logic for new archive page ***
-        loadProjectArchivePage(currentUser);
-    }
-    else if (pageId === "projects-overview-page") {
+    } else if (pageId === "projects-overview-page") {
         sortProjects();
         archivedJump();
         setupArchivedToggle();
@@ -4408,7 +5329,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupProjectsOverviewSearch();
         setupProjectCardNavigation();
     }
-
+    fetchAndRenderTasks();
+    setupAssignTaskForm();
+    // Finally, activate all Feather icons
     feather.replace();
 });
 
@@ -4530,6 +5453,26 @@ async function fetchProjectTasksFromDb(projectId) {
     }));
 }
 
+async function fetchProjectTasksFromDb(projectId) {
+    const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
+    const res = await fetch(url, { credentials: "include" });
+    const data = await res.json();
+    if (!data.success) return [];
+
+    // data.tasks are DB shape -> normalize to your UI shape
+    return (data.tasks || []).map(t => ({
+        id: t.task_id,
+        title: t.task_name,
+        description: t.description || "",
+        priority: t.priority || "medium",
+        status: normalizeDbStatus(t.status),     // you already have this function
+        deadline: t.deadline,
+        assignedTo: Array.isArray(t.assignedUsers)
+            ? t.assignedUsers.map(u => u.email)
+            : []
+    }));
+}
+
 function fetchAndRenderTasks({ search = "", status = "", priority = "", due = "", page = 1 } = {}) {
     console.log("fetchAndRenderTasks running on:", document.body?.id);
 
@@ -4601,6 +5544,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+
+
+/**
+ * Helper: Get current user email from various sources
+ */
+function getCurrentUserEmail() {
+    // Try from window object first (set by PHP)
+    if (window.__USER__?.email) return window.__USER__.email;
+
+    // Try from URL parameter
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('user')) return params.get('user');
+
+    // Default fallback (you might need to adjust this)
+    return 'user@make-it-all.co.uk';
+}
+
+
+
 // =============================
 // CLEAR FILTERS BUTTON (fixed)
 // =============================
@@ -4647,6 +5609,84 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+(function renderAnnouncements() {
+    const announcements = [
+        {
+            title: "🔧 Scheduled maintenance",
+            body: "The platform will be briefly unavailable on Sunday from 9:00–9:30 PM for routine updates. Please save any drafts beforehand.",
+            date: "9 Feb 2026"
+        },
+        {
+            title: "⏱ Response time expectations",
+            body: "Technical posts are usually answered by a specialist within 24–48 hours. If your issue is urgent, make sure your title clearly explains the problem.",
+            date: "6 Feb 2026"
+        },
+        {
+            title: "💙 Mental health & wellbeing support",
+            body: "If you’re feeling overwhelmed or struggling, confidential mental health support is available through our employee assistance programme. You’re not alone — reaching out is okay.",
+            date: "5 Feb 2026"
+        }
+    ];
 
+    const container = document.querySelector(".announcement-content-placeholder");
+    if (!container) return;
 
+    // Show latest 3 announcements only (cleaner UI)
+    const latest = announcements.slice(0, 3);
 
+    container.innerHTML = latest.map(a => `
+    <div class="announcement-item">
+      <strong class="announcement-title">${a.title}</strong>
+      <p class="announcement-body">${a.body}</p>
+      <span class="announcement-date">${a.date}</span>
+    </div>
+  `).join("");
+})();
+
+function setupKbLikeButtonsOnce() {
+    if (document.body.dataset.kbLikesBound === "1") return;
+    document.body.dataset.kbLikesBound = "1";
+
+    document.addEventListener("click", async (e) => {
+        const btn = e.target.closest(".kb-like-btn");
+        if (!btn) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const postId = parseInt(btn.dataset.postId, 10);
+        if (!postId) return;
+
+        const countEl = btn.querySelector(".kb-like-count");
+        const oldVal = countEl ? parseInt(countEl.textContent || "0", 10) : 0;
+
+        // optimistic UI
+        if (countEl) countEl.textContent = String(oldVal + 1);
+        btn.disabled = true;
+
+        try {
+            const fd = new FormData();
+            fd.append("post_id", String(postId));
+
+            const res = await fetch(`${KB_ACTIONS_BASE}/like_post.php`, {
+                method: "POST",
+                body: fd,
+                credentials: "include"
+            });
+
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || "Like failed");
+
+            // sync UI with DB value
+            if (countEl) countEl.textContent = String(data.view_count ?? (oldVal + 1));
+        } catch (err) {
+            // revert on fail
+            if (countEl) countEl.textContent = String(oldVal);
+            console.error(err);
+            alert("Could not like post. Please try again.");
+        } finally {
+            btn.disabled = false;
+            if (window.feather) feather.replace();
+        }
+    });
+}

@@ -214,6 +214,13 @@
   gap: 8px;
 }
 
+/* OVERRIDE dashboard.css label styling for checkboxes */
+.filter-panel label.filter-check {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+}
+
 /* Checkbox row */
 .filter-check {
   display: flex;
@@ -222,7 +229,7 @@
   justify-content: flex-start;
   gap: 10px;
 
-  font-size: 13px;
+  font-size: 14px;
   color: #212121;
   cursor: pointer;
   line-height: 1.2;
@@ -242,7 +249,6 @@
 .filter-actions {
   display: flex;
   gap: 10px;
-  margin-top: 6px;
 }
 
 .filter-actions button {
@@ -255,18 +261,7 @@
   cursor: pointer;
 }
 
-/* Clear button */
-.filter-clear {
-  border: 1.5px solid #e0e0e0;
-  background: #fafafa;
-  color: #555;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.filter-clear:hover {
-  background: #f0f0f0;
-  border-color: #cfcfcf;
-}
+/* Clear button comes from dashboard.css (filter-clear)*/
 
 /* apply button */
 .filter-apply {
@@ -274,12 +269,12 @@
   background: #FBC02D;
   color: #1E1E1E;
   transition: background 0.15s ease;
+  margin-top: 6px;
 }
 
 .filter-apply:hover {
   background: #E6AE24;
 }
-
 
 /* ------------------------
 ----EMPLOYEES GRID/CARDS----
@@ -326,7 +321,6 @@
   justify-content: center;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  background: #6B7280; /*placeholder color for now until we figure out what to do with the banner colour*/
 }
 
 .employee-avatar{
@@ -723,7 +717,7 @@ body.select-mode .employee-checkbox {
   position: fixed;
   bottom: 20px;
   left: 50%;
-  margin-left: 140px; /* Half of sidebar width (280px / 2) to center within main content */
+  margin-left: 155px; /* Half of sidebar width (280px / 2) to center within main content */
   transform: translateX(-50%);
   
   background: #fff;
@@ -771,17 +765,17 @@ body.select-mode .employee-checkbox {
 }
 
 /*ACTION BUTTONS*/
-/* assign task & add to project button css in dashboard.css*/
-/* create new project button  */
-.action-btn {
+/* All action buttons in bottom bar */
+.action-btn,
+.bottom-action-bar .create-post-btn {
   height: 42px;
-  padding: 0 24px;
+  padding: 0 20px;
   border: none;
   border-radius: 8px;
   background: #FBC02D;
   color: #1E1E1E;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   gap: 8px;
   cursor: pointer;
@@ -789,21 +783,29 @@ body.select-mode .employee-checkbox {
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: background 0.15s ease;
+  transition: background 0.2s ease;
   white-space: nowrap;
 }
 
-.action-btn:hover {
+.action-btn:hover,
+.bottom-action-bar .create-post-btn:hover {
   background: #F9A825;
 }
 
-.action-btn svg {
-  width: 18px;
-  height: 18px;
+.action-btn svg,
+.bottom-action-bar .create-post-btn i {
+  width: 20px;
+  height: 20px;
   flex-shrink: 0;
+}
+
+/* Fix for Create Project button in bottom action bar */
+.bottom-action-bar .create-post-btn {
+    white-space: nowrap;
 }
 
 /* Minimal padding since bar is floating */
 body.select-mode .employee-section {
   padding-bottom: 20px;
 }
+
