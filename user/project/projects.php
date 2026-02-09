@@ -380,7 +380,154 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
         exit;
     }
 }
-error_log('CREATE TASK HIT: ' . json_encode($_POST));
+// =============================
+// UPDATE TASK (AJAX) - PDO VERSION (FIXED)
+// =============================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_task') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    // Only manager/team_leader can update tasks (match your create/delete rules)
+    if (!$canManageProject) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'No permission']);
+        exit;
+    }
+
+    $taskId      = isset($_POST['task_id']) ? (int)$_POST['task_id'] : 0;
+    $taskName    = trim($_POST['task_name'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $priority    = strtolower(trim($_POST['priority'] ?? 'medium'));
+    $deadline    = trim($_POST['deadline'] ?? '');
+    $status      = strtolower(trim($_POST['status'] ?? 'to_do'));
+    $assignees   = $_POST['assignees'] ?? [];
+
+    // Validation
+    if ($taskId <= 0) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid task ID']);
+        exit;
+    }
+    if ($taskName === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Task name is required']);
+        exit;
+    }
+    if ($deadline === '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Deadline is required']);
+        exit;
+    }
+    if (empty($assignees) || !is_array($assignees)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'At least one assignee is required']);
+        exit;
+    }
+
+    // Validate priority/status
+    $validPriorities = ['low', 'medium', 'high'];
+    if (!in_array($priority, $validPriorities, true)) $priority = 'medium';
+
+    $validStatuses = ['to_do', 'in_progress', 'review', 'completed'];
+    if (!in_array($status, $validStatuses, true)) $status = 'to_do';
+
+    // Normalise assignee emails
+    $assignees = array_values(array_unique(array_map('strtolower', array_map('trim', $assignees))));
+
+    try {
+        $db->beginTransaction();
+
+        // 0) Make sure task belongs to this project
+        $check = $db->prepare("
+            SELECT 1
+            FROM tasks
+            WHERE task_id = :tid AND project_id = :pid
+            LIMIT 1
+        ");
+        $check->execute([':tid' => $taskId, ':pid' => $projectId]);
+
+        if (!$check->fetchColumn()) {
+            $db->rollBack();
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Task not found in this project']);
+            exit;
+        }
+
+        // 1) Update task fields
+        $upd = $db->prepare("
+            UPDATE tasks
+            SET task_name = :name,
+                description = :descr,
+                priority = :priority,
+                deadline = :deadline,
+                status = :status
+            WHERE task_id = :tid AND project_id = :pid
+            LIMIT 1
+        ");
+        $upd->execute([
+            ':name'     => $taskName,
+            ':descr'    => $description,
+            ':priority' => $priority,
+            ':deadline' => $deadline,
+            ':status'   => $status,
+            ':tid'      => $taskId,
+            ':pid'      => $projectId
+        ]);
+
+        // 2) Delete old assignments
+        $del = $db->prepare("DELETE FROM task_assignments WHERE task_id = :tid");
+        $del->execute([':tid' => $taskId]);
+
+        // 3) Resolve emails -> user_ids
+        $placeholders = implode(',', array_fill(0, count($assignees), '?'));
+        $uStmt = $db->prepare("
+            SELECT user_id, email
+            FROM users
+            WHERE is_active = 1 AND LOWER(email) IN ($placeholders)
+        ");
+        $uStmt->execute($assignees);
+        $foundUsers = $uStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($foundUsers) === 0) {
+            $db->rollBack();
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'No valid assignees found']);
+            exit;
+        }
+
+        // 4) Insert new assignments
+        $ins = $db->prepare("
+            INSERT INTO task_assignments (task_id, user_id, assigned_by)
+            VALUES (:tid, :uid, :by)
+        ");
+
+        foreach ($foundUsers as $fu) {
+            $ins->execute([
+                ':tid' => $taskId,
+                ':uid' => (int)$fu['user_id'],
+                ':by'  => (int)$userId
+            ]);
+        }
+
+        $db->commit();
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Task updated successfully',
+            'task_id' => $taskId
+        ]);
+        exit;
+
+    } catch (Throwable $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        error_log("Update task error: " . $e->getMessage());
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Failed to update task'
+        ]);
+        exit;
+    }
+}
 
 // =============================
 // CLOSE PROJECT (AJAX)

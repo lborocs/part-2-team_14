@@ -1364,7 +1364,6 @@ async function loadProgressPage(currentUser) {
         return;
     }
 
-    // ✅ Project is already injected by PHP, but keep this as a refresh (optional)
     try {
         const response = await fetch(
             `projects.php?ajax=get_project&project_id=${encodeURIComponent(currentProjectId)}`,
@@ -1380,16 +1379,13 @@ async function loadProgressPage(currentUser) {
         // don't hard-fail; we still have __PROJECT__ from PHP
     }
 
-    // ✅ Role-based redirect (keep it simple)
     if (window.__CAN_MANAGE_PROJECT__) {
         window.location.href = `manager-progress.php?project_id=${encodeURIComponent(currentProjectId)}`;
         return;
     }
 
-    // ✅ Update breadcrumbs/nav using injected project
     updateSidebarAndNav();
 
-    // ✅ Pull tasks from DB (NOT simTasks)
     let projectTasks = [];
     try {
         projectTasks = await fetchProjectTasksFromDb(currentProjectId);
@@ -1397,15 +1393,14 @@ async function loadProgressPage(currentUser) {
         console.error("Failed to load tasks from DB:", err);
         projectTasks = [];
     }
+    window.__TASKS_NORM__ = projectTasks;
 
-    // ✅ Only tasks assigned to this user
     const userEmail = String(currentUser.email || "").toLowerCase();
     const userTasks = projectTasks.filter(t =>
         Array.isArray(t.assignedTo) &&
         t.assignedTo.map(e => String(e).toLowerCase()).includes(userEmail)
     );
 
-    // ✅ Update Task Progress widget (only if elements exist)
     const fillEl = document.getElementById("task-progress-fill");
     const textEl = document.getElementById("progress-text");
 
@@ -1419,8 +1414,10 @@ async function loadProgressPage(currentUser) {
             ? `You have completed ${pct}% of your assigned tasks for this project.`
             : `You don’t have any assigned tasks for this project yet.`;
     }
+    window.__TASKS_NORM__ = projectTasks;
 
-    // ✅ Update Upcoming Deadlines widget (only if element exists)
+    console.log('Tasks loaded for countdown:', projectTasks.length);
+    console.log('Current user email:', currentUser?.email);
     const listEl = document.getElementById("deadlines-list");
     if (listEl) {
         const today = new Date();
@@ -1472,6 +1469,10 @@ async function loadProgressPage(currentUser) {
     }
 
     if (window.feather) feather.replace();
+
+    if (window.initProgressWidgets) {
+        window.initProgressWidgets();
+    }
 }
 
 
@@ -1665,83 +1666,112 @@ function setupAssignTaskForm() {
     const form = document.getElementById("assign-task-form");
     if (!form) return;
 
-    // ✅ Prevent double-binding (stops multiple submit handlers)
+    // ✅ Prevent double-binding
     if (form.dataset.bound === "1") return;
     form.dataset.bound = "1";
 
-
     form.addEventListener("submit", async (e) => {
-        e.preventDefault(); // ⛔ STOP PAGE RELOAD
+        e.preventDefault();
+        e.stopPropagation();
+
+        const modal = document.getElementById("assign-task-modal");
+        const isEditMode = modal?.dataset.editMode === "true";
+        const editingTaskId = modal?.dataset.editingTaskId;
 
         const titleEl = document.getElementById("modal-task-title");
         const priorityEl = document.getElementById("modal-task-priority");
         const deadlineEl = document.getElementById("modal-task-deadline");
+        const descriptionEl = document.getElementById("modal-task-description");
+        const statusEl = document.getElementById("modal-task-status");
 
         if (!titleEl || !priorityEl || !deadlineEl) {
-            console.error("Assign task form fields not found");
+            console.error("Form fields not found");
             return;
         }
 
         const taskName = titleEl.value.trim();
         const priority = priorityEl.value;
         const deadline = deadlineEl.value;
-        const description =
-            document.getElementById("modal-task-description")?.value.trim() || "";
+        const description = descriptionEl?.value.trim() || "";
+        const rawStatus = statusEl?.value || "todo";
 
         const assignees = Array.from(
-            document.querySelectorAll(
-                '#modal-task-assignees input[type="checkbox"]:checked'
-            )
-        ).map((cb) => cb.value);
+            document.querySelectorAll('#modal-task-assignees input[type="checkbox"]:checked')
+        ).map(cb => cb.value);
 
         if (!taskName || !deadline || assignees.length === 0) {
-            alert("Please fill all required fields");
+            alert("Please fill all required fields and select at least one assignee");
             return;
         }
-
-        const formData = new FormData();
-        formData.append("ajax", "create_task");
-        formData.append("task_name", taskName);
-        formData.append("priority", priority);
-        formData.append("deadline", deadline);
-        formData.append("description", description);
-
-        const rawStatus =
-            document.getElementById("modal-task-status")?.value || "todo";
 
         const statusMap = {
             todo: "to_do",
             inprogress: "in_progress",
             review: "review",
-            completed: "completed",
+            completed: "completed"
         };
 
-        formData.append("status", statusMap[rawStatus] || "to_do");
+        const status = statusMap[rawStatus] || "to_do";
 
-        assignees.forEach((a) => formData.append("assignees[]", a));
+        const formData = new FormData();
+        formData.append("task_name", taskName);
+        formData.append("priority", priority);
+        formData.append("deadline", deadline);
+        formData.append("description", description);
+        formData.append("status", status);
+        assignees.forEach(a => formData.append("assignees[]", a));
 
-        const res = await fetch(
-            `projects.php?project_id=${encodeURIComponent(
-                window.__PROJECT__.project_id
-            )}`,
-            {
-                method: "POST",
-                body: formData,
+        const pid = getCurrentProjectId() || window.__PROJECT__?.project_id;
+
+        try {
+            if (isEditMode && editingTaskId) {
+                // ✨ UPDATE existing task
+                formData.append("ajax", "update_task");
+                formData.append("task_id", editingTaskId);
+
+                const res = await fetch(
+                    `projects.php?project_id=${encodeURIComponent(pid)}`,
+                    { method: "POST", body: formData }
+                );
+
+                const data = await res.json();
+
+                if (!data.success) {
+                    alert(data.message || "Update failed");
+                    return;
+                }
+
+                showSuccessNotification("Task updated successfully!");
+
+            } else {
+                // CREATE new task
+                formData.append("ajax", "create_task");
+
+                const res = await fetch(
+                    `projects.php?project_id=${encodeURIComponent(pid)}`,
+                    { method: "POST", body: formData }
+                );
+
+                const data = await res.json();
+
+                if (!data.success) {
+                    alert(data.message || "Create failed");
+                    return;
+                }
+
+                showSuccessNotification("Task created successfully!");
             }
-        );
 
-        const data = await res.json();
+            // Close modal and reset
+            closeTaskModal();
 
-        if (!data.success) {
-            alert(data.message || "Failed to create task");
-            return;
+            // Refresh the board
+            fetchAndRenderTasks();
+
+        } catch (err) {
+            console.error("Task submission error:", err);
+            alert("An error occurred. Please try again.");
         }
-
-        // Close modal + refresh
-        document.getElementById("assign-task-modal").style.display = "none";
-        document.body.style.overflow = "";
-
-        fetchAndRenderTasks(); // reload Kanban
     });
 }
 
@@ -1781,31 +1811,30 @@ function setupCreateProjectForm(currentUser) {
     });
 }
 
-/**
- * Generates HTML for a single task card for the project board
- */
 function createTaskCardHTML(task, currentUser) {
     function renderStatusPill(task) {
-    const statuses = {
-        todo: "To Do",
-        inprogress: "In Progress",
-        review: "Review",
-        completed: "Completed"
-    };
+        const statuses = {
+            todo: "To Do",
+            inprogress: "In Progress",
+            review: "Review",
+            completed: "Completed"
+        };
 
-    const priorities = {
-        low: "Low",
-        medium: "Medium",
-        high: "High",
-    };
+        const priorities = {
+            low: "Low",
+            medium: "Medium",
+            high: "High",
+        };
 
-    return `
+        return `
       <div class="task-status-menu" data-task-id="${task.id}">
         <button class="status-pill icon-only" aria-label="Task actions">
           <span class="ellipsis">⋯</span>
         </button>
 
         <div class="status-dropdown" hidden>
+         
+
           <div class="dropdown-section">
             <div class="dropdown-label">STATUS</div>
             ${Object.entries(statuses)
@@ -1828,13 +1857,26 @@ function createTaskCardHTML(task, currentUser) {
 
           <div class="dropdown-divider"></div>
 
+           <div class="dropdown-section">
+            <button data-action="edit" class="dropdown-edit-btn">
+              <i data-feather="edit-2"></i>
+              Edit Task
+            </button>
+          </div>
+
+          <div class="dropdown-divider"></div>
+
           <div class="dropdown-section">
-            <button data-action="delete">Delete Task</button>
+            <button data-action="delete" class="dropdown-delete-btn">
+              <i data-feather="trash-2"></i>
+              Delete Task
+            </button>
           </div>
         </div>
       </div>
     `;
-}
+    }
+
     // Check for the special "Leader on Apollo" case
     const currentProjectId = getCurrentProjectId();
 
@@ -1842,7 +1884,6 @@ function createTaskCardHTML(task, currentUser) {
     const isManager = (role === "manager");
     const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
     const isManagerView = isManager || canManageProject;
-
 
     const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
 
@@ -1855,13 +1896,9 @@ function createTaskCardHTML(task, currentUser) {
         const user = usersMap[email];
         return user
             ? { name: user.name, avatarClass: user.avatarClass, avatarUrl: user.avatarUrl }
-            : { name: email, avatarClass: "avatar-3", avatarUrl: null }; // fallback
+            : { name: email, avatarClass: "avatar-3", avatarUrl: null };
     }).filter(Boolean);
 
-    console.log("Task:", task);
-    console.log("assignedTo: " + task.assignedTo);
-
-    console.log("Assignees", assignees);
     const assigneesHtml = assignees.map((user, index) => {
         if (index >= 3) return '';
 
@@ -1876,17 +1913,30 @@ function createTaskCardHTML(task, currentUser) {
         return `<span class="avatar ${user.avatarClass}" title="${user.name}"></span>`;
     }).join('');
 
-
     const moreAssignees = assignees.length > 3 ? `<span class="avatar-more">+${assignees.length - 3}</span>` : '';
 
     // Capitalize priority
     const priorityText = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
 
-    // Format deadline for display
-    const deadlineDate = task.deadline ? new Date(task.deadline) : null;
-    const formattedDeadline = deadlineDate
-        ? deadlineDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-        : 'No deadline';
+    // Format deadline for display AND check if overdue
+    let formattedDeadline = 'No deadline';
+    let isOverdue = false;
+    let dueDateClass = 'task-due-date';
+
+    if (task.deadline) {
+        const deadlineDate = new Date(task.deadline);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        deadlineDate.setHours(0, 0, 0, 0);
+
+        // Check if overdue (and not completed)
+        if (deadlineDate < today && task.status !== 'completed') {
+            isOverdue = true;
+            dueDateClass = 'task-due-date overdue';
+        }
+
+        formattedDeadline = deadlineDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    }
 
     return `
   <div class="task-card" data-task-id="${task.id}" ${isDraggable ? 'draggable="true"' : ''}>
@@ -1896,20 +1946,17 @@ function createTaskCardHTML(task, currentUser) {
     ${isManagerView ? renderStatusPill(task) : ""}
 
     <div class="task-footer">
-  <div class="task-due-date">
-    ${formattedDeadline}
-  </div>
+      <div class="${dueDateClass}">
+        ${formattedDeadline}
+      </div>
 
-  <div class="task-assignees">
-    ${assigneesHtml}
-    ${moreAssignees}
-  </div>
-</div>
-
+      <div class="task-assignees">
+        ${assigneesHtml}
+        ${moreAssignees}
+      </div>
+    </div>
   </div>
 `;
-
-
 }
 
 function getEffectiveRole(currentUser) {
@@ -2111,7 +2158,7 @@ async function deleteTaskInDb(taskId) {
         }
 
         const raw = await res.text();
-        
+
         // Check if response is empty or not JSON
         if (!raw || raw.trim() === '') {
             // If empty response but status was ok, consider it success
@@ -2119,8 +2166,8 @@ async function deleteTaskInDb(taskId) {
         }
 
         let data;
-        try { 
-            data = JSON.parse(raw); 
+        try {
+            data = JSON.parse(raw);
         } catch (parseError) {
             console.error("JSON parse error. Raw response:", raw);
             // If we can't parse but got 200 OK, assume success
@@ -2135,7 +2182,7 @@ async function deleteTaskInDb(taskId) {
         }
 
         return data;
-        
+
     } catch (err) {
         console.error("Delete task error:", err);
         throw err;
@@ -2143,8 +2190,15 @@ async function deleteTaskInDb(taskId) {
 }
 
 function setupStatusPillActions(currentUser, currentProjectId) {
+    // ✅ PREVENT DUPLICATE BINDINGS
+    const board = document.querySelector('.task-board');
+    if (!board) return;
 
-    document.addEventListener("click", (e) => {
+    if (board.dataset.statusActionsbound === "1") return;
+    board.dataset.statusActionsbound = "1";
+
+    // Open/close dropdown (using event delegation on board)
+    board.addEventListener("click", (e) => {
         const pill = e.target.closest(".status-pill");
         if (!pill) return;
 
@@ -2153,7 +2207,7 @@ function setupStatusPillActions(currentUser, currentProjectId) {
 
         if (!window.__CAN_MANAGE_PROJECT__) return;
 
-        // close all others
+        // Close all others
         document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
         document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
 
@@ -2166,103 +2220,212 @@ function setupStatusPillActions(currentUser, currentProjectId) {
         }
     });
 
+    // Handle dropdown actions (using event delegation on board)
+    board.addEventListener("click", async (e) => {
+        const option = e.target.closest(".status-dropdown button");
+        if (!option) return;
 
-   // Handle dropdown actions (status, priority, delete)
-document.addEventListener("click", async (e) => {
-    const option = e.target.closest(".status-dropdown button");
-    if (!option) return;
+        e.preventDefault();
+        e.stopPropagation();
 
-    e.preventDefault();
-    e.stopPropagation();
+        if (!window.__CAN_MANAGE_PROJECT__) return;
 
-    if (!window.__CAN_MANAGE_PROJECT__) return;
+        const wrapper = option.closest(".task-status-menu");
+        const taskId = wrapper?.dataset.taskId;
+        if (!taskId) return;
 
-    const wrapper = option.closest(".task-status-menu");
-    const taskId = wrapper?.dataset.taskId;
-    if (!taskId) return;
+        const action = option.dataset.action;
+        const value = option.dataset.value;
 
-    const action = option.dataset.action;
-    const value = option.dataset.value;
+        const tasks = window.__TASKS_NORM__ || [];
+        const task = tasks.find(t => String(t.id) === String(taskId));
+        if (!task) return;
 
+        // Close dropdown
+        document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+        document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+
+        if (action === "edit") {
+            openEditTaskModal(taskId);
+            return;
+        }
+
+        // Handle DELETE action
+        if (action === "delete") {
+            const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
+            if (!ok) return;
+
+            try {
+                await deleteTaskInDb(task.id);
+
+                if (Array.isArray(window.__TASKS_NORM__)) {
+                    window.__TASKS_NORM__ = window.__TASKS_NORM__.filter(t => String(t.id) !== String(taskId));
+                }
+                if (Array.isArray(window.__TASKS__)) {
+                    window.__TASKS__ = window.__TASKS__.filter(t => String(t.task_id) !== String(taskId));
+                }
+
+                showSuccessNotification("Task deleted successfully!");
+                renderTaskBoard(currentUser, currentProjectId);
+            } catch (err) {
+                console.error("Delete error:", err);
+                alert("Could not delete task. Please try again.");
+            }
+            return;
+        }
+
+        // Handle STATUS change
+        if (action === "status" && task.status !== value) {
+            const old = task.status;
+            task.status = value;
+
+            try {
+                await updateTaskStatusInDb(task.id, denormalizeStatus(value));
+                showSuccessNotification("Task status updated!");
+            } catch (err) {
+                task.status = old;
+                console.error("Status update error:", err);
+                alert("Could not change status");
+                return;
+            }
+        }
+
+        // Handle PRIORITY change
+        if (action === "priority" && task.priority !== value) {
+            const old = task.priority;
+            task.priority = value;
+
+            try {
+                await updateTaskPriorityInDb(task.id, value);
+                showSuccessNotification("Task priority updated!");
+            } catch (err) {
+                task.priority = old;
+                console.error("Priority update error:", err);
+                alert("Could not change priority");
+                return;
+            }
+        }
+
+        renderTaskBoard(currentUser, currentProjectId);
+    });
+
+    // Close all menus when clicking outside (single listener on document)
+    document.addEventListener("click", (e) => {
+        if (e.target.closest(".task-status-menu")) return;
+        document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+        document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+    }, { once: false }); // Don't use 'once' here as we want it to persist
+}
+
+/**
+ * Opens the assign task modal in EDIT mode with pre-filled data
+ */
+function openEditTaskModal(taskId) {
     const tasks = window.__TASKS_NORM__ || [];
     const task = tasks.find(t => String(t.id) === String(taskId));
-    if (!task) return;
 
-    const currentUser = window.__CURRENT_USER__;
-    const currentProjectId = getCurrentProjectId();
-
-    // Handle DELETE action
-    if (action === "delete") {
-        const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
-        if (!ok) return;
-
-        try {
-            // Close the dropdown first
-            document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
-            document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
-
-            await deleteTaskInDb(task.id);
-
-            // Remove locally
-            if (Array.isArray(window.__TASKS_NORM__)) {
-                window.__TASKS_NORM__ = window.__TASKS_NORM__.filter(t => String(t.id) !== String(taskId));
-            }
-            if (Array.isArray(window.__TASKS__)) {
-                window.__TASKS__ = window.__TASKS__.filter(t => String(t.task_id) !== String(taskId));
-            }
-
-            showSuccessNotification("Task deleted successfully!");
-            renderTaskBoard(currentUser, currentProjectId);
-        } catch (err) {
-            console.error("Delete error:", err);
-            alert("Could not delete task. Please try again.");
-        }
+    if (!task) {
+        alert("Task not found");
         return;
     }
 
-    // Handle STATUS change
-    if (action === "status" && task.status !== value) {
-        const old = task.status;
-        task.status = value;
+    const modal = document.getElementById("assign-task-modal");
+    if (!modal) return;
 
-        try {
-            await updateTaskStatusInDb(task.id, denormalizeStatus(value));
-            showSuccessNotification("Task status updated!");
-        } catch (err) {
-            task.status = old;
-            console.error("Status update error:", err);
-            alert("Could not change status");
-            return;
-        }
+    // Get all form elements
+    const titleInput = document.getElementById("modal-task-title");
+    const descriptionInput = document.getElementById("modal-task-description");
+    const prioritySelect = document.getElementById("modal-task-priority");
+    const deadlineInput = document.getElementById("modal-task-deadline");
+    const statusSelect = document.getElementById("modal-task-status");
+    const assigneesList = document.getElementById("modal-task-assignees");
+    const modalTitle = document.querySelector("#assign-task-modal .modal-header h2");
+    const submitBtn = document.querySelector("#assign-task-modal button[type='submit']");
+
+    // Change modal title and button text
+    if (modalTitle) modalTitle.textContent = "Edit Task";
+    if (submitBtn) submitBtn.textContent = "Update Task";
+
+    // Pre-fill the form with existing task data
+    if (titleInput) titleInput.value = task.title || "";
+    if (descriptionInput) descriptionInput.value = task.description || "";
+    if (prioritySelect) prioritySelect.value = task.priority || "medium";
+    if (statusSelect) statusSelect.value = task.status || "todo";
+
+    // Format deadline for date input (YYYY-MM-DD)
+    if (deadlineInput && task.deadline) {
+        const deadlineDate = new Date(task.deadline);
+        const yyyy = deadlineDate.getFullYear();
+        const mm = String(deadlineDate.getMonth() + 1).padStart(2, "0");
+        const dd = String(deadlineDate.getDate()).padStart(2, "0");
+        deadlineInput.value = `${yyyy}-${mm}-${dd}`;
     }
 
-    // Handle PRIORITY change
-    if (action === "priority" && task.priority !== value) {
-        const old = task.priority;
-        task.priority = value;
-
-        try {
-            await updateTaskPriorityInDb(task.id, value);
-            showSuccessNotification("Task priority updated!");
-        } catch (err) {
-            task.priority = old;
-            console.error("Priority update error:", err);
-            alert("Could not change priority");
-            return;
-        }
+    // Pre-check assigned users
+    if (assigneesList && Array.isArray(task.assignedTo)) {
+        const checkboxes = assigneesList.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(cb => {
+            const email = cb.value.toLowerCase();
+            const isAssigned = task.assignedTo.some(
+                assignedEmail => String(assignedEmail).toLowerCase() === email
+            );
+            cb.checked = isAssigned;
+        });
     }
 
-    renderTaskBoard(currentUser, currentProjectId);
-});
+    // Update selected count
+    updateSelectedCount();
 
+    // Store task ID in modal for submission
+    modal.dataset.editingTaskId = taskId;
+    modal.dataset.editMode = "true";
 
-    document.addEventListener("click", (e) => {
-        if (e.target.closest(".task-status-menu")) return;
+    // Show modal
+    modal.style.display = "flex";
+    document.body.style.overflow = "hidden";
 
-        document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
-        document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
-    });
+    if (window.feather) feather.replace();
+}
 
+/**
+ * Closes the task modal and resets it to CREATE mode
+ */
+function closeTaskModal() {
+    const modal = document.getElementById("assign-task-modal");
+    if (!modal) return;
+
+    modal.style.display = "none";
+    document.body.style.overflow = "";
+
+    // Reset modal to CREATE mode
+    const modalTitle = modal.querySelector(".modal-header h2");
+    const submitBtn = modal.querySelector("button[type='submit']");
+
+    if (modalTitle) modalTitle.textContent = "Assign New Task";
+    if (submitBtn) submitBtn.textContent = "Assign Task";
+
+    // Clear edit mode flags
+    delete modal.dataset.editMode;
+    delete modal.dataset.editingTaskId;
+
+    // Reset form
+    const form = document.getElementById("assign-task-form");
+    if (form) form.reset();
+
+    // Update selected count
+    const countEl = document.getElementById("assignee-selected-count");
+    if (countEl) countEl.textContent = "Selected: 0";
+}
+
+/**
+ * Helper function to update assignee selected count
+ */
+function updateSelectedCount() {
+    const selectedCountEl = document.getElementById("assignee-selected-count");
+    if (!selectedCountEl) return;
+
+    const checked = document.querySelectorAll('#modal-task-assignees input[type="checkbox"]:checked');
+    selectedCountEl.textContent = `Selected: ${checked.length}`;
 }
 
 
@@ -2361,6 +2524,75 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
     });
 }
 
+function ensureTaskDetailsMenuUI(detailsModal) {
+    // Add a unique scope class so CSS only affects THIS modal
+    detailsModal.classList.add("task-details-modal");
+
+    const header = detailsModal.querySelector(".modal-header");
+    if (!header) return null;
+
+    // Create / reuse right-side actions container
+    let actions = header.querySelector(".details-header-actions");
+    if (!actions) {
+        actions = document.createElement("div");
+        actions.className = "details-header-actions";
+        header.appendChild(actions);
+    }
+
+    // Move the CLOSE button into the actions container
+    const closeBtn =
+        header.querySelector("#details-close-modal-btn") ||
+        header.querySelector(".close-btn");
+
+    if (closeBtn && closeBtn.parentElement !== actions) {
+        actions.appendChild(closeBtn);
+    }
+
+    // If menu already exists, return references
+    let wrap = actions.querySelector(".task-status-menu.details-menu");
+    if (wrap) {
+        return {
+            menuBtn: wrap.querySelector(".status-pill"),
+            dropdown: wrap.querySelector(".status-dropdown"),
+        };
+    }
+
+    // Create menu WITHOUT any feather icons - use pure text
+    wrap = document.createElement("div");
+    wrap.className = "task-status-menu details-menu";
+
+    wrap.innerHTML = `
+    <button type="button" class="status-pill" aria-label="Task actions">
+      <span class="ellipsis">⋯</span>
+    </button>
+
+    <div class="status-dropdown" hidden>
+      <button type="button" data-action="edit">
+        Edit Task
+      </button>
+
+      <div class="dropdown-divider"></div>
+
+      <button type="button" data-action="delete">
+        Delete Task
+      </button>
+    </div>
+  `;
+
+    // Insert the menu BEFORE the close button
+    if (closeBtn && closeBtn.parentElement === actions) {
+        actions.insertBefore(wrap, closeBtn);
+    } else {
+        actions.appendChild(wrap);
+    }
+
+    return {
+        menuBtn: wrap.querySelector(".status-pill"),
+        dropdown: wrap.querySelector(".status-dropdown"),
+    };
+}
+
+
 
 function initTaskDetailsModal(currentUser) {
     const detailsModal = document.getElementById("task-details-modal");
@@ -2383,10 +2615,12 @@ function initTaskDetailsModal(currentUser) {
         if (e.target === detailsModal) closeModal();
     });
 
-    // ✅ Event delegation for clicking a task card
     document.addEventListener("click", (e) => {
         // If they clicked the 3-dot menu, do NOT open modal
         if (e.target.closest(".task-status-menu")) return;
+        // Don't open task details when clicking task action controls
+        if (e.target.closest(".task-actions")) return;
+        if (e.target.closest(".task-move-select")) return;
 
         const card = e.target.closest(".task-card");
         if (!card) return;
@@ -2450,59 +2684,114 @@ function initTaskDetailsModal(currentUser) {
         const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
         const isManagerLike = role === "manager" || canManageProject;
 
-        // Managers/leaders: can delete. Regular employees: can only mark complete from todo/inprogress.
-if (isManagerLike) {
-    if (markBtn) markBtn.style.display = "none";
-    if (deleteBtn) deleteBtn.style.display = "inline-flex";
-} else {
-    const canMarkComplete = task.status === "todo" || task.status === "inprogress";
-    if (markBtn) markBtn.style.display = canMarkComplete ? "inline-flex" : "none";
-    if (deleteBtn) deleteBtn.style.display = "none";
-}
+        // Hide the old Delete button entirely
+        if (deleteBtn) deleteBtn.style.display = "none";
 
-        if (deleteBtn) deleteBtn.style.display = isManagerLike ? "inline-flex" : "none";
+        // Regular employees: can only mark complete from todo/inprogress
+        if (!isManagerLike) {
+            const canMarkComplete = task.status === "todo" || task.status === "inprogress";
+            if (markBtn) markBtn.style.display = canMarkComplete ? "inline-flex" : "none";
+        } else {
+            // Managers/leaders: hide mark complete
+            if (markBtn) markBtn.style.display = "none";
+        }
 
-        // Rebind delete button safely
-        if (deleteBtn) {
-            const freshDeleteBtn = deleteBtn.cloneNode(true);
-            deleteBtn.parentNode.replaceChild(freshDeleteBtn, deleteBtn);
+        // Setup the 3-dot menu
+        const menuUI = ensureTaskDetailsMenuUI(detailsModal);
 
-            freshDeleteBtn.addEventListener("click", async () => {
-                const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
-                if (!ok) return;
+        if (menuUI) {
+            const { menuBtn, dropdown } = menuUI;
 
-                try {
-                    await deleteTaskInDb(task.id);
+            // Only show menu for manager/leader
+            menuBtn.style.display = isManagerLike ? "inline-flex" : "none";
+            dropdown.hidden = true;
 
-                    // remove locally too
-                    if (Array.isArray(window.__TASKS_NORM__)) {
-                        window.__TASKS_NORM__ = window.__TASKS_NORM__.filter((t) => String(t.id) !== String(task.id));
-                    }
-                    if (Array.isArray(window.__TASKS__)) {
-                        window.__TASKS__ = window.__TASKS__.filter((t) => String(t.task_id) !== String(task.id));
-                    }
+            // Store the current taskId on the menu for actions
+            menuBtn.dataset.taskId = String(task.id);
+            dropdown.dataset.taskId = String(task.id);
 
-                    closeModal();
-                    showSuccessNotification("Task deleted successfully!");
-                    renderTaskBoard(currentUser, getCurrentProjectId());
-                } catch (err) {
-                    console.error(err);
-                    alert("Could not delete task. Check console.");
+            // **FIX: Remove old listeners and rebind**
+            const newMenuBtn = menuBtn.cloneNode(true);
+            menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
+
+            const newDropdown = dropdown.cloneNode(true);
+            dropdown.parentNode.replaceChild(newDropdown, dropdown);
+
+            // Toggle dropdown
+            newMenuBtn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                newDropdown.hidden = !newDropdown.hidden;
+                if (window.feather) feather.replace();
+            });
+
+            // Handle menu actions (edit/delete)
+            newDropdown.addEventListener("click", async (e) => {
+                const item = e.target.closest("button[data-action]");
+                if (!item) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                const action = item.dataset.action;
+                const id = newDropdown.dataset.taskId;
+
+                newDropdown.hidden = true;
+
+                if (action === "edit") {
+                    // close task details modal first
+                    detailsModal.style.display = "none";
+
+                    // open edit modal immediately
+                    openEditTaskModal(id);
+                    return;
                 }
+
+                if (action === "delete") {
+                    const ok = confirm("Are you sure you want to delete this task? This cannot be undone.");
+                    if (!ok) return;
+
+                    try {
+                        await deleteTaskInDb(id);
+
+                        // remove locally too
+                        if (Array.isArray(window.__TASKS_NORM__)) {
+                            window.__TASKS_NORM__ = window.__TASKS_NORM__.filter((t) => String(t.id) !== String(id));
+                        }
+                        if (Array.isArray(window.__TASKS__)) {
+                            window.__TASKS__ = window.__TASKS__.filter((t) => String(t.task_id) !== String(id));
+                        }
+
+                        // close modal + rerender
+                        detailsModal.style.display = "none";
+                        document.body.style.overflow = "";
+                        showSuccessNotification("Task deleted successfully!");
+                        renderTaskBoard(currentUser, getCurrentProjectId());
+                    } catch (err) {
+                        console.error(err);
+                        alert("Could not delete task. Check console.");
+                    }
+                }
+            });
+
+            // Close dropdown when clicking elsewhere inside modal
+            detailsModal.addEventListener("click", (e) => {
+                if (e.target.closest(".details-header-actions")) return;
+                newDropdown.hidden = true;
             });
         }
 
-        // Rebind mark complete button safely
+        // Rebind mark complete button
         if (markBtn) {
             const freshMarkBtn = markBtn.cloneNode(true);
             markBtn.parentNode.replaceChild(freshMarkBtn, markBtn);
 
             freshMarkBtn.addEventListener("click", async () => {
                 // Safety: regular employees can only mark complete from todo/inprogress
-if (!isManagerLike && !(task.status === "todo" || task.status === "inprogress")) {
-    alert("You can only mark a task complete if it is in To Do or In Progress.");
-    return;
-}
+                if (!isManagerLike && !(task.status === "todo" || task.status === "inprogress")) {
+                    alert("You can only mark a task complete if it is in To Do or In Progress.");
+                    return;
+                }
 
                 const ok = confirm("Mark this task as complete? It will be moved to Review.");
                 if (!ok) return;
@@ -2519,7 +2808,8 @@ if (!isManagerLike && !(task.status === "todo" || task.status === "inprogress"))
 
                     await updateTaskStatusInDb(task.id, denormalizeStatus("review"));
 
-                    closeModal();
+                    detailsModal.style.display = "none";
+                    document.body.style.overflow = "";
                     showSuccessNotification("Task sent to Review!");
                     renderTaskBoard(currentUser, getCurrentProjectId());
                 } catch (err) {
@@ -2535,8 +2825,14 @@ if (!isManagerLike && !(task.status === "todo" || task.status === "inprogress"))
 
         if (window.feather) feather.replace();
     });
-}
 
+    // Close dropdown on ESC
+    document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        const dd = detailsModal.querySelector(".status-dropdown");
+        if (dd) dd.hidden = true;
+    });
+}
 // =============================
 // Close Project (modal + DB update)
 // Works on BOTH projects.php and manager-progress.php
@@ -4020,7 +4316,6 @@ document.addEventListener("click", (e) => {
     }
 });
 
-
 // ===============================================
 // === DOCUMENT LOAD =============================
 // ===============================================
@@ -4114,14 +4409,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupProjectCardNavigation();
     }
 
-
-    // Finally, activate all Feather icons
     feather.replace();
 });
 
-
-
-// I've put this for testing, just type resetAllData(); to refresh the web page after testing
 function resetAllData() {
     if (confirm("This will erase all current data and reload the defaults. Continue?")) {
         localStorage.clear();
@@ -4129,7 +4419,6 @@ function resetAllData() {
         location.reload();
     }
 }
-
 
 // =============================
 // TASK SEARCH (AJAX)
@@ -4232,8 +4521,9 @@ async function fetchProjectTasksFromDb(projectId) {
         title: t.task_name,
         description: t.description || "",
         priority: t.priority || "medium",
-        status: normalizeDbStatus(t.status),     // you already have this function
+        status: normalizeDbStatus(t.status),
         deadline: t.deadline,
+        createdDate: t.created_date || t.date_assigned || t.created_at,
         assignedTo: Array.isArray(t.assignedUsers)
             ? t.assignedUsers.map(u => u.email)
             : []
@@ -4282,28 +4572,6 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
                 updateTaskCounts();
             }
 
-            // If this page is manager-progress and you want charts to reflect filters:
-            // rebuild normalized tasks and re-render manager widgets
-            /*if (document.body?.id === "manager-progress-page") {
-                const normalized = (window.__TASKS__ || []).map(t => ({
-                    id: t.task_id,
-                    title: t.task_name,
-                    description: t.description || "",
-                    priority: t.priority || "medium",
-                    status: normalizeDbStatus(t.status),
-                    deadline: t.deadline,
-                    assignedTo: Array.isArray(t.assignedUsers) ? t.assignedUsers.map(u => u.email) : []
-                }));
-
-                renderManagerDeadlines(normalized);
-
-                // Optional: if you want the Team Progress list to refresh after filtering,
-                // you'd need to pass filters into ajax=member_progress too (not doing that now).
-                if (window.feather) feather.replace();
-            }*/
-
-            // IMPORTANT: manager-progress page uses loadManagerProgressPage() to render.
-            // Don't overwrite #deadlines-list from here (it causes flicker/blank).
             if (document.body?.id === "manager-progress-page") {
                 return;
             }
@@ -4323,36 +4591,6 @@ function updateTaskCounts() {
         col.querySelector(".task-count").textContent = count;
     });
 }
-/*function renderTaskCard(task) {
-    const statusMap = {
-        "to_do": "todo",
-        "in_progress": "inprogress",
-        "review": "review",
-        "completed": "completed"
-    };
-
-    const columnKey = statusMap[task.status];
-    if (!columnKey) return;
-
-    const column = document.querySelector(
-        `.task-column[data-status="${columnKey}"] .task-list`
-    );
-
-    if (!column) return;
-
-    const card = document.createElement("div");
-    card.className = "task-card";
-    card.dataset.taskId = task.task_id;
-
-    card.innerHTML = `
-        <span class="priority ${task.priority}">${task.priority.toUpperCase()}</span>
-        <h4>${task.task_name}</h4>
-        <p>${task.description || ""}</p>
-    `;
-
-    column.appendChild(card);
-}*/
-
 
 document.addEventListener("DOMContentLoaded", () => {
     const pageId = document.body?.id;
@@ -4362,11 +4600,6 @@ document.addEventListener("DOMContentLoaded", () => {
         setupAssignTaskForm();
     }
 });
-
-
-
-
-
 
 // =============================
 // CLEAR FILTERS BUTTON (fixed)

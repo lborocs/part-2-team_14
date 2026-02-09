@@ -1,5 +1,4 @@
 /* Manager Progress Page Layout (match Progress page layout) */
-/* SCOPED TO PREVENT CONFLICTS WITH OTHER PAGES */
 #manager-progress-page .manager-progress-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -25,7 +24,6 @@
     flex-direction: column;
 }
 
-/* Optional: keep the top cards equal height if you want */
 #manager-progress-page .manager-progress-left > section,
 #manager-progress-page .manager-progress-right > section {
     width: 100%;
@@ -47,8 +45,6 @@
 }
 
 
-
-/* Search bar wrapper matches your "Search tasks..." look */
 #manager-progress-page .member-progress-search-wrap {
   display: flex;
   align-items: center;
@@ -130,7 +126,6 @@
   margin-top: 3px;
 }
 
-/* Bar smaller */
 #manager-progress-page .member-bar-wrap {
   display: flex;
   align-items: center;
@@ -160,7 +155,6 @@
   text-align: right;
 }
 
-/* Responsive (same as your progress page) */
 @media (max-width: 1200px) {
     #manager-progress-page .manager-progress-layout {
         grid-template-columns: 1fr;
@@ -176,6 +170,8 @@
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  height:285px;
+;
 }
 
 #manager-progress-page .deadlines-card h2 {
@@ -256,7 +252,6 @@
   color: #999;
 }
 
-/* ONE scroll container (header + rows together) */
 #manager-progress-page .deadlines-scroll{
   max-height: 180px;     
   overflow-y: auto;
@@ -264,7 +259,6 @@
   padding-right: 8px;  
 }
 
-/* stop the inner list from scrolling */
 #manager-progress-page .deadlines-list{
   max-height: none;
   overflow: visible;
@@ -292,7 +286,7 @@
 
 
 /* ========================================
-   TASK DETAIL MODAL - Matching progress.css - FIXED LAYOUT
+   TASK DETAIL MODAL - Matching progress.css 
    ======================================== */
 
 #deadline-task-modal {
@@ -525,7 +519,6 @@
   color: #3A6EDC;
 }
 
-/* Priority badge colors (match Tasks page priority pills) */
 .priority-low {
   background: #E6F7EF;
   color: #2F8F5B;
@@ -540,7 +533,6 @@
   background: #FDE8E8;
   color: #D14343;
 }
-
 
 /* Success notification */
 .success-notification {
@@ -845,7 +837,6 @@
   align-items: center;
 }
 
-/* UPDATED: Dynamic row height based on task count */
 #manager-progress-page .gantt-employee-row {
   padding: 12px 16px;
   border-bottom: 1px solid #e0e0e0;
@@ -945,7 +936,6 @@
   position: relative;
 }
 
-/* UPDATED: Dynamic row height based on task count */
 #manager-progress-page .gantt-timeline-row {
   position: relative;
   min-height: 72px;
@@ -975,7 +965,6 @@
   border-right: none;
 }
 
-/* UPDATED: Task Bars - Red/Amber/Green Status Colors */
 #manager-progress-page .gantt-task-bar {
   position: absolute;
   height: 10px;
@@ -993,7 +982,6 @@
   height: 12px;
 }
 
-/* Task Status Colors - Red/Amber/Green System */
 #manager-progress-page .gantt-task-bar.status-red {
   background: #ef5350;
 }

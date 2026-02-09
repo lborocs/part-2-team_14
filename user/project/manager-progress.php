@@ -183,7 +183,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'deadlines
 
 // =============================
 // CLOSE PROJECT (AJAX) - manager-progress.php
-// (same behaviour as projects.php)
 // =============================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'close_project') {
     header('Content-Type: application/json; charset=utf-8');

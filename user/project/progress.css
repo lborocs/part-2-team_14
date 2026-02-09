@@ -2,14 +2,20 @@
 * Progress Page Styles
 */
 
-
-.progress-layout {
+#progress-page .progress-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 30px;
-    padding: 30px 40px; /* ADDED padding here instead */
+    gap: 15px;
+    padding: 10px 30px;
     overflow-y: auto;
     flex-grow: 1;
+}
+
+#progress-page .progress-left,
+#progress-page .progress-right {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
 }
 
 /* === PROGRESS CARD === */
@@ -17,7 +23,7 @@
     background: #fff;
     border-radius: 12px;
     padding: 30px;
-    margin-bottom: 30px;
+    margin-bottom: 0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
@@ -63,13 +69,201 @@
     margin: 0;
 }
 
+/* === COUNTDOWN CARD === */
+.countdown-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 15px 18px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+      max-width: 1200px;      
+  width: 100%;
+}
+
+.countdown-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #FBC02D 0%, #F9A825 50%, #FBC02D 100%);
+    animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.countdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+}
+
+.countdown-header h2 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+    color: #1E1E1E;
+}
+
+.countdown-pulse{
+  position: absolute;
+  top: 22px;          
+  right: 22px;        
+  left: auto;
+
+  width: 12px;
+  height: 12px;
+  background: #FBC02D;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(251, 192, 45, 0.7);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(251, 192, 45, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(251, 192, 45, 0);
+    }
+}
+
+.countdown-content {
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.countdown-task-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1E1E1E;
+    margin-bottom: 26px;
+    text-align: center;
+}
+
+.countdown-timer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.countdown-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+}
+
+.countdown-value {
+    font-size: 46px;
+    font-weight: 700;
+    color: #1E1E1E;
+    line-height: 1;
+    background: #F9F9F9;
+    border-radius: 8px;
+    padding: 16px 12px;
+    min-width: 60px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 2px solid #FBC02D;
+    font-variant-numeric: tabular-nums;
+}
+
+.countdown-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #8C8C8C;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-top: 8px;
+}
+
+.countdown-separator {
+    font-size: 28px;
+    font-weight: 700;
+    color: #FBC02D;
+    margin: 0 10px;
+    align-self: flex-start;
+    padding-top: 12px;
+}
+
+.countdown-deadline-date {
+    font-size: 13px;
+    color: #555;
+    text-align: center;
+    background: #F9F9F9;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: 1px solid #f0f0f0;
+}
+
+/* Empty State */
+.countdown-empty {
+    text-align: center;
+    padding: 30px 20px;
+}
+
+.countdown-empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.8;
+}
+
+.countdown-empty-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1E1E1E;
+    margin: 0 0 8px 0;
+}
+
+.countdown-empty-subtext {
+    font-size: 14px;
+    color: #8C8C8C;
+    margin: 0;
+}
+
+/* Expired State */
+.countdown-expired {
+    text-align: center;
+    padding: 30px 20px;
+}
+
+.countdown-expired-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.countdown-expired-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: #D93025;
+    margin: 0;
+}
+
 /* === DEADLINES CARD === */
+
 .deadlines-card {
     background: #fff;
     border-radius: 12px;
     padding: 30px;
-    margin-bottom: 30px;
+    margin-bottom: 0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    height: 195px;
+    display: flex;
+    flex-direction: column;
 }
 
 .deadlines-card h2 {
@@ -79,17 +273,28 @@
 }
 
 .deadlines-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
 }
 
 .deadline-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 100px 100px;
     align-items: center;
+    gap: 12px;
     padding: 12px 0;
     border-bottom: 1px solid #F0F0F0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.deadline-item:hover {
+    background-color: #fafafa;
+    margin: 0 -12px;
+    padding: 12px 12px;
+    border-radius: 8px;
 }
 
 .deadline-item:last-child {
@@ -104,14 +309,13 @@
 }
 
 .deadline-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: contents;
 }
 
 .deadline-date {
     font-size: 13px;
     color: #8C8C8C;
+    text-align: center;
 }
 
 .deadline-status {
@@ -119,6 +323,8 @@
     font-weight: 600;
     padding: 4px 10px;
     border-radius: 12px;
+    text-align: center;
+    justify-self: end;
 }
 
 .deadline-status.overdue {
@@ -134,6 +340,39 @@
 .deadline-status.on-track {
     background: #E6F7F0;
     color: #34A853;
+}
+
+.deadlines-list-header {
+    display: grid;
+    grid-template-columns: 1fr 100px 100px;
+    gap: 12px;
+    padding: 0 0 12px 0;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 15px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #8C8C8C;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.deadlines-list-header span:nth-child(2) {
+    text-align: center;
+}
+
+.deadlines-list-header span:nth-child(3) {
+    text-align: right;
+    padding-right: 10px;
+}
+.deadlines-list-header-left {
+    display: flex;
+    align-items: center;
+}
+
+.deadlines-list-header-right {
+    display: flex;
+    align-items: center;
+    gap: 60px;
 }
 
 /* === SPENDING CARD === */
@@ -352,15 +591,254 @@
     flex-shrink: 0;
 }
 
-/* === RESPONSIVE === */
 @media (max-width: 1200px) {
-    .progress-layout {
+    #progress-page .progress-layout {
         grid-template-columns: 1fr;
     }
 }
 
-.deadlines-list{
-  max-height: 240px;   /* tweak until about 3 items show */
-  overflow-y: auto;
-  padding-right: 6px;  /* prevents scrollbar covering content */
+.deadlines-list {
+    max-height: 240px;
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+.deadlines-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.deadlines-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.deadlines-list::-webkit-scrollbar-thumb {
+    background: #d0d0d0;
+    border-radius: 4px;
+}
+
+.deadlines-list::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
+}
+
+/* === TASK DETAILS MODAL === */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.task-detail-modal {
+    background: #fff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    animation: slideUp 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.task-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.task-detail-header h3 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #1E1E1E;
+    flex: 1;
+    padding-right: 20px;
+}
+
+.task-detail-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 20px 28px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+}
+
+.modal-close-btn:hover {
+    background: #f5f5f5;
+}
+
+.modal-close-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.task-detail-body {
+    padding: 16px 28px 20px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.task-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.task-detail-row:last-child {
+    border-bottom: none;
+}
+
+.task-detail-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+}
+
+.task-detail-value {
+    font-size: 15px;
+    color: #1E1E1E;
+    font-weight: 500;
+    text-align: right;
+    max-width: 320px;
+}
+
+/* Status and Priority badges */
+.status-badge,
+.priority-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Status badge colors */
+.status-todo {
+    background: #FDE8E8;
+    color: #D14343;
+}
+
+.status-progress {
+    background: #FFF3C4;
+    color: #B58100;
+}
+
+.status-review {
+    background: #E6F7EF;
+    color: #2F8F5B;
+}
+
+.status-completed {
+    background: #E8F1FF;
+    color: #3A6EDC;
+}
+
+/* Priority badge colors */
+.priority-low {
+    background: #E6F7EF;
+    color: #2F8F5B;
+}
+
+.priority-medium {
+    background: #FFF4C1;
+    color: #E6A100;
+}
+
+.priority-high {
+    background: #FDE8E8;
+    color: #D14343;
+}
+
+/* Manager Notes */
+.task-detail-row-notes {
+    align-items: flex-start;
+}
+
+.task-detail-row-notes .task-detail-value {
+    white-space: pre-wrap;
+    line-height: 1.5;
+    text-align: right;
+}
+
+/* Mark Complete Button */
+.project-complete-btn {
+    background: linear-gradient(90deg, #FBC02D 0%, #F9A825 100%);
+    color: #1E1E1E;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.project-complete-btn:hover {
+    background: linear-gradient(90deg, #F9A825 0%, #F57F17 100%);
+    transform: translateY(-1px);
+}
+
+/* Grid: 2 columns + explicit rows */
+#progress-page .progress-layout{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  padding: 30px 40px;
+  align-items: start;
+}
+
+#progress-page .countdown-card{
+  grid-column: 1 / -1;  /* span both columns */
+}
+
+#progress-page .progress-left{
+  grid-column: 1 / 2;
+}
+
+#progress-page .progress-right{
+  grid-column: 2 / 3;
 }
