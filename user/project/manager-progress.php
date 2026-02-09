@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'deadlines
 
     try {
         // Get upcoming/overdue tasks for THIS project (exclude completed)
-        // Include status and priority fields
+        // Get first assignee only (using MIN to avoid GROUP BY issues)
         $stmt = $db->prepare("
             SELECT
                 t.task_id,
@@ -130,22 +130,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'deadlines
                 t.priority,
                 t.description,
 
-                u.user_id AS owner_id,
+                ta_first.user_id AS owner_id,
                 u.first_name,
                 u.last_name,
                 u.profile_picture
 
             FROM tasks t
-            LEFT JOIN task_assignments ta
-              ON ta.task_id = t.task_id
-            LEFT JOIN users u
-              ON u.user_id = ta.user_id
+            LEFT JOIN (
+                SELECT task_id, MIN(user_id) AS user_id
+                FROM task_assignments
+                GROUP BY task_id
+            ) ta_first ON ta_first.task_id = t.task_id
+            LEFT JOIN users u ON u.user_id = ta_first.user_id
 
             WHERE t.project_id = :pid
               AND t.status != 'completed'
               AND t.deadline IS NOT NULL
 
-            GROUP BY t.task_id
             ORDER BY t.deadline ASC
             LIMIT 30
         ");
@@ -175,11 +176,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'deadlines
         echo json_encode(['success' => true, 'items' => $items]);
         exit;
     } catch (Throwable $e) {
+        error_log("Deadlines query error: " . $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => 'Server error']);
         exit;
     }
 }
+
 
 // =============================
 // CLOSE PROJECT (AJAX) - manager-progress.php
