@@ -1213,7 +1213,46 @@ async function loadAllTopicsPage(currentUser) {
     const listEl = document.getElementById('all-topics-list');
     if (listEl) {
         await ensureKbTopicsLoaded();
-        const topics = KB_TOPICS.filter(t => String(t.is_public) === "1").map(t => t.topic_name);
+        const allTopics = KB_TOPICS
+            .filter(t => String(t.is_public) === "1")
+            .map(t => String(t.topic_name || "").trim())
+            .filter(Boolean);
+
+        function renderTopicsList(topicNames) {
+        if (!listEl) return;
+
+        if (!topicNames.length) {
+            listEl.innerHTML = '<p>No topics found.</p>';
+            return;
+        }
+
+        listEl.innerHTML = topicNames
+            .map(t => `
+            <div class="topic-row" data-topic="${escapeHtml(t)}">
+                <span class="topic-name">${escapeHtml(t)}</span>
+                <i data-feather="arrow-right"></i>
+            </div>
+            `)
+            .join('');
+
+        // Re-bind click handlers every re-render
+        listEl.querySelectorAll('.topic-row').forEach((row) => {
+            row.addEventListener('click', () => {
+            const topicName = row.dataset.topic;
+            sessionStorage.setItem('returnToTopic', topicName);
+            window.location.href = `knowledge-base.html?user=${currentUser.email}`;
+            });
+        });
+
+        feather.replace();
+        }
+
+        // initial render
+        renderTopicsList(allTopics);
+
+        // bind search
+        setupAllTopicsSearch(allTopics, renderTopicsList);
+
 
         if (topics.length === 0) {
             listEl.innerHTML = '<p>No topics yet.</p>';
@@ -1241,6 +1280,34 @@ async function loadAllTopicsPage(currentUser) {
     }
 
     feather.replace();
+}
+
+function setupAllTopicsSearch(allTopics, renderFn) {
+  const input = document.getElementById("kb-topics-search-input");
+  if (!input) return;
+
+  if (input.dataset.bound === "1") return;
+  input.dataset.bound = "1";
+
+  let t = null;
+
+  input.addEventListener("input", () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      const q = String(input.value || "").trim().toLowerCase();
+
+      if (!q) {
+        renderFn(allTopics);
+        return;
+      }
+
+      const filtered = allTopics.filter(name =>
+        name.toLowerCase().includes(q)
+      );
+
+      renderFn(filtered);
+    }, 200);
+  });
 }
 
 /**

@@ -891,6 +891,7 @@ body[data-topics-view="topic"] #related-topics-widget {
 }
 
 .kb-solved-badge{
+  font-family: 'Poppins', sans-serif;
   display:inline-flex;
   align-items:center;
   padding:6px 10px;
@@ -904,6 +905,7 @@ body[data-topics-view="topic"] #related-topics-widget {
 }
 
 .kb-solve-btn{
+  font-family: 'Poppins', sans-serif;
   padding:8px 12px;
   border-radius:10px;
   border:1px solid #D0D5DD;
