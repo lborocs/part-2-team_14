@@ -107,14 +107,13 @@
 
                 <div class="input-group">
                     <label for="login-password">Password</label>
-                    <input type="password" id="login-password" required />
-                    <i class="fa-solid fa-eye-slash" onclick="myFunction('login-password', this)"></i>
+                    <div class="password-wrapper">
+                        <input type="password" id="login-password" required />
+                        <i class="fa-solid fa-eye-slash" onclick="myFunction('login-password', this)"></i>
+                    </div>
                     <small id="login-error">Invalid email or password</small>
+                    <p class="forgot-password">Forgot your password?</p>
                 </div>
-                <div>
-                <!-- Forgot your password? -->
-                <p class="forgot-password">Forgot your password?</p>
-</div>
 
                 <button type="submit">Log In</button>
             </form>
