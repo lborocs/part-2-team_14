@@ -7,9 +7,10 @@ body {
     margin: 0;
     height: 100vh;
     color: #1E1E1E;
-    overflow: hidden;
-    /* ADDED: Prevent body scroll */
+    overflow: hidden; /* Keep sidebar fixed on ALL pages */
 }
+
+/* Remove the page-specific body overflow rules - not needed */
 
 * {
     box-sizing: border-box;
@@ -119,14 +120,29 @@ body {
 * Main Content
 */
 .main-content {
-    flex-grow: 1;
-    /* Takes up remaining space */
+    flex: 1;
     padding: 0;
-    /* Removed padding */
-    overflow-y: auto;
-    /* FIXED: Changed from hidden to auto */
     display: flex;
     flex-direction: column;
+    min-height: 0;
+    overflow-y: auto; /* Default: allow scrolling in main content */
+    height: 100vh;
+}
+
+/* Main content scrolling - specific overrides for pages that need no scroll */
+body#projects-page .main-content,
+body#manager-progress-page .main-content,
+body#progress-page .main-content {
+    overflow: hidden; /* These pages manage their own scroll in sub-containers */
+}
+
+/* All other pages (settings, home, knowledge base, etc.) scroll in main-content */
+body#settings-page .main-content,
+body#home-page .main-content,
+body#kb-index .main-content,
+body#kb-post .main-content,
+body#kb-create .main-content {
+    overflow-y: auto !important;
     height: 100vh;
 }
 
@@ -135,6 +151,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 30px 40px 0 40px;
+    flex-shrink: 0;
 }
 
 .project-header-top {
@@ -232,12 +249,10 @@ body {
     display: flex;
     gap: 20px;
     width: 100%;
-    /* UPDATED for new layout */
-    padding: 30px 40px 30px 40px;
-    /* Added padding (was 0 40 30 40) */
-    flex-grow: 1;
+    padding: 30px 40px;
+    flex: 1;
     overflow: hidden;
-    /* Hide vertical scroll */
+    min-height: 0;
 }
 
 .task-column {
@@ -249,6 +264,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0; 
 }
 
 .column-header {
@@ -359,23 +375,40 @@ body.can-manage-project .add-task {
 */
 /* ADDED: Styles for scrolling task list */
 .task-list {
-    flex-grow: 1;
+    flex: 1;
     overflow-y: auto;
-    padding-right: 8px;
-    /* space for scrollbar */
-    margin-right: -8px;
-    /* pull column back */
+    padding-right: 10px;
+    min-height: 0;
+    padding-bottom: 20px;
+}
+
+/* Custom scrollbar styling */
+.task-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.task-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.task-list::-webkit-scrollbar-thumb {
+    background: #d0d0d0;
+    border-radius: 4px;
+}
+
+.task-list::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
 }
 
 .task-card {
     position: relative;   
     background: #fff;
     border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
+    padding: 13px;
+    margin-bottom: 13px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
-    padding-bottom: 16px;  
+    padding-bottom: 13px;  
     z-index:0;  
 }
 .task-card.menu-open {
@@ -438,8 +471,8 @@ body.can-manage-project .add-task {
 }
 
 .avatar {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     overflow: hidden;
     display: inline-flex;
@@ -494,6 +527,42 @@ body.can-manage-project .add-task {
     color: #1E1E1E;
     border-bottom-color: #1E1E1E;
 }
+
+
+.task-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.task-due-date {
+  font-size: 14px;
+  color: #6b7280; /* subtle grey */
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+
+.task-deadline {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #555;
+    white-space: nowrap;
+}
+
+.task-deadline i {
+    width: 14px;
+    height: 14px;
+}
+
+.task-deadline span {
+    font-weight: 500;
+}
+
+
 
 /*
 * Shared Create/Assign Button Styles (from knowledge-base.css)
@@ -553,12 +622,11 @@ body.can-manage-project .add-task {
 }
 
 .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    position: relative;
     padding: 20px 25px;
     border-bottom: 1px solid #EAECEE;
 }
+
 
 .modal-header h2 {
     margin: 0;
@@ -829,7 +897,7 @@ body.can-manage-project .add-task {
 }
 
 /* =============================
-   Project Header ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ Right Actions
+   Project Header – Right Actions
 ============================= */
 .project-header-actions { 
     display: flex; 
@@ -1218,6 +1286,646 @@ body.can-manage-project .add-task {
   height: 20px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+html, body {
+  height: 100%;
+}
+
+.dashboard-container {
+  height: 100vh; 
+}
+
+/*make sure task board fills remaining space and allows scrolling */
+.task-title{
+  margin: 0 0 2px 0;   
+}
+
+.task-due-date{
+  margin: 0 0 4px 0;   
+  line-height: 1.2;    
+}
+
+.task-footer{
+  margin-top: 6px;     
+  gap: 4px;            
+}
+
+.task-assignees{
+  margin-top: 2px;     
+}
+
+
+.status-dropdown .dropdown-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  padding: 6px 10px 4px;
+  text-transform: none;
+}
+
+.status-dropdown .dropdown-divider {
+  height: 1px;
+  background: #eee;
+  margin: 8px 0;
+}
+
+.status-dropdown button {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: none;
+  background: #fff;
+  text-align: left;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #212121;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.status-dropdown button:hover {
+  background: #f0f0f0;
+}
+
+/* ========================================
+   TASK CARD DROPDOWN - Match Manager Progress Modal EXACTLY
+   ======================================== */
+
+.task-status-menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 60;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 6px;
+  border: none;
+  background: #f7f7f7;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.status-pill:hover {
+  background: #e8e8e8;
+}
+
+.status-pill .ellipsis {
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: 2px;
+  color: #555;
+}
+
+/* Dropdown Menu - EXACT copy from manager-progress.css */
+.status-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 8px;
+  min-width: 220px;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Section Container - No padding on sections themselves */
+.dropdown-section {
+  padding: 0;
+}
+
+/* Section Labels - EXACT spacing from manager-progress */
+.dropdown-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 8px 12px 4px 12px;
+  margin: 0;
+}
+
+/* Dropdown Buttons - EXACT copy from .menu-item */
+.status-dropdown button {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  margin: 0;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #111;
+  border-radius: 6px;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: auto;
+  line-height: 1.4;
+}
+
+.status-dropdown button:hover {
+  background: #f5f5f5;
+}
+
+.status-dropdown button:active {
+  background: #ebebeb;
+}
+
+/* Icons - match manager-progress modal exactly */
+.status-dropdown button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Arrow icon for status - use SVG approach like modal */
+.status-dropdown button[data-action="status"]::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+  flex-shrink: 0;
+}
+
+/* Flag icon for priority - use SVG approach like modal */
+.status-dropdown button[data-action="priority"]::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'%3E%3C/path%3E%3Cline x1='4' y1='22' x2='4' y2='15'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+  flex-shrink: 0;
+}
+
+.status-dropdown button[data-action="delete"] {
+  color: #ef4444;
+}
+
+.status-dropdown button[data-action="delete"]::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+  flex-shrink: 0;
+}
+
+.status-dropdown button[data-action="delete"]:hover {
+  background: #fef2f2;
+}
+
+/* Divider between sections - matches manager-progress */
+.dropdown-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 8px 0;
+}
+
+/* =============================
+   EDIT TASK BUTTON STYLES
+   ============================= */
+
+/* Edit button in dropdown - distinct styling */
+.dropdown-edit-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    color: #1a73e8; /* Blue color for edit */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: 500;
+}
+
+.dropdown-edit-btn:hover {
+    background-color: #e8f0fe; /* Light blue background on hover */
+}
+
+.dropdown-edit-btn i {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+}
+
+/* Delete button - distinct styling */
+.dropdown-delete-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 14px;
+    color: #d93025; /* Red color for delete */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: 500;
+}
+
+.dropdown-delete-btn:hover {
+    background-color: #fce8e6; /* Light red background on hover */
+}
+
+.dropdown-delete-btn i {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+}
+
+/* Dropdown divider - visual separator */
+.dropdown-divider {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 4px 0;
+}
+
+/* Dropdown section spacing */
+.dropdown-section {
+    padding: 4px 0;
+}
+
+.dropdown-section:first-child {
+    padding-top: 0;
+}
+
+.dropdown-section:last-child {
+    padding-bottom: 0;
+}
+
+/* Modal adjustments for edit mode */
+.assign-task-modal[data-edit-mode="true"] .modal-header h2 {
+    color: #1a73e8; /* Blue title when editing */
+}
+
+.assign-task-modal[data-edit-mode="true"] .modal-header h2::before {
+    content: "✏️ "; /* Pencil emoji before title */
+    margin-right: 4px;
+}
+
+/* Optional: Highlight changed fields */
+.assign-task-modal[data-edit-mode="true"] input:focus,
+.assign-task-modal[data-edit-mode="true"] select:focus,
+.assign-task-modal[data-edit-mode="true"] textarea:focus {
+    border-color: #1a73e8;
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+}
+
+/* Update button styling when in edit mode */
+.assign-task-modal[data-edit-mode="true"] button[type="submit"] {
+    background-color: #1a73e8;
+}
+
+.assign-task-modal[data-edit-mode="true"] button[type="submit"]:hover {
+    background-color: #1557b0;
+}
+
+/* Remove ONLY the CSS-injected delete icon (the first bin) */
+.status-dropdown button[data-action="delete"]::before{
+  content: none !important;
+  background-image: none !important;
+}
+
+/* Details modal X (ONLY this one should sit inline) */
+#details-close-modal-btn{
+  position: static;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+}
+
+/* Edit/Create modal X (keep top-right) */
+.assign-task-modal .modal-header{
+  position: relative;
+}
+
+.assign-task-modal .modal-header .close-btn{
+  position: absolute;
+  top: 16px;
+  right: 16px;
+
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+}
+
+/* Make sure the X icon centres correctly */
+#details-close-modal-btn svg,
+.modal-header .close-btn svg{
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* Pin the ... to the LEFT of the X */
+.task-status-menu.details-menu{
+  position: static;
+  top: 16px;
+  right: 58px; /* 36px button + ~6-8px gap */
+  z-index: 50;
+}
+
+.task-status-menu.details-menu .status-pill{
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #f7f7f7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;       /* <-- centres the dots */
+}
+
+
+.task-status-menu.details-menu .status-pill:hover{
+  background: #e8e8e8;
+}
+
+/* Task Details modal: align ... and X with the title line */
+.details-header-actions{
+  position: absolute;
+  right: 16px;
+  top: 40px;                 /* <-- adjust this number if needed */
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 50;
+}
+
+.details-header-actions .status-dropdown{
+  min-width: 180px;   
+  width: auto;
+  padding: 8px;
+}
+
+
+.modal-header h2{ padding-right: 100px; }
+
+/* EDIT/CREATE MODAL: force the close X top-right */
+.assign-task-modal .modal-header{
+  position: relative;
+}
+
+.modal-header .close-btn,
+.modal-header #close-modal-btn{
+  position: absolute !important;
+  top: 16px;
+  right: 16px;
+}
+
+
+/* ============================
+   EDIT/CREATE MODAL (only)
+   ============================ */
+
+.assign-task-modal .modal-header,
+.modal-content.assign-task-modal .modal-header{
+  position: relative;
+}
+
+/* close button in Edit/Create modal */
+.assign-task-modal .modal-header .close-btn,
+.modal-content.assign-task-modal .modal-header .close-btn,
+.assign-task-modal .modal-header #close-modal-btn,
+.modal-content.assign-task-modal .modal-header #close-modal-btn{
+  position: absolute !important;
+  top: 16px;
+  right: 16px;
+
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+}
+/* ============================
+   TASK DETAILS MODAL (only)
+   ============================ */
+
+.task-details-modal .modal-header{
+  display: flex !important;
+  align-items: center !important;     
+  justify-content: space-between !important;
+  gap: 12px;
+}
+
+.task-details-modal .details-header-actions{
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  transform: none !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* X inside task details should NOT be absolute */
+.task-details-modal #details-close-modal-btn{
+  position: static !important;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+}
+
+/* dots inside task details should NOT be absolute */
+.task-details-modal .task-status-menu.details-menu{
+  position: static !important;
+  margin: 0;
+}
+
+/* Remove any big default margins that push things visually */
+.task-details-modal .modal-header h1,
+.task-details-modal .modal-header h2{
+  margin: 0 !important;
+}
+
+/* Task Details Modal Dropdown - Clean Version */
+.details-header-actions .status-dropdown {
+  min-width: 200px;
+  max-width: 220px;
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Remove ALL pseudo-element icons */
+.details-header-actions .status-dropdown button::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* Style buttons with background icons */
+.details-header-actions .status-dropdown button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px 10px 38px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #111;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.details-header-actions .status-dropdown button:hover {
+  background-color: #f5f5f5;
+}
+
+/* Edit icon */
+.details-header-actions .status-dropdown button[data-action="edit"] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'%3E%3C/path%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 16px 16px;
+}
+
+/* Delete icon and styling */
+.details-header-actions .status-dropdown button[data-action="delete"] {
+  color: #d93025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d93025' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+  background-size: 16px 16px;
+}
+
+.details-header-actions .status-dropdown button[data-action="delete"]:hover {
+  background-color: #fef2f2;
+}
+
+/* Hide any feather icons */
+.details-header-actions .status-dropdown button svg {
+  display: none !important;
+}
+
+.task-details-modal {
+  overflow: hidden;
+}
+
+/* Overdue styling for task cards */
+.task-due-date.overdue {
+  color: #d93025;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.task-due-date.overdue::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23d93025' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+  flex-shrink: 0;
+}
+
+/* =============================
+   Success Notification
+   ============================= */
+
+.success-notification {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    background: #34A853;
+    color: white;
+    padding: 16px 20px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    z-index: 10000;
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+.success-notification i {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 /* ========================================
