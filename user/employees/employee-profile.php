@@ -169,6 +169,68 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
     }
     exit;
 }
+// ============================================
+// 6. AJAX ENDPOINT: GET ACTIVE TASKS
+// ============================================
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'active_tasks') {
+    header('Content-Type: application/json');
+    
+    $stmt = $pdo->prepare("
+        SELECT 
+            t.task_id,
+            t.task_name,
+            t.priority,
+            t.deadline,
+            t.status,
+            p.project_name
+        FROM tasks t
+        INNER JOIN task_assignments ta ON t.task_id = ta.task_id
+        INNER JOIN projects p ON t.project_id = p.project_id
+        WHERE ta.user_id = ?
+          AND t.status != 'completed'
+        ORDER BY t.deadline ASC
+    ");
+    $stmt->execute([$employeeId]);
+    $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode([
+        'success' => true,
+        'tasks' => $tasks
+    ]);
+    exit;
+}
+
+// ============================================
+// 7. AJAX ENDPOINT: GET OVERDUE TASKS
+// ============================================
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
+    header('Content-Type: application/json');
+    
+    $stmt = $pdo->prepare("
+        SELECT 
+            t.task_id,
+            t.task_name,
+            t.priority,
+            t.deadline,
+            t.status,
+            p.project_name
+        FROM tasks t
+        INNER JOIN task_assignments ta ON t.task_id = ta.task_id
+        INNER JOIN projects p ON t.project_id = p.project_id
+        WHERE ta.user_id = ?
+          AND t.status != 'completed'
+          AND t.deadline < CURDATE()
+        ORDER BY t.deadline ASC
+    ");
+    $stmt->execute([$employeeId]);
+    $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode([
+        'success' => true,
+        'tasks' => $tasks
+    ]);
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -203,13 +265,23 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
             min-height: 100vh;
         }
 
+        .project-header {
+            padding: 30px 20px 0px 20px !important;
+        }
+
+        .project-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 5px 0 25px 0; 
+        }
+
         /* Banner Section */
         .profile-banner {
             background: linear-gradient(135deg, #4A90A4 0%, #2C7873 100%);
             color: white;
-            padding: 30px 40px;
+            padding: 30px 20px;
             border-radius: 0 0 16px 16px;
-            margin: -20px -40px 30px;
+            margin: -20px 0 30px 0;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
@@ -217,21 +289,21 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
             max-width: 1200px;
             margin: 0 auto;
             display: flex;
-            align-items: center;
+            align-items: center !important;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 20px;
+            gap: 40px;
         }
 
         .banner-left {
             display: flex;
             align-items: center;
             gap: 20px;
+            padding-left: 20px;
         }
 
         .profile-avatar-large {
-            width: 100px;
-            height: 100px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             border: 4px solid rgba(255, 255, 255, 0.2);
             overflow: hidden;
@@ -267,12 +339,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
 
         .banner-right {
             display: flex;
+            flex-direction: column;
             gap: 12px;
+            margin-top: 0;
+            align-items: stretch;
+            padding-right: 20px;
         }
 
         .banner-btn {
             display: inline-flex;
             align-items: center;
+            justify-content: flex-start;
             gap: 8px;
             padding: 10px 20px;
             background: rgba(255, 255, 255, 0.15);
@@ -284,6 +361,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
             font-weight: 500;
             text-decoration: none;
             transition: all 0.2s;
+            white-space: nowrap;
+            min-width: 200px;
+            text-align: left;
         }
 
         .banner-btn:hover {
@@ -299,18 +379,37 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
 
         /* Analytics Section */
         .analytics-section {
-            padding: 0 40px;
-            max-width: 1200px;
-            margin: 0 auto;
+            padding: 0 20px;
             width: 100%;
+            max-width: 100%;
+        }
+
+        /* Two Column Layout */
+        .profile-layout {
+            display: grid;
+            grid-template-columns: 2fr 3fr;
+            gap: 20px;
+            margin-bottom: 40px;
+            width: 100%;
+            max-width: none;
+        }
+
+        .profile-left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .profile-right-column {
+            display: flex;
+            flex-direction: column;
         }
 
         /* Content Grid */
         .profile-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
         }
 
         /* Specialties Card */
@@ -416,8 +515,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
         .stats-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 24px;
+            gap: 16px;
         }
 
         .stat-card {
@@ -487,7 +585,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
             border-radius: 12px;
             padding: 24px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            margin-bottom: 40px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
 
         .chart-header {
@@ -558,6 +658,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
             display: flex;
             align-items: center;
             gap: 40px;
+            flex: 1;
         }
 
         .chart-wrapper {
@@ -680,6 +781,240 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
         .spec-prototyping        { background:#E8EAF6; color:#303F9F; }
 
         /* ================================
+           TASK MODALS
+           ================================ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .tasks-modal-content {
+            background: #fff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 85vh;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            animation: modalSlideIn 0.25s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 28px;
+            border-bottom: 1px solid #EAECEE;
+            flex-shrink: 0;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+            color: #1E1E1E;
+        }
+
+        .modal-header .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 50%;
+            transition: background 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-header .close-btn:hover {
+            background: #F0F0F0;
+        }
+
+        .modal-header .close-btn svg {
+            width: 22px;
+            height: 22px;
+            color: #555;
+        }
+
+        .modal-body {
+            padding: 20px 28px 28px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .tasks-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .task-item {
+            background: #FAFAFA;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .task-item:hover {
+            border-color: #4A90A4;
+            box-shadow: 0 2px 8px rgba(74, 144, 164, 0.1);
+        }
+
+        .task-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .task-item-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1E1E1E;
+            margin: 0 0 6px 0;
+            line-height: 1.4;
+        }
+
+        .task-item-project {
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .task-item-project svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .task-item-priority {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+        }
+
+        .task-item-priority.low {
+            background: #E6F7F0;
+            color: #34A853;
+        }
+
+        .task-item-priority.medium {
+            background: #FFF4C1;
+            color: #E6A100;
+        }
+
+        .task-item-priority.high {
+            background: #FFEBEB;
+            color: #D93025;
+        }
+
+        .task-item-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #E5E7EB;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .task-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .task-meta-item svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .task-status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .task-status-badge.to_do {
+            background: #FFEBEB;
+            color: #D93025;
+        }
+
+        .task-status-badge.in_progress {
+            background: #FFF4C1;
+            color: #E6A100;
+        }
+
+        .task-status-badge.review {
+            background: #E7F3FF;
+            color: #1A73E8;
+        }
+
+        .empty-tasks-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+        }
+
+        .empty-tasks-message svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-tasks-message p {
+            margin: 0;
+            font-size: 15px;
+        }
+
+        /* Make stat cards clickable */
+        .stat-card {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .stat-card.clickable:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        /* ================================
            RESPONSIVE
            ================================ */
         @media (max-width: 900px) {
@@ -697,12 +1032,17 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
             
             .banner-content {
                 flex-direction: column;
-                text-align: center;
+                text-align: stretch;
             }
             
             .banner-left {
                 flex-direction: column;
                 text-align: center;
+                padding-left: 0;
+            }
+
+            .banner-right {
+                width: 100%;
             }
         }
 
@@ -755,6 +1095,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
             <header class="project-header">
                 <div class="project-header-top">
                     <div class="breadcrumbs-title">
+                        <p class="breadcrumbs">
+                            <a href="employee-directory.php" style="color: #8C8C8C; text-decoration: none;">Employee Directory</a>
+                            > <?= $fullName ?>
+                        </p>
                         <h1>Employee Profile</h1>
                     </div>
                 </div>
@@ -797,314 +1141,511 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
 
             <!-- Analytics Section -->
             <section class="analytics-section">
-                <!-- Specialties & Projects Row -->
-                <div class="profile-content">
-                    <!-- Specialties Card -->
-                    <div class="specialties-card">
-                        <h2>
-                            <i data-feather="star"></i>
-                            Specialties
-                        </h2>
-                        <div class="specialties-container">
-                            <?php if (!empty($specialties)): ?>
-                                <?php 
-                                // Specialty class map from employee-directory
-                                $specialtyClassMap = [
-                                    'Project Management' => 'spec-project-management',
-                                    'Strategy'           => 'spec-strategy',
-                                    'Leadership'         => 'spec-leadership',
-                                    'Backend'            => 'spec-backend',
-                                    'Python'             => 'spec-python',
-                                    'SQL'                => 'spec-sql',
-                                    'API Design'         => 'spec-api-design',
-                                    'Frontend'           => 'spec-frontend',
-                                    'React'              => 'spec-react',
-                                    'CSS'                => 'spec-css',
-                                    'JavaScript'         => 'spec-javascript',
-                                    'Node.js'            => 'spec-node-js',
-                                    'MongoDB'            => 'spec-mongodb',
-                                    'DevOps'             => 'spec-devops',
-                                    'AWS'                => 'spec-aws',
-                                    'Docker'             => 'spec-docker',
-                                    'CI/CD'              => 'spec-ci-cd',
-                                    'UI Design'          => 'spec-ui-design',
-                                    'Figma'              => 'spec-figma',
-                                    'Prototyping'        => 'spec-prototyping',
-                                ];
-                                ?>
-                                <?php foreach ($specialties as $skill): ?>
-                                    <?php $skillClass = $specialtyClassMap[$skill] ?? 'spec-default'; ?>
-                                    <span class="specialty-pill <?= $skillClass ?>">
-                                        <?= htmlspecialchars($skill) ?>
-                                    </span>
-                                <?php endforeach; ?>
+                <!-- Two column layout -->
+                <div class="profile-layout">
+                    <!-- LEFT COLUMN -->
+                    <div class="profile-left-column">
+                        <!-- Specialties & Projects Row -->
+                        <div class="profile-content">
+                            <!-- Specialties Card -->
+                            <div class="specialties-card">
+                                <h2>
+                                    <i data-feather="star"></i>
+                                    Specialties
+                                </h2>
+                                <div class="specialties-container">
+                                    <?php if (!empty($specialties)): ?>
+                                        <?php 
+                                        // Specialty class map from employee-directory
+                                        $specialtyClassMap = [
+                                            'Project Management' => 'spec-project-management',
+                                            'Strategy'           => 'spec-strategy',
+                                            'Leadership'         => 'spec-leadership',
+                                            'Backend'            => 'spec-backend',
+                                            'Python'             => 'spec-python',
+                                            'SQL'                => 'spec-sql',
+                                            'API Design'         => 'spec-api-design',
+                                            'Frontend'           => 'spec-frontend',
+                                            'React'              => 'spec-react',
+                                            'CSS'                => 'spec-css',
+                                            'JavaScript'         => 'spec-javascript',
+                                            'Node.js'            => 'spec-node-js',
+                                            'MongoDB'            => 'spec-mongodb',
+                                            'DevOps'             => 'spec-devops',
+                                            'AWS'                => 'spec-aws',
+                                            'Docker'             => 'spec-docker',
+                                            'CI/CD'              => 'spec-ci-cd',
+                                            'UI Design'          => 'spec-ui-design',
+                                            'Figma'              => 'spec-figma',
+                                            'Prototyping'        => 'spec-prototyping',
+                                        ];
+                                        ?>
+                                        <?php foreach ($specialties as $skill): ?>
+                                            <?php $skillClass = $specialtyClassMap[$skill] ?? 'spec-default'; ?>
+                                            <span class="specialty-pill <?= $skillClass ?>">
+                                                <?= htmlspecialchars($skill) ?>
+                                            </span>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <p style="color: #888; font-style: italic;">No specialties listed</p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <!-- Projects Card -->
+                            <div class="projects-card">
+                                <h2>
+                                    <i data-feather="folder"></i>
+                                    Current Projects
+                                </h2>
+                                <?php if (!empty($projects)): ?>
+                                    <div class="projects-list">
+                                        <?php foreach ($projects as $project): ?>
+                                            <div class="project-item">
+                                                <span class="project-name">
+                                                    <?= htmlspecialchars($project['project_name']) ?>
+                                                </span>
+                                                <span class="project-status <?= $project['status'] ?>">
+                                                    <?= ucfirst($project['status']) ?>
+                                                </span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="no-projects">
+                                        <p>Not assigned to any projects</p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Cards -->
+                        <div class="stats-row">
+                            <!-- Active Tasks -->
+                            <div class="stat-card clickable" id="active-tasks-card" onclick="showActiveTasks()">
+                                <div class="stat-icon active">
+                                    <i data-feather="clipboard"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value"><?= $activeTasks ?></div>
+                                    <div class="stat-label">Active Tasks</div>
+                                </div>
+                            </div>
+
+                            <!-- Overdue Tasks -->
+                            <div class="stat-card clickable" id="overdue-tasks-card" onclick="showOverdueTasks()">
+                                <div class="stat-icon overdue">
+                                    <i data-feather="alert-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value"><?= $overdueTasks ?></div>
+                                    <div class="stat-label">Overdue Tasks</div>
+                                </div>
+                            </div>
+
+                            <!-- Project Count -->
+                            <div class="stat-card">
+                                <div class="stat-icon projects">
+                                    <i data-feather="folder"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value"><?= $projectCount ?></div>
+                                    <div class="stat-label">Projects</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT COLUMN -->
+                    <div class="profile-right-column">
+                        <!-- Donut Chart - Task Breakdown -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h2 class="chart-title">
+                                    <i data-feather="pie-chart"></i>
+                                    Task Performance
+                                </h2>
+                                
+                                <!-- Project Filter Dropdown -->
+                                <?php if (!empty($projects)): ?>
+                                <div class="chart-filter">
+                                    <select id="project-filter">
+                                        <option value="all">All Projects</option>
+                                        <?php foreach ($projects as $proj): ?>
+                                            <option value="<?= (int) $proj['project_id'] ?>">
+                                                <?= htmlspecialchars($proj['project_name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if ($totalTasks > 0): ?>
+                                <div class="chart-body">
+                                    <!-- Donut Chart -->
+                                    <div class="chart-wrapper">
+                                        <canvas id="taskDonutChart"></canvas>
+                                        <div class="chart-center">
+                                            <div class="chart-center-value" id="chart-total"><?= $totalTasks ?></div>
+                                            <div class="chart-center-label">Total Tasks</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Legend -->
+                                    <div class="chart-legend">
+                                        <div class="legend-item">
+                                            <div class="legend-color todo"></div>
+                                            <span class="legend-text">To Do</span>
+                                            <span class="legend-value" id="legend-todo"><?= $taskStats['to_do'] ?></span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color inprogress"></div>
+                                            <span class="legend-text">In Progress</span>
+                                            <span class="legend-value" id="legend-inprogress"><?= $taskStats['in_progress'] ?></span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color review"></div>
+                                            <span class="legend-text">In Review</span>
+                                            <span class="legend-value" id="legend-review"><?= $taskStats['review'] ?></span>
+                                        </div>
+                                        <div class="legend-item">
+                                            <div class="legend-color completed"></div>
+                                            <span class="legend-text">Completed</span>
+                                            <span class="legend-value" id="legend-completed"><?= $taskStats['completed'] ?></span>
+                                        </div>
+                                    </div>
+                                </div>
                             <?php else: ?>
-                                <p style="color: #888; font-style: italic;">No specialties listed</p>
+                                <div class="chart-empty">
+                                    <i data-feather="inbox"></i>
+                                    <p>No tasks assigned to this employee yet.</p>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>
-
-                    <!-- Projects Card -->
-                    <div class="projects-card">
-                        <h2>
-                            <i data-feather="folder"></i>
-                            Current Projects
-                        </h2>
-                        <?php if (!empty($projects)): ?>
-                            <div class="projects-list">
-                                <?php foreach ($projects as $project): ?>
-                                    <div class="project-item">
-                                        <span class="project-name">
-                                            <?= htmlspecialchars($project['project_name']) ?>
-                                        </span>
-                                        <span class="project-status <?= $project['status'] ?>">
-                                            <?= ucfirst($project['status']) ?>
-                                        </span>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="no-projects">
-                                <p>Not assigned to any projects</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <!-- Statistics Cards -->
-                <div class="stats-row">
-                    <!-- Active Tasks -->
-                    <div class="stat-card">
-                        <div class="stat-icon active">
-                            <i data-feather="clipboard"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value"><?= $activeTasks ?></div>
-                            <div class="stat-label">Active Tasks</div>
-                        </div>
-                    </div>
-
-                    <!-- Overdue Tasks -->
-                    <div class="stat-card">
-                        <div class="stat-icon overdue">
-                            <i data-feather="alert-circle"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value"><?= $overdueTasks ?></div>
-                            <div class="stat-label">Overdue Tasks</div>
-                        </div>
-                    </div>
-
-                    <!-- Project Count -->
-                    <div class="stat-card">
-                        <div class="stat-icon projects">
-                            <i data-feather="folder"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-value"><?= $projectCount ?></div>
-                            <div class="stat-label">Projects</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Donut Chart - Task Breakdown -->
-                <div class="chart-card">
-                    <div class="chart-header">
-                        <h2 class="chart-title">
-                            <i data-feather="pie-chart"></i>
-                            Task Performance
-                        </h2>
-                        
-                        <!-- Project Filter Dropdown -->
-                        <?php if (!empty($projects)): ?>
-                        <div class="chart-filter">
-                            <select id="project-filter">
-                                <option value="all">All Projects</option>
-                                <?php foreach ($projects as $proj): ?>
-                                    <option value="<?= (int) $proj['project_id'] ?>">
-                                        <?= htmlspecialchars($proj['project_name']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <?php if ($totalTasks > 0): ?>
-                        <div class="chart-body">
-                            <!-- Donut Chart -->
-                            <div class="chart-wrapper">
-                                <canvas id="taskDonutChart"></canvas>
-                                <div class="chart-center">
-                                    <div class="chart-center-value" id="chart-total"><?= $totalTasks ?></div>
-                                    <div class="chart-center-label">Total Tasks</div>
-                                </div>
-                            </div>
-
-                            <!-- Legend -->
-                            <div class="chart-legend">
-                                <div class="legend-item">
-                                    <div class="legend-color todo"></div>
-                                    <span class="legend-text">To Do</span>
-                                    <span class="legend-value" id="legend-todo"><?= $taskStats['to_do'] ?></span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color inprogress"></div>
-                                    <span class="legend-text">In Progress</span>
-                                    <span class="legend-value" id="legend-inprogress"><?= $taskStats['in_progress'] ?></span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color review"></div>
-                                    <span class="legend-text">In Review</span>
-                                    <span class="legend-value" id="legend-review"><?= $taskStats['review'] ?></span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color completed"></div>
-                                    <span class="legend-text">Completed</span>
-                                    <span class="legend-value" id="legend-completed"><?= $taskStats['completed'] ?></span>
-                                </div>
-                            </div>
-                        </div>
-                    <?php else: ?>
-                        <div class="chart-empty">
-                            <i data-feather="inbox"></i>
-                            <p>No tasks assigned to this employee yet.</p>
-                        </div>
-                    <?php endif; ?>
                 </div>
             </section>
         </main>
     </div>
 
     <script>
-        // Initialize Feather Icons
-        feather.replace();
+        // wait for DOM to be fully load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Feather Icons
+            feather.replace();
 
-        // Add to Project Function
-        function assignToProject() {
-            alert('This would open a modal to add <?= $fullName ?> to a project. Feature coming soon!');
-            // In a real implementation, you'd open a modal with project selection
-        }
+            // ================================
+            // TASK MODALS FUNCTIONALITY
+            // ================================
+            const employeeId = <?= $employeeId ?>;
+            
+            // Modal elements
+            const activeModal = document.getElementById('active-tasks-modal');
+            const overdueModal = document.getElementById('overdue-tasks-modal');
+            const closeActiveBtn = document.getElementById('close-active-modal');
+            const closeOverdueBtn = document.getElementById('close-overdue-modal');
+            const activeTasksList = document.getElementById('active-tasks-list');
+            const overdueTasksList = document.getElementById('overdue-tasks-list');
+            
+            // Show Active Tasks Modal  
+            window.showActiveTasks = async function() {
+                try {
+                    const response = await fetch(`?id=${employeeId}&ajax=active_tasks`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        renderTasksList(result.tasks, activeTasksList, 'active');
+                        activeModal.classList.add('show');
+                        feather.replace();
+                    } else {
+                        activeTasksList.innerHTML = '<div class="empty-tasks-message"><p>Error loading tasks</p></div>';
+                        activeModal.classList.add('show');
+                    }
+                } catch (error) {
+                    console.error('Error fetching active tasks:', error);
+                    activeTasksList.innerHTML = '<div class="empty-tasks-message"><p>Error loading tasks</p></div>';
+                    activeModal.classList.add('show');
+                }
+            }
+            
+            // Show Overdue Tasks Modal
+            window.showOverdueTasks = async function() {
+                try {
+                    const response = await fetch(`?id=${employeeId}&ajax=overdue_tasks`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        renderTasksList(result.tasks, overdueTasksList, 'overdue');
+                        overdueModal.classList.add('show');
+                        feather.replace();
+                    } else {
+                        overdueTasksList.innerHTML = '<div class="empty-tasks-message"><p>Error loading tasks</p></div>';
+                        overdueModal.classList.add('show');
+                    }
+                } catch (error) {
+                    console.error('Error fetching overdue tasks:', error);
+                    overdueTasksList.innerHTML = '<div class="empty-tasks-message"><p>Error loading tasks</p></div>';
+                    overdueModal.classList.add('show');
+                }
+            }
+            
+            // Render tasks list
+            function renderTasksList(tasks, container, type) {
+                if (!tasks || tasks.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-tasks-message">
+                            <i data-feather="inbox"></i>
+                            <p>No ${type} tasks found</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const tasksHTML = tasks.map(task => {
+                    const deadline = new Date(task.deadline);
+                    const formattedDeadline = deadline.toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                    });
+                    
+                    const statusLabels = {
+                        'to_do': 'To Do',
+                        'in_progress': 'In Progress',
+                        'review': 'In Review',
+                        'completed': 'Completed'
+                    };
+                    
+                    return `
+                        <div class="task-item">
+                            <div class="task-item-header">
+                                <div>
+                                    <h3 class="task-item-title">${escapeHtml(task.task_name)}</h3>
+                                    <div class="task-item-project">
+                                        <i data-feather="folder"></i>
+                                        ${escapeHtml(task.project_name)}
+                                    </div>
+                                </div>
+                                <span class="task-item-priority ${task.priority}">
+                                    ${task.priority}
+                                </span>
+                            </div>
+                            <div class="task-item-meta">
+                                <div class="task-meta-item">
+                                    <i data-feather="calendar"></i>
+                                    <span>Due: ${formattedDeadline}</span>
+                                </div>
+                                <div class="task-meta-item">
+                                    <span class="task-status-badge ${task.status}">
+                                        ${statusLabels[task.status] || task.status}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                container.innerHTML = tasksHTML;
+            }
+            
+            // Escape HTML to prevent XSS
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, m => map[m]);
+            }
+            
+            // Close modal handlers
+            closeActiveBtn.addEventListener('click', () => {
+                activeModal.classList.remove('show');
+            });
+            
+            closeOverdueBtn.addEventListener('click', () => {
+                overdueModal.classList.remove('show');
+            });
+            
+            // Close on background click
+            activeModal.addEventListener('click', (e) => {
+                if (e.target === activeModal) {
+                    activeModal.classList.remove('show');
+                }
+            });
+            
+            overdueModal.addEventListener('click', (e) => {
+                if (e.target === overdueModal) {
+                    overdueModal.classList.remove('show');
+                }
+            });
+            
+            // Close on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    activeModal.classList.remove('show');
+                    overdueModal.classList.remove('show');
+                }
+            });
 
-        <?php if ($totalTasks > 0): ?>
-        // ================================
-        // DONUT CHART INITIALIZATION
-        // ================================
-        const ctx = document.getElementById('taskDonutChart').getContext('2d');
-        
-        // Initial data from PHP
-        let chartData = {
-            to_do: <?= $taskStats['to_do'] ?>,
-            in_progress: <?= $taskStats['in_progress'] ?>,
-            review: <?= $taskStats['review'] ?>,
-            completed: <?= $taskStats['completed'] ?>
-        };
+            // Add to Project Function
+            window.assignToProject = function() {
+                alert('This would open a modal to add <?= $fullName ?> to a project. Feature coming soon!');
+                // In a real implementation, you'd open a modal with project selection
+            }
 
-        // Chart colors (match your existing prototype)
-        const chartColors = {
-            todo: '#D93025',
-            inprogress: '#E6A100',
-            review: '#34A853',
-            completed: '#4285F4'
-        };
+            <?php if ($totalTasks > 0): ?>
+            // ================================
+            // DONUT CHART INITIALIZATION
+            // ================================
+            const ctx = document.getElementById('taskDonutChart').getContext('2d');
+            
+            // Initial data from PHP
+            let chartData = {
+                to_do: <?= $taskStats['to_do'] ?>,
+                in_progress: <?= $taskStats['in_progress'] ?>,
+                review: <?= $taskStats['review'] ?>,
+                completed: <?= $taskStats['completed'] ?>
+            };
 
-        // Create the donut chart
-        const taskChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['To Do', 'In Progress', 'In Review', 'Completed'],
-                datasets: [{
-                    data: [
-                        chartData.to_do,
-                        chartData.in_progress,
-                        chartData.review,
-                        chartData.completed
-                    ],
-                    backgroundColor: [
-                        chartColors.todo,
-                        chartColors.inprogress,
-                        chartColors.review,
-                        chartColors.completed
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                cutout: '70%',
-                plugins: {
-                    legend: {
-                        display: false // We use custom legend
-                    },
-                    tooltip: {
-                        backgroundColor: '#333',
-                        titleFont: {
-                            family: "'Poppins', sans-serif",
-                            size: 13
+            // Chart colors (match your existing prototype)
+            const chartColors = {
+                todo: '#D93025',
+                inprogress: '#E6A100',
+                review: '#34A853',
+                completed: '#4285F4'
+            };
+
+            // Create the donut chart
+            const taskChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['To Do', 'In Progress', 'In Review', 'Completed'],
+                    datasets: [{
+                        data: [
+                            chartData.to_do,
+                            chartData.in_progress,
+                            chartData.review,
+                            chartData.completed
+                        ],
+                        backgroundColor: [
+                            chartColors.todo,
+                            chartColors.inprogress,
+                            chartColors.review,
+                            chartColors.completed
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false // We use custom legend
                         },
-                        bodyFont: {
-                            family: "'Poppins', sans-serif",
-                            size: 12
-                        },
-                        padding: 12,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const value = context.raw;
-                                const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                return `${context.label}: ${value} (${percentage}%)`;
+                        tooltip: {
+                            backgroundColor: '#333',
+                            titleFont: {
+                                family: "'Poppins', sans-serif",
+                                size: 13
+                            },
+                            bodyFont: {
+                                family: "'Poppins', sans-serif",
+                                size: 12
+                            },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.raw;
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${context.label}: ${value} (${percentage}%)`;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
-
-        // ================================
-        // PROJECT FILTER FUNCTIONALITY
-        // ================================
-        const projectFilter = document.getElementById('project-filter');
-        const employeeId = <?= $employeeId ?>;
-
-        if (projectFilter) {
-            projectFilter.addEventListener('change', async function() {
-                const projectId = this.value;
-                
-                try {
-                    // Fetch filtered data via AJAX
-                    const response = await fetch(
-                        `?id=${employeeId}&ajax=chart_data&project_id=${encodeURIComponent(projectId)}`
-                    );
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        // Update chart data
-                        taskChart.data.datasets[0].data = [
-                            result.data.to_do,
-                            result.data.in_progress,
-                            result.data.review,
-                            result.data.completed
-                        ];
-                        taskChart.update();
-
-                        // Update center total
-                        document.getElementById('chart-total').textContent = result.total;
-
-                        // Update legend values
-                        document.getElementById('legend-todo').textContent = result.data.to_do;
-                        document.getElementById('legend-inprogress').textContent = result.data.in_progress;
-                        document.getElementById('legend-review').textContent = result.data.review;
-                        document.getElementById('legend-completed').textContent = result.data.completed;
-                    }
-                } catch (error) {
-                    console.error('Error fetching chart data:', error);
-                }
             });
-        }
-        <?php endif; ?>
+
+            // ================================
+            // PROJECT FILTER FUNCTIONALITY
+            // ================================
+            const projectFilter = document.getElementById('project-filter');
+
+            if (projectFilter) {
+                projectFilter.addEventListener('change', async function() {
+                    const projectId = this.value;
+                    
+                    try {
+                        // Fetch filtered data via AJAX
+                        const response = await fetch(
+                            `?id=${employeeId}&ajax=chart_data&project_id=${encodeURIComponent(projectId)}`
+                        );
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            // Update chart data
+                            taskChart.data.datasets[0].data = [
+                                result.data.to_do,
+                                result.data.in_progress,
+                                result.data.review,
+                                result.data.completed
+                            ];
+                            taskChart.update();
+
+                            // Update center total
+                            document.getElementById('chart-total').textContent = result.total;
+
+                            // Update legend values
+                            document.getElementById('legend-todo').textContent = result.data.to_do;
+                            document.getElementById('legend-inprogress').textContent = result.data.in_progress;
+                            document.getElementById('legend-review').textContent = result.data.review;
+                            document.getElementById('legend-completed').textContent = result.data.completed;
+                        }
+                    } catch (error) {
+                        console.error('Error fetching chart data:', error);
+                    }
+                });
+            }
+            <?php endif; ?>
+        });
     </script>
+
+    <!-- Active Tasks Modal -->
+    <div class="modal-overlay" id="active-tasks-modal">
+        <div class="modal-content tasks-modal-content">
+            <div class="modal-header">
+                <h2>Active Tasks</h2>
+                <button type="button" class="close-btn" id="close-active-modal">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="active-tasks-list" class="tasks-list-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Tasks Modal -->
+    <div class="modal-overlay" id="overdue-tasks-modal">
+        <div class="modal-content tasks-modal-content">
+            <div class="modal-header">
+                <h2>Overdue Tasks</h2>
+                <button type="button" class="close-btn" id="close-overdue-modal">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="overdue-tasks-list" class="tasks-list-container"></div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
