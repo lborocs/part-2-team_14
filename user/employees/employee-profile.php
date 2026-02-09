@@ -38,6 +38,21 @@ if (!$employee) {
 $fullName = htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']);
 $roleDisplay = ucfirst(str_replace('_', ' ', $employee['role']));
 
+// Same 10-color banner palette as employee directory
+$bannerColors = [
+    '#5B9BD5', '#7FB069', '#9B59B6', '#D4926F', '#45B7B8',
+    '#6C8EAD', '#2A9D8F', '#B56576', '#52796F', '#7D8FA0',
+];
+if (!isset($_SESSION['employee_colors'])) {
+    $_SESSION['employee_colors'] = [];
+}
+if (isset($_SESSION['employee_colors'][$employeeId])) {
+    $profileBannerColor = $_SESSION['employee_colors'][$employeeId];
+} else {
+    $profileBannerColor = $bannerColors[array_rand($bannerColors)];
+    $_SESSION['employee_colors'][$employeeId] = $profileBannerColor;
+}
+
 // Decode specialties for display
 $specialties = [];
 if (!empty($employee['specialties'])) {
@@ -63,25 +78,29 @@ $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // ============================================
 // 3. FETCH TASK STATISTICS (ALL PROJECTS)
 // ============================================
-// Active tasks count (not completed)
+// Active tasks count (not completed, exclude archived projects)
 $stmt = $pdo->prepare("
     SELECT COUNT(*) as count
     FROM tasks t
     INNER JOIN task_assignments ta ON t.task_id = ta.task_id
+    INNER JOIN projects p ON t.project_id = p.project_id
     WHERE ta.user_id = ?
       AND t.status != 'completed'
+      AND p.status != 'archived'
 ");
 $stmt->execute([$employeeId]);
 $activeTasks = (int) $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-// Overdue tasks count
+// Overdue tasks count (exclude archived projects)
 $stmt = $pdo->prepare("
     SELECT COUNT(*) as count
     FROM tasks t
     INNER JOIN task_assignments ta ON t.task_id = ta.task_id
+    INNER JOIN projects p ON t.project_id = p.project_id
     WHERE ta.user_id = ?
       AND t.status != 'completed'
       AND t.deadline < CURDATE()
+      AND p.status != 'archived'
 ");
 $stmt->execute([$employeeId]);
 $overdueTasks = (int) $stmt->fetch(PDO::FETCH_ASSOC)['count'];
@@ -93,12 +112,14 @@ $projectCount = count($projects);
 // 4. FETCH TASK BREAKDOWN FOR DONUT CHART (ALL PROJECTS)
 // ============================================
 $stmt = $pdo->prepare("
-    SELECT 
+    SELECT
         t.status,
         COUNT(*) as count
     FROM tasks t
     INNER JOIN task_assignments ta ON t.task_id = ta.task_id
+    INNER JOIN projects p ON t.project_id = p.project_id
     WHERE ta.user_id = ?
+      AND p.status != 'archived'
     GROUP BY t.status
 ");
 $stmt->execute([$employeeId]);
@@ -188,11 +209,12 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'active_tasks') {
         INNER JOIN projects p ON t.project_id = p.project_id
         WHERE ta.user_id = ?
           AND t.status != 'completed'
+          AND p.status != 'archived'
         ORDER BY t.deadline ASC
     ");
     $stmt->execute([$employeeId]);
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     echo json_encode([
         'success' => true,
         'tasks' => $tasks
@@ -205,9 +227,9 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'active_tasks') {
 // ============================================
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
     header('Content-Type: application/json');
-    
+
     $stmt = $pdo->prepare("
-        SELECT 
+        SELECT
             t.task_id,
             t.task_name,
             t.priority,
@@ -220,6 +242,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         WHERE ta.user_id = ?
           AND t.status != 'completed'
           AND t.deadline < CURDATE()
+          AND p.status != 'archived'
         ORDER BY t.deadline ASC
     ");
     $stmt->execute([$employeeId]);
@@ -265,24 +288,12 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             min-height: 100vh;
         }
 
-        .project-header {
-            padding: 30px 20px 0px 20px !important;
-        }
-
-        .project-header h1 {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 5px 0 25px 0; 
-        }
-
         /* Banner Section */
         .profile-banner {
-            background: linear-gradient(135deg, #4A90A4 0%, #2C7873 100%);
-            color: white;
             padding: 30px 20px;
             border-radius: 0 0 16px 16px;
-            margin: -20px 0 30px 0;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin: 0 0 30px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .banner-content {
@@ -305,7 +316,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             width: 140px;
             height: 140px;
             border-radius: 50%;
-            border: 4px solid rgba(255, 255, 255, 0.2);
+            border: 4px solid rgba(255, 255, 255, 0.3);
             overflow: hidden;
             background: #fff;
         }
@@ -320,18 +331,18 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             font-size: 32px;
             font-weight: 700;
             margin: 0 0 8px 0;
-            color: white;
+            color: #fff;
         }
 
         .profile-basic-info .role {
             font-size: 16px;
-            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.9);
             margin: 0 0 4px 0;
         }
 
         .profile-basic-info .email {
             font-size: 14px;
-            opacity: 0.8;
+            color: rgba(255, 255, 255, 0.8);
             display: flex;
             align-items: center;
             gap: 6px;
@@ -355,7 +366,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             background: rgba(255, 255, 255, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 8px;
-            color: white;
+            color: #fff;
             font-family: 'Poppins', sans-serif;
             font-size: 14px;
             font-weight: 500;
@@ -368,7 +379,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
 
         .banner-btn:hover {
             background: rgba(255, 255, 255, 0.25);
-            border-color: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.5);
             transform: translateY(-1px);
         }
 
@@ -387,8 +398,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         /* Two Column Layout */
         .profile-layout {
             display: grid;
-            grid-template-columns: 2fr 3fr;
-            gap: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
             margin-bottom: 40px;
             width: 100%;
             max-width: none;
@@ -403,6 +414,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .profile-right-column {
             display: flex;
             flex-direction: column;
+            gap: 24px;
         }
 
         /* Content Grid */
@@ -417,7 +429,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             background: white;
             border-radius: 12px;
             padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #EAECEE;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
 
         .specialties-card h2 {
@@ -433,7 +446,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .specialties-card h2 i {
             width: 20px;
             height: 20px;
-            color: #4A90A4;
+            color: #E6A100;
         }
 
         .specialties-container {
@@ -447,7 +460,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             background: white;
             border-radius: 12px;
             padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #EAECEE;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
 
         .projects-card h2 {
@@ -463,13 +477,25 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .projects-card h2 i {
             width: 20px;
             height: 20px;
-            color: #4A90A4;
+            color: #E6A100;
         }
 
         .projects-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 10px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .projects-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .projects-list::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 2px;
         }
 
         .project-item {
@@ -479,7 +505,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             padding: 12px;
             background: #f8f9fa;
             border-radius: 8px;
-            border-left: 4px solid #4A90A4;
+            border-left: 4px solid #FBC02D;
         }
 
         .project-name {
@@ -521,23 +547,24 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .stat-card {
             background: white;
             border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 14px;
+            border: 1px solid #EAECEE;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
 
         .stat-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -545,8 +572,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         .stat-icon svg {
-            width: 28px;
-            height: 28px;
+            width: 20px;
+            height: 20px;
             color: white;
         }
 
@@ -567,16 +594,16 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         .stat-value {
-            font-size: 32px;
+            font-size: 22px;
             font-weight: 700;
             color: #333;
             line-height: 1.1;
         }
 
         .stat-label {
-            font-size: 14px;
+            font-size: 13px;
             color: #666;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         /* Donut Chart Card */
@@ -584,8 +611,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             background: white;
             border-radius: 12px;
             padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-            height: 100%;
+            border: 1px solid #EAECEE;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
             display: flex;
             flex-direction: column;
         }
@@ -609,7 +636,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .chart-title svg {
             width: 22px;
             height: 22px;
-            color: #4A90A4;
+            color: #E6A100;
         }
 
         .chart-filter {
@@ -631,13 +658,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         .chart-filter select:hover {
-            border-color: #4A90A4;
+            border-color: #E6A100;
         }
 
         .chart-filter select:focus {
             outline: none;
-            border-color: #4A90A4;
-            box-shadow: 0 0 0 3px rgba(74, 144, 164, 0.15);
+            border-color: #E6A100;
+            box-shadow: 0 0 0 3px rgba(251, 192, 45, 0.25);
         }
 
         .chart-filter::after {
@@ -882,8 +909,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         .task-item:hover {
-            border-color: #4A90A4;
-            box-shadow: 0 2px 8px rgba(74, 144, 164, 0.1);
+            border-color: #E6A100;
+            box-shadow: 0 2px 8px rgba(251, 192, 45, 0.15);
         }
 
         .task-item-header {
@@ -1091,21 +1118,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
 
         <!-- Main content -->
         <main class="main-content">
-            <!-- Page Header -->
-            <header class="project-header">
-                <div class="project-header-top">
-                    <div class="breadcrumbs-title">
-                        <p class="breadcrumbs">
-                            <a href="employee-directory.php" style="color: #8C8C8C; text-decoration: none;">Employee Directory</a>
-                            > <?= $fullName ?>
-                        </p>
-                        <h1>Employee Profile</h1>
-                    </div>
-                </div>
-            </header>
-
             <!-- Profile Banner -->
-            <section class="profile-banner">
+            <section class="profile-banner" style="background: <?= htmlspecialchars($profileBannerColor) ?>; color: #fff;">
                 <div class="banner-content">
                     <div class="banner-left">
                         <div class="profile-avatar-large">
@@ -1219,41 +1233,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                             </div>
                         </div>
 
-                        <!-- Statistics Cards -->
-                        <div class="stats-row">
-                            <!-- Active Tasks -->
-                            <div class="stat-card clickable" id="active-tasks-card" onclick="showActiveTasks()">
-                                <div class="stat-icon active">
-                                    <i data-feather="clipboard"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-value"><?= $activeTasks ?></div>
-                                    <div class="stat-label">Active Tasks</div>
-                                </div>
-                            </div>
-
-                            <!-- Overdue Tasks -->
-                            <div class="stat-card clickable" id="overdue-tasks-card" onclick="showOverdueTasks()">
-                                <div class="stat-icon overdue">
-                                    <i data-feather="alert-circle"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-value"><?= $overdueTasks ?></div>
-                                    <div class="stat-label">Overdue Tasks</div>
-                                </div>
-                            </div>
-
-                            <!-- Project Count -->
-                            <div class="stat-card">
-                                <div class="stat-icon projects">
-                                    <i data-feather="folder"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-value"><?= $projectCount ?></div>
-                                    <div class="stat-label">Projects</div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <!-- RIGHT COLUMN -->
@@ -1322,6 +1301,37 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                                     <p>No tasks assigned to this employee yet.</p>
                                 </div>
                             <?php endif; ?>
+                        </div>
+
+                        <!-- Statistics Cards -->
+                        <div class="stats-row">
+                            <div class="stat-card clickable" id="active-tasks-card" onclick="showActiveTasks()">
+                                <div class="stat-icon active">
+                                    <i data-feather="clipboard"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value"><?= $activeTasks ?></div>
+                                    <div class="stat-label">Active Tasks</div>
+                                </div>
+                            </div>
+                            <div class="stat-card clickable" id="overdue-tasks-card" onclick="showOverdueTasks()">
+                                <div class="stat-icon overdue">
+                                    <i data-feather="alert-circle"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value"><?= $overdueTasks ?></div>
+                                    <div class="stat-label">Overdue Tasks</div>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon projects">
+                                    <i data-feather="folder"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <div class="stat-value"><?= $projectCount ?></div>
+                                    <div class="stat-label">Projects</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1493,8 +1503,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
 
             // Add to Project Function
             window.assignToProject = function() {
-                alert('This would open a modal to add <?= $fullName ?> to a project. Feature coming soon!');
-                // In a real implementation, you'd open a modal with project selection
+                sessionStorage.setItem('preselectedEmployees', JSON.stringify([<?= $employeeId ?>]));
+                window.location.href = 'add-to-project.php';
             }
 
             <?php if ($totalTasks > 0): ?>
