@@ -556,11 +556,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
         .stat-icon {
             width: 40px;
             height: 40px;
@@ -1032,7 +1027,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         /* Make stat cards clickable */
-        .stat-card {
+        .stat-card.clickable {
             cursor: pointer;
             user-select: none;
         }
