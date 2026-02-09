@@ -63,6 +63,57 @@ $specialtyClassMap = [
 ];
 
 // =============================
+// AJAX: Preview Remove Member (GET) - shows task impact
+// =============================
+if (isset($_GET['action']) && $_GET['action'] === 'preview_remove') {
+    header('Content-Type: application/json');
+
+    if ($role !== 'manager') {
+        echo json_encode(['success' => false, 'message' => 'Only managers can remove members.']);
+        exit;
+    }
+
+    $removeUserId = (int) ($_GET['user_id'] ?? 0);
+    if ($removeUserId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid user ID.']);
+        exit;
+    }
+
+    try {
+        // Find tasks this user is assigned to in this project
+        $stmt = $pdo->prepare("
+            SELECT t.task_id, t.task_name,
+                   (SELECT COUNT(*) FROM task_assignments ta2 WHERE ta2.task_id = t.task_id) AS assignee_count
+            FROM task_assignments ta
+            JOIN tasks t ON t.task_id = ta.task_id
+            WHERE ta.user_id = :uid AND t.project_id = :pid
+        ");
+        $stmt->execute([':uid' => $removeUserId, ':pid' => $projectId]);
+        $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $soloTasks = [];
+        $sharedTasks = [];
+        foreach ($tasks as $task) {
+            if ((int)$task['assignee_count'] === 1) {
+                $soloTasks[] = $task['task_name'];
+            } else {
+                $sharedTasks[] = $task['task_name'];
+            }
+        }
+
+        echo json_encode([
+            'success' => true,
+            'solo_tasks' => $soloTasks,
+            'shared_tasks' => $sharedTasks,
+            'total_tasks' => count($tasks)
+        ]);
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'message' => 'Database error.']);
+    }
+    exit;
+}
+
+// =============================
 // AJAX: Remove Member (POST)
 // =============================
 if (isset($_POST['action']) && $_POST['action'] === 'remove_member') {
@@ -90,6 +141,18 @@ if (isset($_POST['action']) && $_POST['action'] === 'remove_member') {
     }
 
     try {
+        $pdo->beginTransaction();
+
+        // Remove their task assignments for this project
+        $stmt = $pdo->prepare("
+            DELETE ta FROM task_assignments ta
+            JOIN tasks t ON t.task_id = ta.task_id
+            WHERE ta.user_id = :uid AND t.project_id = :pid
+        ");
+        $stmt->execute([':uid' => $removeUserId, ':pid' => $projectId]);
+        $tasksRemoved = $stmt->rowCount();
+
+        // Soft-delete from project_members
         $stmt = $pdo->prepare("
             UPDATE project_members
             SET left_at = NOW()
@@ -98,11 +161,18 @@ if (isset($_POST['action']) && $_POST['action'] === 'remove_member') {
         $stmt->execute([':pid' => $projectId, ':uid' => $removeUserId]);
 
         if ($stmt->rowCount() > 0) {
-            echo json_encode(['success' => true, 'message' => 'Member removed successfully.']);
+            $pdo->commit();
+            echo json_encode([
+                'success' => true,
+                'message' => 'Member removed successfully.',
+                'tasks_unassigned' => $tasksRemoved
+            ]);
         } else {
+            $pdo->rollBack();
             echo json_encode(['success' => false, 'message' => 'Member not found or already removed.']);
         }
     } catch (PDOException $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
     }
     exit;
@@ -281,7 +351,7 @@ function getMemberColor($uid, $bannerColors, &$colorMap) {
                     <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb"><?= htmlspecialchars($project['project_name']) ?></span></p>
                     <h1 id="project-name-header"><?= htmlspecialchars($project['project_name']) ?></h1>
                 </div>
-                <button class="close-project-btn" id="close-project-btn" style="display:none;">Close Project</button>
+                <button class="close-project-btn" id="close-project-btn" style="display:none;"><i data-feather="archive"></i> Close Project</button>
             </div>
             <nav class="project-nav" id="project-nav-links">
                 <a href="#">Tasks</a>
@@ -433,11 +503,38 @@ function getMemberColor($uid, $bannerColors, &$colorMap) {
         });
 
         // Attach remove button listeners
+        const modalBody = document.getElementById('remove-modal-body');
         document.querySelectorAll('.remove-member-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 removeUserId = btn.dataset.userId;
-                modalName.textContent = btn.dataset.name;
+                const memberName = btn.dataset.name;
+                modalName.textContent = memberName;
+
+                // Fetch task impact preview
+                let warningHtml = '';
+                try {
+                    const res = await fetch(`project-members.php?action=preview_remove&user_id=${removeUserId}`);
+                    const preview = await res.json();
+                    if (preview.success && preview.total_tasks > 0) {
+                        warningHtml = '<div style="margin-top:12px; padding:12px; background:#FFF8E1; border-radius:8px; font-size:13px; color:#7A6100;">';
+                        if (preview.solo_tasks.length > 0) {
+                            warningHtml += `<p style="margin:0 0 6px;"><strong>Solo tasks (will become unassigned):</strong></p><ul style="margin:0 0 8px; padding-left:18px;">`;
+                            preview.solo_tasks.forEach(t => { warningHtml += `<li>${t}</li>`; });
+                            warningHtml += '</ul>';
+                        }
+                        if (preview.shared_tasks.length > 0) {
+                            warningHtml += `<p style="margin:0 0 6px;"><strong>Shared tasks (will remain with other assignees):</strong></p><ul style="margin:0; padding-left:18px;">`;
+                            preview.shared_tasks.forEach(t => { warningHtml += `<li>${t}</li>`; });
+                            warningHtml += '</ul>';
+                        }
+                        warningHtml += '</div>';
+                    }
+                } catch (err) {
+                    console.error('Preview error:', err);
+                }
+
+                modalBody.innerHTML = `Are you sure you want to remove <strong>${memberName}</strong> from this project?${warningHtml}`;
                 modal.classList.add('show');
             });
         });

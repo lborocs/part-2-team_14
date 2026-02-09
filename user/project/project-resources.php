@@ -263,7 +263,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
           <p class="breadcrumbs">Projects > <span id="project-name-breadcrumb">Project</span></p>
           <h1 id="project-name-header">Project</h1>
         </div>
-        <button class="close-project-btn" id="close-project-btn" style="display:none;">Close Project</button>
+        <button class="close-project-btn" id="close-project-btn" style="display:none;"><i data-feather="archive"></i> Close Project</button>
       </div>
 
       <nav class="project-nav" id="project-nav-links">

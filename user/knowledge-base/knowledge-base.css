@@ -932,6 +932,14 @@ body[data-topics-view="topic"] #related-topics-widget {
   cursor: not-allowed;
 }
 
+.kb-like-btn.liked {
+  color: #E6A100;
+}
+
+.kb-like-btn:hover {
+  color: #E6A100;
+}
+
 .kb-solved-badge{
   font-family: 'Poppins', sans-serif;
   display:inline-flex;

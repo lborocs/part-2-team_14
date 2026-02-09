@@ -24,32 +24,45 @@ try {
 
   $db->beginTransaction();
 
-  // Try to insert a like record. If it already exists, rowCount will be 0 (or it will throw duplicate key).
-  $insert = $db->prepare("INSERT IGNORE INTO kb_post_likes (post_id, user_id) VALUES (?, ?)");
-  $insert->execute([$postId, $userId]);
+  // Check if user already liked this post
+  $check = $db->prepare("SELECT like_id FROM kb_post_likes WHERE post_id = ? AND user_id = ?");
+  $check->execute([$postId, $userId]);
+  $existing = $check->fetch(PDO::FETCH_ASSOC);
 
-  $likedNow = ($insert->rowCount() === 1);
+  if ($existing) {
+    // Unlike: remove the like
+    $del = $db->prepare("DELETE FROM kb_post_likes WHERE like_id = ?");
+    $del->execute([$existing['like_id']]);
 
-  // Only increment if they liked for the first time
-  if ($likedNow) {
-    $upd = $db->prepare("UPDATE kb_posts SET view_count = view_count + 1 WHERE post_id = ?");
+    $upd = $db->prepare("UPDATE kb_posts SET like_count = GREATEST(like_count - 1, 0) WHERE post_id = ?");
     $upd->execute([$postId]);
+
+    $liked = false;
+  } else {
+    // Like: insert new like
+    $ins = $db->prepare("INSERT INTO kb_post_likes (post_id, user_id) VALUES (?, ?)");
+    $ins->execute([$postId, $userId]);
+
+    $upd = $db->prepare("UPDATE kb_posts SET like_count = like_count + 1 WHERE post_id = ?");
+    $upd->execute([$postId]);
+
+    $liked = true;
   }
 
-  // Get updated count + whether this user has liked it
-  $stmt = $db->prepare("SELECT view_count FROM kb_posts WHERE post_id = ?");
+  // Get updated count
+  $stmt = $db->prepare("SELECT like_count FROM kb_posts WHERE post_id = ?");
   $stmt->execute([$postId]);
   $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
   $db->commit();
 
   echo json_encode([
-    "success" => true,
-    "post_id" => $postId,
-    "view_count" => (int)($row["view_count"] ?? 0),
-    "liked_now" => $likedNow
+    "success"    => true,
+    "post_id"    => $postId,
+    "like_count" => (int)($row["like_count"] ?? 0),
+    "liked"      => $liked
   ]);
 } catch (Exception $e) {
-  if ($db && $db->inTransaction()) $db->rollBack();
+  if (isset($db) && $db->inTransaction()) $db->rollBack();
   echo json_encode(["success" => false, "message" => "Server error."]);
 }

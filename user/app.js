@@ -2395,7 +2395,7 @@ function renderTaskBoard(currentUser, currentProjectId) {
                 : (Array.isArray(t.assignedTo) ? t.assignedTo : []),
             project: window.__PROJECT__?.project_name || '',
             projectId: currentProjectId,
-            createdDate: t.created_date,
+            createdDate: t.created_date || t.date_assigned || t.created_at,
             deadline: t.deadline,
             created_by: t.created_by
         }));
@@ -5447,26 +5447,6 @@ async function fetchProjectTasksFromDb(projectId) {
         status: normalizeDbStatus(t.status),
         deadline: t.deadline,
         createdDate: t.created_date || t.date_assigned || t.created_at,
-        assignedTo: Array.isArray(t.assignedUsers)
-            ? t.assignedUsers.map(u => u.email)
-            : []
-    }));
-}
-
-async function fetchProjectTasksFromDb(projectId) {
-    const url = `projects.php?project_id=${encodeURIComponent(projectId)}&ajax=fetch_tasks`;
-    const res = await fetch(url, { credentials: "include" });
-    const data = await res.json();
-    if (!data.success) return [];
-
-    // data.tasks are DB shape -> normalize to your UI shape
-    return (data.tasks || []).map(t => ({
-        id: t.task_id,
-        title: t.task_name,
-        description: t.description || "",
-        priority: t.priority || "medium",
-        status: normalizeDbStatus(t.status),     // you already have this function
-        deadline: t.deadline,
         assignedTo: Array.isArray(t.assignedUsers)
             ? t.assignedUsers.map(u => u.email)
             : []

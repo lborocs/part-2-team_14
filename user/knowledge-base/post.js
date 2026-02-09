@@ -84,9 +84,9 @@
         </div>
 
         <div class="post-card-footer">
-          <button class="kb-like-btn" data-post-id="${post.post_id}">
+          <button class="kb-like-btn${post.user_has_liked ? ' liked' : ''}" data-post-id="${post.post_id}">
             <i data-feather="thumbs-up"></i>
-            <span class="kb-like-count">${post.view_count}</span>
+            <span class="kb-like-count">${post.like_count || 0}</span>
           </button>
 
           <span><i data-feather="message-circle"></i> ${post.comment_count}</span>
@@ -706,10 +706,13 @@ async function wireSinglePostLike() {
       const data = await res.json();
       if (!data.success) throw new Error(data.message || "Like failed");
 
-      if (countEl) countEl.textContent = String(data.view_count);
+      if (countEl) countEl.textContent = String(data.like_count);
 
-      if (!data.liked_now) {
-        alert("You already liked this post.");
+      // Toggle liked state
+      if (data.liked) {
+        btn.classList.add("liked");
+      } else {
+        btn.classList.remove("liked");
       }
     } catch (err) {
       console.error(err);

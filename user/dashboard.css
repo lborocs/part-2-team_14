@@ -16,6 +16,16 @@ body {
     box-sizing: border-box;
 }
 
+/* Global link styling - black text, orange hover */
+a {
+    color: #1E1E1E;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: #E6A100;
+}
+
 .dashboard-container {
     display: flex;
     width: 100%;
@@ -166,10 +176,20 @@ body#kb-create .main-content {
     flex-direction: column;
 }
 
-.project-header .breadcrumbs {
+.breadcrumbs {
     font-size: 14px;
     color: #8C8C8C;
     margin: 0;
+}
+
+.breadcrumbs a {
+    color: #8C8C8C;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.breadcrumbs a:hover {
+    color: #E6A100;
 }
 
 .project-header h1 {
@@ -213,6 +233,14 @@ body#kb-create .main-content {
     transition: background 0.2s ease;
     height: fit-content;
     margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.close-project-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 .close-project-btn:hover {

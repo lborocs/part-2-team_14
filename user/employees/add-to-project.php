@@ -168,28 +168,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Loop through each project and each employee
         foreach ($selectedProjects as $projectId) {
             foreach ($employeeIds as $userId) {
-                // Check if already a member
+                // Check if already an active member
                 $checkStmt = $db->prepare("
                     SELECT COUNT(*) FROM project_members
                     WHERE project_id = :pid AND user_id = :uid AND left_at IS NULL
                 ");
                 $checkStmt->execute([':pid' => $projectId, ':uid' => $userId]);
-                
+
                 if ($checkStmt->fetchColumn() > 0) {
                     $skippedCount++;
-                    continue; // Already a member
+                    continue; // Already an active member
                 }
-                
-                // Insert into project_members
-                $insertStmt = $db->prepare("
-                    INSERT INTO project_members (project_id, user_id, project_role)
-                    VALUES (:pid, :uid, 'member')
+
+                // Check if previously removed (soft-deleted record exists)
+                $prevStmt = $db->prepare("
+                    SELECT project_member_id FROM project_members
+                    WHERE project_id = :pid AND user_id = :uid AND left_at IS NOT NULL
+                    LIMIT 1
                 ");
-                $insertStmt->execute([
-                    ':pid' => $projectId,
-                    ':uid' => $userId
-                ]);
-                
+                $prevStmt->execute([':pid' => $projectId, ':uid' => $userId]);
+                $prevRecord = $prevStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($prevRecord) {
+                    // Re-activate: clear left_at to re-add them
+                    $reactivateStmt = $db->prepare("
+                        UPDATE project_members
+                        SET left_at = NULL, joined_at = NOW()
+                        WHERE project_member_id = :pmid
+                    ");
+                    $reactivateStmt->execute([':pmid' => $prevRecord['project_member_id']]);
+                } else {
+                    // Insert new project_members record
+                    $insertStmt = $db->prepare("
+                        INSERT INTO project_members (project_id, user_id, project_role)
+                        VALUES (:pid, :uid, 'member')
+                    ");
+                    $insertStmt->execute([
+                        ':pid' => $projectId,
+                        ':uid' => $userId
+                    ]);
+                }
+
                 $addedCount++;
             }
         }

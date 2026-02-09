@@ -422,9 +422,7 @@ if ($isAjax) {
             <!-- Page header (reuse project-header styles) -->
             <header class="project-header">
                 <div class="project-header-top">
-                    <div class="breadcrumbs-title">
                         <h1>Employee Directory</h1>
-                    </div>
                 </div>
             </header>
 

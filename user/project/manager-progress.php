@@ -591,7 +591,7 @@ foreach ($users as $u) {
                         <h1 id="project-name-header"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></h1>
                     </div>
                     <?php if ($canCloseProject): ?>
-                        <button class="close-project-btn" id="close-project-btn">Close Project</button>
+                        <button class="close-project-btn" id="close-project-btn"><i data-feather="archive"></i> Close Project</button>
                     <?php endif; ?>
 
 

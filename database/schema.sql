@@ -300,6 +300,7 @@ CREATE TABLE kb_posts (
     
     -- Engagement
     view_count INT DEFAULT 0,
+    like_count INT DEFAULT 0 COMMENT 'Denormalized count of likes',
     comment_count INT DEFAULT 0 COMMENT 'Denormalized for performance',
     
     -- Status
@@ -324,6 +325,28 @@ CREATE TABLE kb_posts (
     INDEX idx_author (author_id),
     INDEX idx_created_at (created_at),
     INDEX idx_is_solved (is_solved)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================================================
+-- TABLE 7b: KB_POST_LIKES
+-- ============================================================================
+-- Purpose: Track which users have liked which posts (one like per user per post)
+-- ============================================================================
+
+CREATE TABLE kb_post_likes (
+    like_id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_post_user_like (post_id, user_id),
+
+    FOREIGN KEY (post_id) REFERENCES kb_posts(post_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+
+    INDEX idx_post (post_id),
+    INDEX idx_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 

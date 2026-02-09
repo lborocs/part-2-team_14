@@ -1081,6 +1081,7 @@ foreach ($users as $u) {
                     <div class="project-header-right">
                         <?php if ($canCloseProject && (($project['status'] ?? '') !== 'archived')): ?>
                             <button class="close-project-btn" id="close-project-btn">
+                                <i data-feather="archive"></i>
                                 Close Project
                             </button>
                         <?php endif; ?>
