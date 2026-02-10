@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 hideConfirmationModal();
                 
                 // Show success message
-                alert('✅ Task assigned successfully!');
+                alert('Task assigned successfully!');
                 
                 // Redirect back to employee directory
                 window.location.href = 'employee-directory.php';
