@@ -617,7 +617,7 @@ a, u {
 }
 
 .settings-card .form-group {
-    max-width: 100%;
+    max-width: 80%;
 }
 
 .settings-card input:disabled {
