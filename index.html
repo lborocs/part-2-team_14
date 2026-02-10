@@ -28,8 +28,10 @@
 
                 <div class="input-group">
                     <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" required />
-                    <i class="fa-solid fa-eye-slash" onclick="myFunction('signup-password', this)"></i>
+                    <div class="password-wrapper">
+                        <input type="password" id="signup-password" required />
+                        <i class="fa-solid fa-eye-slash" onclick="myFunction('signup-password', this)"></i>
+                    </div>
 
                     <!-- Toggle password visibility -->
                     <script>
@@ -79,8 +81,6 @@
                             updateRequirement('characters', /[#.?!@$%^&*-]/.test(value))
                         });
                     </script>
-
-                    <!-- Password requirement CSS -->
                 </div>
 
                 <!-- Confirm password -->
@@ -102,19 +102,17 @@
 
                 <div class="input-group">
                     <label for="login-email">Email</label>
-                    <input type="email" id="login-email" required />
+                    <input type="email" id="login-email" name="email" required />
                 </div>
 
                 <div class="input-group">
                     <label for="login-password">Password</label>
-                    <input type="password" id="login-password" required />
-                    <i class="fa-solid fa-eye-slash" onclick="myFunction('login-password', this)"></i>
-                    <small id="login-error">Invalid email or password</small>
+                    <div class="password-wrapper">
+                        <input type="password" id="login-password" name="password" required />
+                        <i class="fa-solid fa-eye-slash" onclick="myFunction('login-password', this)"></i>
+                    </div>
+                    <p class="forgot-password">Forgot your password?</p>
                 </div>
-                <div>
-                <!-- Forgot your password? -->
-                <p class="forgot-password">Forgot your password?</p>
-</div>
 
                 <button type="submit">Log In</button>
             </form>

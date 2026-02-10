@@ -1072,15 +1072,22 @@ function setupCreateProjectPage(currentUser) {
     });
 }
 
-
-
 /**
  * Runs on the Settings page (settings.php)
  */
 function loadSettingsPage(currentUser) {
     document.getElementById('profile-name').value = currentUser.name;
     document.getElementById('profile-email').value = currentUser.email;
-    const role = currentUser.role.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    let role = document.getElementById('profile-role').value = currentUser.role;
+
+    if (role === 'manager') {
+    role = 'Manager';
+    } else if (role === 'technical_specialist') {
+    role = 'Technical Specialist';
+    } else {
+    role = 'Employee';
+    }
+
     document.getElementById('profile-role').value = role;
 
     // Upload a new profile picture
