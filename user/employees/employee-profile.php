@@ -910,11 +910,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             transition: all 0.2s ease;
         }
 
-        .task-item:hover {
-            border-color: #E6A100;
-            box-shadow: 0 2px 8px rgba(251, 192, 45, 0.15);
-        }
-
         .task-item-header {
             display: flex;
             justify-content: space-between;
