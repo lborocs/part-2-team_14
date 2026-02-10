@@ -24,7 +24,7 @@ $pdo = $database->getConnection();
 // 1. FETCH EMPLOYEE BASIC INFO
 // ============================================
 $stmt = $pdo->prepare("
-    SELECT user_id, first_name, last_name, email, role, profile_picture, specialties
+    SELECT user_id, first_name, last_name, email, role, profile_picture, specialties, is_registered
     FROM users
     WHERE user_id = ?
 ");
@@ -36,7 +36,12 @@ if (!$employee) {
 }
 
 $fullName = htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']);
-$roleDisplay = ucfirst(str_replace('_', ' ', $employee['role']));
+$roleMap = [
+    'manager' => 'Manager',
+    'technical_specialist' => 'Technical Specialist',
+];
+$roleDisplay = $roleMap[$employee['role']] ?? 'Employee';
+$isRegistered = $employee['is_registered'];
 
 // Same 10-color banner palette as employee directory
 $bannerColors = [
@@ -313,8 +318,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         .profile-avatar-large {
-            width: 120px;
-            height: 120px;
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
             border: 4px solid rgba(255, 255, 255, 0.3);
             overflow: hidden;
@@ -380,6 +385,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .banner-btn:hover {
             background: rgba(255, 255, 255, 0.25);
             border-color: rgba(255, 255, 255, 0.5);
+            color: #fff;
             transform: translateY(-1px);
         }
 
@@ -904,11 +910,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             transition: all 0.2s ease;
         }
 
-        .task-item:hover {
-            border-color: #E6A100;
-            box-shadow: 0 2px 8px rgba(251, 192, 45, 0.15);
-        }
-
         .task-item-header {
             display: flex;
             justify-content: space-between;
@@ -1107,7 +1108,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
+                    <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>
         </nav>
@@ -1127,6 +1128,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                             <p class="email">
                                 <i data-feather="mail"></i>
                                 <?= htmlspecialchars($employee['email']) ?>
+                            </p>
+                            <?php $isRegistered = (int)$employee['is_registered'] === 1;?>
+                            <p class="<?= $isRegistered ? 'registered-pill' : 'unregistered-pill' ?>">
+                                <?= $isRegistered ? 'Registered' : 'Unregistered' ?>
                             </p>
                         </div>
                     </div>
@@ -1206,7 +1211,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                             <div class="projects-card">
                                 <h2>
                                     <i data-feather="folder"></i>
-                                    Current Projects
+                                    Projects
                                 </h2>
                                 <?php if (!empty($projects)): ?>
                                     <div class="projects-list">
@@ -1263,7 +1268,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                                         <canvas id="taskDonutChart"></canvas>
                                         <div class="chart-center">
                                             <div class="chart-center-value" id="chart-total"><?= $totalTasks ?></div>
-                                            <div class="chart-center-label">Total Tasks</div>
+                                            <div class="chart-center-label">Total Task(s)</div>
                                         </div>
                                     </div>
 

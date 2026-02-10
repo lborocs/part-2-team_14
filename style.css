@@ -5,35 +5,45 @@ body {
     background: #FEFBF4;
     font-family: 'Poppins', sans-serif;
     margin: 0;
-    /* Remove default margin */
     padding: 0;
-    /* Remove default padding */
     height: 100vh;
-    /* Ensure body fills height */
 }
 
-.input-group i {
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+}
+
+.password-wrapper i {
     position: absolute;
     top: 50%;
-    right: 10px;
+    right: 12px;
     transform: translateY(-50%);
     cursor: pointer;
     font-size: 18px;
     color: #555;
 }
 
-.input-group i:hover {
+.password-wrapper i:hover {
     color: #000;
 }
 
+/* Hide Microsoft Edge password reveal icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+
 .forgot-password {
-    margin: -20px 0 10px 0;
+    margin-top: 15px !important;
     font-size: 13px;
     color: #8C8C8C;
-    padding-right: 480px;
     cursor: pointer;
-    padding-bottom: 20px;
-    white-space: nowrap;
+    text-align: left;
 }
 
 h1 {
@@ -114,12 +124,8 @@ img.logo {
     padding-bottom: 50px;
 }
 
-/*
-* This placeholder style is just for the illustration now btw
-*/
 .illustration {
     width: 500px;
-    /*Adjust as needed*/
     height: auto;
     margin-bottom: 10px;
 }

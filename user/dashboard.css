@@ -2321,3 +2321,30 @@ html, body {
 #delete-image-btn:hover {
     background-color: #c0392b;
 }
+
+/* ===================
+   REGISTRATION PILL
+======================= */
+.registered-pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 999px;
+  line-height: 1;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  margin: 0px;
+}
+
+.unregistered-pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 999px;
+  line-height: 1;
+  background-color: #f1f1f1;
+  color: #6b7280;
+  margin: 0px;
+}

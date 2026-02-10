@@ -153,8 +153,12 @@
   border: 1px solid #EAECEE;
   border-radius: 8px;
   padding: 12px;
-  max-height: 120px;
+  max-height: none;
   overflow-y: auto;
+}
+
+.detail-section ul:has(li:nth-child(6)) {
+  max-height: 120px;
 }
 
 .detail-section li {
