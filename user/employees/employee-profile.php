@@ -1269,7 +1269,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                                         <canvas id="taskDonutChart"></canvas>
                                         <div class="chart-center">
                                             <div class="chart-center-value" id="chart-total"><?= $totalTasks ?></div>
-                                            <div class="chart-center-label">Total Tasks</div>
+                                            <div class="chart-center-label">Total Task(s)</div>
                                         </div>
                                     </div>
 
