@@ -28,38 +28,32 @@ passwordInput.addEventListener('keyup', () => {
 
 //LOGIN FORM - Connected to Database
 const signInForm = document.getElementById('signInForm');
-const loginEmail = document.getElementById('login-email');
-const loginPassword = document.getElementById('login-password');
-const loginError = document.getElementById('login-error');
 
-signInForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    loginError.classList.remove('visible');
-    
-    const formData = new FormData();
-    formData.append('email', loginEmail.value);
-    formData.append('password', loginPassword.value);
-    
-    fetch('actions/login_action.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Login Successful! Redirecting...');
-            window.location.href = data.redirect;
-        } else {
-            loginError.textContent = data.message;
-            loginError.classList.add('visible');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        loginError.textContent = 'An error occurred. Please try again.';
-        loginError.classList.add('visible');
+if (signInForm) {
+    signInForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(signInForm);
+        
+        fetch('actions/login_action.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Login successful! Redirecting...');
+                window.location.href = data.redirect;
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
     });
-});
+}
 
 //SIGNUP FORM - Connected to Database
 const signUpForm = document.getElementById('signUpForm');

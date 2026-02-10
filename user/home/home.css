@@ -313,8 +313,8 @@ select:hover {
     height: 42px;
     gap: 10px;
     padding: 12px 20px;
-    background-color: white;
-    border: 1px solid #e0e0e0;
+    background-color: #FFF3E0;
+    border: 1px solid #FFB74D;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -391,6 +391,30 @@ select:hover {
     padding-top: 30px;
 }
 
+.employee-table-content {
+    max-height: 450px;
+    overflow-y: auto;
+    border-radius: 12px;
+}
+
+.employee-table-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.employee-table-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.employee-table-content::-webkit-scrollbar-thumb {
+    background: #bfbfbf;
+    border-radius: 4px;
+}
+
+.employee-table-content::-webkit-scrollbar-thumb:hover {
+    background: #8c8c8c;
+}
+
 table {
     padding-top: 15px;
     background: white;
@@ -403,6 +427,9 @@ table {
 
 thead {
     background: linear-gradient(135deg, #FFB84D 0%, #F5A623 100%);
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 thead th {

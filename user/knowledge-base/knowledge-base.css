@@ -209,6 +209,27 @@
     display: flex;
     flex-direction: column;
     gap: 15px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.post-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.post-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.post-list::-webkit-scrollbar-thumb {
+    background: #bfbfbf;
+    border-radius: 4px;
+}
+
+.post-list::-webkit-scrollbar-thumb:hover {
+    background: #8c8c8c;
 }
 
 .post-card {
@@ -303,7 +324,8 @@ a, u {
     gap: 20px;
 }
 
-.post-card-footer span {
+.post-card-footer span,
+.post-card-footer .kb-like-btn {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -311,7 +333,8 @@ a, u {
     font-weight: 500;
     color: #555;
 }
-.post-card-footer span svg {
+.post-card-footer span svg,
+.post-card-footer .kb-like-btn svg {
     width: 18px;
     height: 18px;
     color: #8C8C8C;
@@ -594,7 +617,7 @@ a, u {
 }
 
 .settings-card .form-group {
-    max-width: 500px;
+    max-width: 100%;
 }
 
 .settings-card input:disabled {
@@ -625,7 +648,6 @@ a, u {
     font-size: 15px;
     color: #555;
     line-height: 1.6;
-    max-width: 600px;
     margin-top: 0;
 }
 
@@ -670,6 +692,7 @@ body#kb-create .kb-header h1 {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  margin-top: 15px;
 }
 
 .topic-row {
@@ -936,6 +959,11 @@ body[data-topics-view="topic"] #related-topics-widget {
   color: #E6A100;
 }
 
+.kb-like-btn.liked svg {
+  fill: #E6A100;
+  color: #E6A100;
+}
+
 .kb-like-btn:hover {
   color: #E6A100;
 }
@@ -965,4 +993,11 @@ body[data-topics-view="topic"] #related-topics-widget {
 }
 
 .kb-solve-btn:hover{ background:#F8FAFC; }
+
+.kb-unsolve-btn {
+  background: #FFF3E0;
+  border-color: #FFE0B2;
+  color: #E65100;
+}
+.kb-unsolve-btn:hover { background: #FFE0B2; }
 

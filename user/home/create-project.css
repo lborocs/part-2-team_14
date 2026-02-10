@@ -101,7 +101,7 @@
 #create-project-page .kb-layout-wrapper {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 24px;
+  gap: 40px;
   align-items: start;
 }
 

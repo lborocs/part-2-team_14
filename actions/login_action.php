@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Check if user is registered
         if (!$user['is_registered']) {
-            echo json_encode(['success' => false, 'message' => 'Account not registered. Please sign up first.']);
+            echo json_encode(['success' => false, 'message' => 'Account not registered. Please sign up first']);
             exit();
         }
         
