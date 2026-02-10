@@ -36,7 +36,11 @@ if (!$employee) {
 }
 
 $fullName = htmlspecialchars($employee['first_name'] . ' ' . $employee['last_name']);
-$roleDisplay = ucfirst(str_replace('_', ' ', $employee['role']));
+$roleMap = [
+    'manager' => 'Manager',
+    'technical_specialist' => 'Technical Specialist',
+];
+$roleDisplay = $roleMap[$employee['role']] ?? 'Employee';
 $isRegistered = $employee['is_registered'];
 
 // Same 10-color banner palette as employee directory
