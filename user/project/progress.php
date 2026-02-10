@@ -24,14 +24,13 @@ if (!$userId) {
 $projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
 if ($projectId <= 0) exit("Missing/invalid project_id in the URL.");
 
-// SINGLE SOURCE OF TRUTH (access + roles for THIS project)
+// Check access and get project details
 $access = guardProjectAccess($db, $projectId, (int)$userId);
 
 $project = $access['project'];
 $canManageProject = $access['canManageProject'];
 
-
-// If they can manage, send them to manager-progress.php (no HTML loop anymore)
+// If user can manage the project, redirect to manager view
 if ($canManageProject) {
     header("Location: manager-progress.php?project_id=" . urlencode($projectId));
     exit;
@@ -146,7 +145,6 @@ foreach ($users as $u) {
                 <span class="countdown-pulse"></span>
             </div>
             <div id="countdown-content" class="countdown-content">
-                <!-- Countdown will be rendered here -->
             </div>
         </section>
     <!-- Left Column -->
@@ -174,15 +172,12 @@ foreach ($users as $u) {
         <!-- Upcoming Deadlines Card -->
         <section class="deadlines-card">
             <h2>Upcoming Deadlines</h2>
-            <div class="deadlines-list-header">
-    <div class="deadlines-list-header-left">Task</div>
-    <div class="deadlines-list-header-right">
-        <span>Due</span>
-        <span>Status</span>
-    </div>
+      <div class="deadlines-list-header">
+    <span>Task</span>
+    <span>Due</span>
+    <span>Status</span>
 </div>
 <div class="deadlines-list" id="deadlines-list">
-    <!-- Deadlines will be rendered here -->
 </div>
         </section>
     </div>
@@ -246,6 +241,10 @@ foreach ($users as $u) {
     </script>
     
     <script>
+/**
+     * Initialize progress page widgets
+     * Handles countdown timer, task progress, and upcoming deadlines
+     */
     window.initProgressWidgets = function() {
     const projectId = new URLSearchParams(location.search).get('project_id');
     if (!projectId) return;
@@ -253,15 +252,15 @@ foreach ($users as $u) {
     let taskDataMap = {};
     let countdownInterval = null;
 
-// Countdown Timer Function — PROJECT deadline
+// Countdown Timer Function
 function startCountdown() {
     const contentDiv = document.getElementById('countdown-content');
     if (!contentDiv) return;
 
     const project = window.__PROJECT__ || {};
-    const rawDeadline = project.deadline; // projects.deadline (DATE)
+    const rawDeadline = project.deadline; // projects deadline from DB
 
-    // No project deadline (should not happen as DB is NOT NULL, but safe guard)
+    //handle no deadline case
     if (!rawDeadline) {
         contentDiv.innerHTML = `
             <div class="countdown-empty">
@@ -273,7 +272,7 @@ function startCountdown() {
         return;
     }
 
-    // Force end-of-day to avoid DATE timezone issues
+    // set deadline to end of day
     const deadlineDate = new Date(`${rawDeadline}T23:59:59`);
 
     // Clear any existing interval
@@ -294,12 +293,13 @@ function startCountdown() {
             `;
             return;
         }
-
+        // Calculate time components
         const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
         const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
+        
+        
         contentDiv.innerHTML = `
             <div class="countdown-task-name">
                 ${project.project_name || 'Project'}
@@ -338,14 +338,10 @@ function startCountdown() {
         `;
     }
 
-    // Initial render
+    // Initial call and set interval
     updateCountdown();
-
-    // Update every second
     countdownInterval = setInterval(updateCountdown, 1000);
 }
-
-
 
     // Fetch and render deadlines
     async function loadDeadlines() {
@@ -389,6 +385,7 @@ function startCountdown() {
                     month: 'short' 
                 });
 
+                // Determine status based on deadline
                 let status = 'on-track';
                 let statusText = 'On track';
 
@@ -414,6 +411,7 @@ function startCountdown() {
                     </div>
                 `;
 
+                // open modal on click
                 item.addEventListener('click', () => openTaskModal(task.id));
                 list.appendChild(item);
             });
@@ -471,10 +469,10 @@ function startCountdown() {
             : '—';
 
         // Set created date - tasks are normalized from DB with proper fields
-const created = task.createdDate ? new Date(task.createdDate) : null;
-document.getElementById('modal-task-created').textContent = (created && !isNaN(created))
-    ? created.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-    : '—';
+        const created = task.createdDate ? new Date(task.createdDate) : null;
+        document.getElementById('modal-task-created').textContent = (created && !isNaN(created))
+        ? created.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+        : '—';
 
         // Show/hide mark complete button
         const markBtn = document.getElementById('mark-complete-btn');
@@ -514,7 +512,7 @@ document.getElementById('modal-task-created').textContent = (created && !isNaN(c
             const taskId = Object.keys(taskDataMap).find(id => taskDataMap[id].title === taskName);
             
             if (!taskId) return;
-
+            // Confirm action
             const ok = confirm('Mark this task as complete? It will be moved to Review.');
             if (!ok) return;
 
@@ -535,12 +533,10 @@ document.getElementById('modal-task-created').textContent = (created && !isNaN(c
                     alert(data.message || 'Failed to update task');
                     return;
                 }
-
+                //show success, close modal, and refresh deadlines
                 showSuccessNotification('Task sent to Review!');
                 modal.style.display = 'none';
                 document.body.style.overflow = '';
-
-                // Reload page to refresh data
                 setTimeout(() => location.reload(), 1000);
 
             } catch (err) {
