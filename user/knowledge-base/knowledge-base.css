@@ -617,7 +617,7 @@ a, u {
 }
 
 .settings-card .form-group {
-    max-width: 500px;
+    max-width: 100%;
 }
 
 .settings-card input:disabled {
@@ -692,6 +692,7 @@ body#kb-create .kb-header h1 {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  margin-top: 15px;
 }
 
 .topic-row {
@@ -992,4 +993,11 @@ body[data-topics-view="topic"] #related-topics-widget {
 }
 
 .kb-solve-btn:hover{ background:#F8FAFC; }
+
+.kb-unsolve-btn {
+  background: #FFF3E0;
+  border-color: #FFE0B2;
+  color: #E65100;
+}
+.kb-unsolve-btn:hover { background: #FFE0B2; }
 

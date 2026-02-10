@@ -68,6 +68,12 @@
         </button>`
       : "";
 
+    const unsolveBtnHtml = (isSolved && isManager)
+      ? `<button type="button" class="kb-solve-btn kb-unsolve-btn" id="kb-unsolve" data-post-id="${post.post_id}">
+          Unsolve
+        </button>`
+      : "";
+
 
     contentEl.innerHTML = `
       <div class="post-card">
@@ -93,6 +99,7 @@
 
           ${solvedBadgeHtml}
           ${markSolvedBtnHtml}
+          ${unsolveBtnHtml}
         </div>
 
 
@@ -119,9 +126,16 @@
     }
 
 
-    // Show reply form
-    if (replyForm) replyForm.style.display = "block";
+    // Show reply form only if post is not solved
+    if (replyForm) {
+      if (isSolved) {
+        replyForm.style.display = "none";
+      } else {
+        replyForm.style.display = "block";
+      }
+    }
     wireReplyForm();
+    wireUnsolve();
 
     function wireReplyForm() {
       if (!replyForm) return;
@@ -772,13 +786,92 @@ function wireMarkSolved() {
       // remove the button
       btn.remove();
 
-      // update local state (optional)
+      // update local state
       post.is_solved = 1;
+
+      // hide reply form
+      const replyForm = document.getElementById("reply-form");
+      if (replyForm) replyForm.style.display = "none";
+
+      // add unsolve button for manager
+      if (isManager && footer && !footer.querySelector("#kb-unsolve")) {
+        const unsolveBtn = document.createElement("button");
+        unsolveBtn.type = "button";
+        unsolveBtn.className = "kb-solve-btn kb-unsolve-btn";
+        unsolveBtn.id = "kb-unsolve";
+        unsolveBtn.dataset.postId = postId;
+        unsolveBtn.textContent = "Unsolve";
+        footer.appendChild(unsolveBtn);
+        wireUnsolve();
+      }
 
       feather.replace();
     } catch (err) {
       console.error(err);
       alert("Marked as solved.");
+      btn.disabled = false;
+    }
+  });
+}
+
+function wireUnsolve() {
+  const btn = document.getElementById("kb-unsolve");
+  if (!btn) return;
+
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const postId = btn.dataset.postId;
+    if (!postId) return;
+
+    btn.disabled = true;
+
+    try {
+      const fd = new FormData();
+      fd.append("post_id", String(postId));
+
+      const res = await fetch("actions/unmark_solved.php", {
+        method: "POST",
+        body: fd,
+        credentials: "include"
+      });
+
+      if (!res.ok) throw new Error("HTTP " + res.status);
+
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "Failed");
+
+      // remove solved badge
+      const footer = contentEl.querySelector(".post-card-footer");
+      const badge = footer?.querySelector(".kb-solved-badge");
+      if (badge) badge.remove();
+
+      // remove unsolve button
+      btn.remove();
+
+      // update local state
+      post.is_solved = 0;
+
+      // show reply form again
+      const replyForm = document.getElementById("reply-form");
+      if (replyForm) replyForm.style.display = "block";
+
+      // add mark as solved button back
+      if (isManager && footer && !footer.querySelector("#kb-mark-solved")) {
+        const solveBtn = document.createElement("button");
+        solveBtn.type = "button";
+        solveBtn.className = "kb-solve-btn";
+        solveBtn.id = "kb-mark-solved";
+        solveBtn.dataset.postId = postId;
+        solveBtn.textContent = "Mark as solved";
+        footer.appendChild(solveBtn);
+        wireMarkSolved();
+      }
+
+      feather.replace();
+    } catch (err) {
+      console.error(err);
+      alert("Could not unsolve post. Please try again.");
       btn.disabled = false;
     }
   });

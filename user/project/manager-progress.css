@@ -994,6 +994,26 @@
   background: #66bb6a;
 }
 
+#manager-progress-page .gantt-task-bar.status-completed-gantt {
+  background: repeating-linear-gradient(
+    45deg,
+    #4caf50,
+    #4caf50 4px,
+    #388e3c 4px,
+    #388e3c 8px
+  );
+}
+
+#manager-progress-page .legend-color.status-completed-gantt {
+  background: repeating-linear-gradient(
+    45deg,
+    #4caf50,
+    #4caf50 4px,
+    #388e3c 4px,
+    #388e3c 8px
+  );
+}
+
 /* Task Tooltip */
 .gantt-tooltip {
   position: fixed;

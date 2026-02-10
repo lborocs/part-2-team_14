@@ -591,7 +591,7 @@ foreach ($users as $u) {
                         <h1 id="project-name-header"><?= htmlspecialchars($project['project_name'] ?? 'Project') ?></h1>
                     </div>
                     <?php if ($canCloseProject): ?>
-                        <button class="close-project-btn" id="close-project-btn"><i data-feather="archive"></i> Close Project</button>
+                        <button class="close-project-btn" id="close-project-btn"><i data-feather="archive"></i> Archive Project</button>
                     <?php endif; ?>
 
 
@@ -684,6 +684,10 @@ foreach ($users as $u) {
                     <div class="legend-color status-green"></div>
                     <span>On Track</span>
                 </div>
+                <div class="legend-item">
+                    <div class="legend-color status-completed-gantt"></div>
+                    <span>Completed</span>
+                </div>
             </div>
         </div>
     </div>
@@ -695,18 +699,18 @@ foreach ($users as $u) {
             </div>
         </main>
     </div>
-    <!-- Close Project Confirm Modal (REQUIRED for app.js close button) -->
+    <!-- Archive Project Confirm Modal (REQUIRED for app.js close button) -->
     <div class="modal-overlay" id="close-project-modal" style="display:none;">
         <div class="modal-content" style="max-width:520px;">
             <div class="modal-header">
-                <h2>Close Project</h2>
+                <h2>Archive Project</h2>
                 <button type="button" class="close-btn" id="close-project-x">
                     <i data-feather="x"></i>
                 </button>
             </div>
 
             <div class="modal-body">
-                <p style="margin:0 0 8px;">Are you sure you want to close this project?</p>
+                <p style="margin:0 0 8px;">Are you sure you want to archive this project?</p>
                 <p style="margin:0 0 16px; color:#666;">
                     This project will be moved to archives.
                 </p>
@@ -1382,9 +1386,9 @@ async function saveTaskEdits(taskId) {
         const deadline = new Date(task.deadline);
         const createdDate = new Date(task.created_date);
         
-        // If task is completed, use green
+        // If task is completed, use distinct completed style
         if (task.status === 'completed') {
-            return 'status-green';
+            return 'status-completed-gantt';
         }
         
         // Calculate total duration and time elapsed
