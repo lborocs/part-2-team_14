@@ -219,7 +219,6 @@ body#kb-create .main-content {
     border-bottom-color: #1E1E1E;
 }
 
-/* Close Project Button */
 .close-project-btn {
     background: #FBC02D;
     color: #1E1E1E;
@@ -230,7 +229,7 @@ body#kb-create .main-content {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background 0.15s ease, color 0.15s ease;
     height: fit-content;
     margin: 0;
     display: inline-flex;
@@ -238,14 +237,21 @@ body#kb-create .main-content {
     gap: 8px;
 }
 
-.close-project-btn svg {
-    width: 18px;
-    height: 18px;
-}
-
+/* Hover background */
 .close-project-btn:hover {
     background: #F9A825;
 }
+
+/* Dim text + icon like Create Project */
+.close-project-btn:hover,
+.close-project-btn:hover svg {
+    color: rgba(10, 10, 10, 0.1);
+}
+
+.close-project-btn:hover svg {
+    opacity: 0.35;
+}
+
 
 /* Project Complete Button */
 .project-complete-btn {
