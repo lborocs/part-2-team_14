@@ -324,7 +324,8 @@ a, u {
     gap: 20px;
 }
 
-.post-card-footer span {
+.post-card-footer span,
+.post-card-footer .kb-like-btn {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -332,7 +333,8 @@ a, u {
     font-weight: 500;
     color: #555;
 }
-.post-card-footer span svg {
+.post-card-footer span svg,
+.post-card-footer .kb-like-btn svg {
     width: 18px;
     height: 18px;
     color: #8C8C8C;
@@ -954,6 +956,11 @@ body[data-topics-view="topic"] #related-topics-widget {
 }
 
 .kb-like-btn.liked {
+  color: #E6A100;
+}
+
+.kb-like-btn.liked svg {
+  fill: #E6A100;
   color: #E6A100;
 }
 

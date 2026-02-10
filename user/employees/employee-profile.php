@@ -540,7 +540,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         /* Statistics Cards */
         .stats-row {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 16px;
         }
 
@@ -1317,15 +1317,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                                 <div class="stat-content">
                                     <div class="stat-value"><?= $overdueTasks ?></div>
                                     <div class="stat-label">Overdue Tasks</div>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-icon projects">
-                                    <i data-feather="folder"></i>
-                                </div>
-                                <div class="stat-content">
-                                    <div class="stat-value"><?= $projectCount ?></div>
-                                    <div class="stat-label">Projects</div>
                                 </div>
                             </div>
                         </div>
