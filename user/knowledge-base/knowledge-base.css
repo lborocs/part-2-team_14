@@ -993,3 +993,7 @@ body[data-topics-view="topic"] #related-topics-widget {
 
 .kb-solve-btn:hover{ background:#F8FAFC; }
 
+.no-topics-message {
+  padding: 5px 15px;
+  color: #666;
+}
