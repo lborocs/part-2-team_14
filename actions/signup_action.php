@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($updateStmt->execute()) {
             echo json_encode([
                 'success' => true,
-                'message' => 'Account created successfully! Please login.'
+                'message' => 'Account created successfully! Please log in.'
             ]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Failed to create account']);
