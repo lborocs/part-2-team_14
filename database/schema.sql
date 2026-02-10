@@ -760,6 +760,13 @@ INSERT INTO kb_topics (topic_name, description, created_by) VALUES
 ('Career Development',       'Learning resources, certifications, career advice, and professional growth',                      1),
 ('Tools & Resources',        'Share useful tools, libraries, frameworks, and development resources',                            1);
 
+INSERT INTO kb_topics (topic_name, description, created_by, icon) VALUES
+('Technical Support', 'IT support, troubleshooting, and technical documentation', 1, 'tool'),
+('HR Policies', 'Company policies, benefits, and HR information', 1, 'users'),
+('Project Best Practices', 'Tips and guidelines for successful project management', 1, 'bar-chart-2'),
+('Development Guidelines', 'Coding standards, architecture decisions, and dev tips', 2, 'code');
+
+
 -- =============================================
 -- KNOWLEDGE BASE POSTS (IDs 1-22)
 -- =============================================
