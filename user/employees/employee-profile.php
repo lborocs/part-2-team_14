@@ -302,8 +302,8 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         }
 
         .banner-content {
-            max-width: 1200px;
-            margin: 0 auto;
+            max-width: 100%;
+            margin: 0;
             display: flex;
             align-items: center !important;
             justify-content: space-between;
@@ -396,9 +396,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
 
         /* Analytics Section */
         .analytics-section {
-            padding: 0 20px;
+            padding: 0 40px;
             width: 100%;
             max-width: 100%;
+            box-sizing: border-box;
         }
 
         /* Two Column Layout */

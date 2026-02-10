@@ -1107,7 +1107,7 @@ foreach ($users as $u) {
                         <?php if ($canCloseProject && (($project['status'] ?? '') !== 'archived')): ?>
                             <button class="close-project-btn" id="close-project-btn">
                                 <i data-feather="archive"></i>
-                                Close Project
+                                Archive Project
                             </button>
                         <?php endif; ?>
 
@@ -1339,18 +1339,18 @@ foreach ($users as $u) {
             </div>
         </div>
     </div>
-    <!-- Close Project Confirm Modal -->
+    <!-- Archive Project Confirm Modal -->
     <div class="modal-overlay" id="close-project-modal" style="display:none;">
         <div class="modal-content" style="max-width:520px;">
             <div class="modal-header">
-                <h2>Close Project</h2>
+                <h2>Archive Project</h2>
                 <button type="button" class="close-btn" id="close-project-x">
                     <i data-feather="x"></i>
                 </button>
             </div>
 
             <div class="modal-body">
-                <p style="margin:0 0 8px;">Are you sure you want to close this project?</p>
+                <p style="margin:0 0 8px;">Are you sure you want to archive this project?</p>
                 <p style="margin:0 0 16px; color:#666;">
                     This project will be moved to archives.
                 </p>

@@ -3902,6 +3902,7 @@ function renderTasksPerMemberChart(projectTasks) {
  */
 async function loadProjectResourcesPage(currentUser) {
     updateSidebarAndNav();
+    setupCloseProjectControls();
 
     const res = await fetch('project-resources.php?action=list', {
         headers: { 'Accept': 'application/json' }
@@ -5255,6 +5256,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (role === 'manager') {
         if (navEmployees) navEmployees.style.display = '';
+    }
+
+    // Add "My Profile" link to nav-footer on all pages
+    const navFooter = document.querySelector('.nav-footer ul');
+    if (navFooter && currentUser.user_id && !document.getElementById('nav-my-profile')) {
+        const li = document.createElement('li');
+        li.id = 'nav-my-profile';
+        // Determine correct relative path based on current page location
+        const isInSubfolder = window.location.pathname.includes('/home/') ||
+            window.location.pathname.includes('/employees/') ||
+            window.location.pathname.includes('/project/') ||
+            window.location.pathname.includes('/knowledge-base/');
+        const prefix = isInSubfolder ? '../employees/' : 'employees/';
+        li.innerHTML = `<a href="${prefix}employee-profile.php?id=${currentUser.user_id}"><i data-feather="user"></i>My Profile</a>`;
+        navFooter.insertBefore(li, navFooter.firstChild);
+        if (typeof feather !== 'undefined') feather.replace();
     }
 
     // Run page-specific logic based on body ID

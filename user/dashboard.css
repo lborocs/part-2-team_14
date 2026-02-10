@@ -1,22 +1,24 @@
-/*
-* Font and Base Styles
-*/
+/* === FONT AND BASE STYLES === */
+
+html,
+body {
+    height: 100%;
+}
+
 body {
     background: #FEFBF4;
     font-family: 'Poppins', sans-serif;
     margin: 0;
     height: 100vh;
     color: #1E1E1E;
-    overflow: hidden; /* Keep sidebar fixed on ALL pages */
+    overflow: hidden;
+    /* Keep sidebar fixed */
 }
-
-/* Remove the page-specific body overflow rules - not needed */
 
 * {
     box-sizing: border-box;
 }
 
-/* Global link styling - black text, orange hover */
 a {
     color: #1E1E1E;
     transition: color 0.2s ease;
@@ -29,18 +31,15 @@ a:hover {
 .dashboard-container {
     display: flex;
     width: 100%;
-    height: 100%;
+    height: 100vh;
 }
 
-/*
-* Sidebar
-*/
+/* === SIDEBAR === */
+
 .sidebar {
     width: 240px;
     flex-shrink: 0;
-    /* Prevents sidebar from shrinking */
     background: #F8F9FA;
-    /* Light grey, close to image */
     padding: 24px;
     display: flex;
     flex-direction: column;
@@ -90,21 +89,20 @@ a:hover {
     height: 20px;
 }
 
-/* Active Project Parent */
 .sidebar ul.nav-main>li.active-parent>a {
     background: #FBC02D;
     color: black;
     font-weight: 700;
 }
 
-/* Active state for nav-footer items (e.g., Settings) */
 .sidebar .nav-footer ul>li.active-parent>a {
     background: #FBC02D;
     color: black;
     font-weight: 700;
 }
 
-/* Sub-navigation */
+/* === SUB NAVIGATION === */
+
 .nav-sub {
     margin: 5px 0 10px 20px;
 }
@@ -119,34 +117,30 @@ a:hover {
     font-weight: 600;
     color: #1E1E1E;
     background: #E6E6E6;
-    /* light grey highlight */
     border-radius: 6px;
     padding: 8px 15px;
     display: block;
 }
 
+/* === MAIN CONTENT === */
 
-/*
-* Main Content
-*/
 .main-content {
     flex: 1;
     padding: 0;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    overflow-y: auto; /* Default: allow scrolling in main content */
+    overflow-y: auto;
     height: 100vh;
 }
 
-/* Main content scrolling - specific overrides for pages that need no scroll */
+/* Page scroll override */
 body#projects-page .main-content,
 body#manager-progress-page .main-content,
 body#progress-page .main-content {
-    overflow: hidden; /* These pages manage their own scroll in sub-containers */
+    overflow: hidden;
 }
 
-/* All other pages (settings, home, knowledge base, etc.) scroll in main-content */
 body#settings-page .main-content,
 body#home-page .main-content,
 body#kb-index .main-content,
@@ -156,7 +150,8 @@ body#kb-create .main-content {
     height: 100vh;
 }
 
-/* Project Header (Updated for proper top-right button alignment) */
+/* === PROJECT HEADER === */
+
 .project-header {
     display: flex;
     flex-direction: column;
@@ -167,7 +162,7 @@ body#kb-create .main-content {
 .project-header-top {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     width: 100%;
 }
 
@@ -198,6 +193,8 @@ body#kb-create .main-content {
     margin: 5px 0 10px 0;
 }
 
+/* === PROJECT NAV TABS === */
+
 .project-nav {
     display: flex;
     border-bottom: 2px solid #EAECEE;
@@ -219,7 +216,8 @@ body#kb-create .main-content {
     border-bottom-color: #1E1E1E;
 }
 
-/* Close Project Button */
+/* === PROJECT ACTION BUTTONS === */
+
 .close-project-btn {
     background: #FBC02D;
     color: #1E1E1E;
@@ -247,7 +245,6 @@ body#kb-create .main-content {
     background: #F9A825;
 }
 
-/* Project Complete Button */
 .project-complete-btn {
     background: #FBC02D;
     color: #1E1E1E;
@@ -269,10 +266,8 @@ body#kb-create .main-content {
     background: #F9A825;
 }
 
+/* === TASK BOARD === */
 
-/*
-* Task Board
-*/
 .task-board {
     display: flex;
     gap: 20px;
@@ -284,15 +279,11 @@ body#kb-create .main-content {
 }
 
 .task-column {
-    /* UPDATED: for flexible width and scrolling height */
     flex: 1 1 260px;
-    /* Grow, shrink, base size */
-    /* min-width: 260px; */
-    /* REMOVED */
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 0; 
+    min-height: 0;
 }
 
 .column-header {
@@ -303,7 +294,6 @@ body#kb-create .main-content {
     border-radius: 8px;
     margin-bottom: 20px;
     flex-shrink: 0;
-    /* ADDED */
 }
 
 .column-header h2 {
@@ -335,7 +325,7 @@ body#kb-create .main-content {
 }
 
 body.can-manage-project .add-task {
-  display: inline-flex;
+    display: inline-flex;
 }
 
 .add-task svg {
@@ -344,7 +334,8 @@ body.can-manage-project .add-task {
     color: #555;
 }
 
-/* Column Header Colors */
+/* === COLUMN HEADER STATES === */
+
 .todo-header {
     background: #FFEBEB;
     color: #D93025;
@@ -397,11 +388,8 @@ body.can-manage-project .add-task {
     color: #4285F4;
 }
 
+/* === TASK LIST === */
 
-/*
-* Task Cards
-*/
-/* ADDED: Styles for scrolling task list */
 .task-list {
     flex: 1;
     overflow-y: auto;
@@ -410,7 +398,6 @@ body.can-manage-project .add-task {
     padding-bottom: 20px;
 }
 
-/* Custom scrollbar styling */
 .task-list::-webkit-scrollbar {
     width: 8px;
 }
@@ -429,18 +416,19 @@ body.can-manage-project .add-task {
 }
 
 .task-card {
-    position: relative;   
+    position: relative;
     background: #fff;
     border-radius: 8px;
     padding: 13px;
     margin-bottom: 13px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     border: 1px solid #F0F0F0;
-    padding-bottom: 13px;  
-    z-index:0;  
+    padding-bottom: 13px;
+    z-index: 0;
 }
+
 .task-card.menu-open {
-  z-index: 50;
+    z-index: 50;
 }
 
 .priority {
@@ -453,7 +441,6 @@ body.can-manage-project .add-task {
     text-transform: uppercase;
 }
 
-/* Priority Tag Colors */
 .priority.medium {
     background: #FFF4C1;
     color: #E6A100;
@@ -477,7 +464,7 @@ body.can-manage-project .add-task {
 .task-title {
     font-size: 16px;
     font-weight: 600;
-    margin: 0 0 5px 0;
+    margin: 0 0 2px 0;
 }
 
 .task-description {
@@ -551,26 +538,20 @@ body.can-manage-project .add-task {
     gap: 30px;
 }
 
-.project-nav a.active {
-    color: #1E1E1E;
-    border-bottom-color: #1E1E1E;
-}
-
-
 .task-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    margin-top: 6px;
+    gap: 4px;
 }
 
 .task-due-date {
-  font-size: 14px;
-  color: #6b7280; /* subtle grey */
-  font-weight: 500;
-  margin-bottom: 6px;
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+    margin: 0 0 4px 0;
+    line-height: 1.2;
 }
-
 
 .task-deadline {
     display: flex;
@@ -590,11 +571,8 @@ body.can-manage-project .add-task {
     font-weight: 500;
 }
 
+/* === SHARED CREATE / ASSIGN BUTTON === */
 
-
-/*
-* Shared Create/Assign Button Styles (from knowledge-base.css)
-*/
 .create-post-btn {
     display: inline-flex;
     align-items: center;
@@ -621,9 +599,8 @@ body.can-manage-project .add-task {
     height: 20px;
 }
 
-/*
-* Modal Styles
-*/
+/* === MODAL OVERLAY + CONTAINER === */
+
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -632,7 +609,6 @@ body.can-manage-project .add-task {
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
     display: none;
-    /* Hidden by default */
     align-items: center;
     justify-content: center;
     z-index: 1000;
@@ -649,12 +625,12 @@ body.can-manage-project .add-task {
     flex-direction: column;
 }
 
+
 .modal-header {
     position: relative;
     padding: 20px 25px;
     border-bottom: 1px solid #EAECEE;
 }
-
 
 .modal-header h2 {
     margin: 0;
@@ -686,7 +662,8 @@ body.can-manage-project .add-task {
     overflow-y: auto;
 }
 
-/* Form styles from knowledge-base.css (copied for modal) */
+/* === MODAL FORM FIELDS === */
+
 .create-post-form .form-group {
     margin-bottom: 20px;
 }
@@ -722,9 +699,9 @@ body.can-manage-project .add-task {
     box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.3);
 }
 
-/*
-* Task Details Modal Styles
-*/
+
+/* === TASK DETAILS MODAL STYLES === */
+
 .task-details-meta {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -778,9 +755,6 @@ body.can-manage-project .add-task {
     color: #E65100;
 }
 
-/* Added high */
-
-
 .task-details-description strong {
     display: block;
     color: #555;
@@ -794,12 +768,10 @@ body.can-manage-project .add-task {
     line-height: 1.6;
     color: #1E1E1E;
     white-space: pre-wrap;
-    /* Preserves line breaks from textarea */
 }
 
-/*
-* Dragging Styles
-*/
+/* === DRAGGING STATES === */
+
 .task-card.dragging {
     opacity: 0.5;
     transform: rotate(3deg);
@@ -811,14 +783,15 @@ body.can-manage-project .add-task {
     border: 2px dashed #CCC;
 }
 
-/* Assignee Checklist Styles */
+/* === ASSIGNEE CHECKLIST === */
+
 .assignee-checklist {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid #DCDCDC;
-    border-radius: 8px;
-    padding: 10px;
     background: #FAFAFA;
+    max-height: 180px;
+    overflow: auto;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 10px;
 }
 
 .assignee-checkbox-item {
@@ -864,15 +837,7 @@ body.can-manage-project .add-task {
     margin-bottom: 8px;
 }
 
-.assignee-checklist {
-    max-height: 180px;
-    overflow: auto;
-    border: 1px solid #eee;
-    border-radius: 10px;
-    padding: 10px;
-}
-
-/* === DELETE + MARK COMPLETE BUTTONS (TASK DETAILS MODAL) === */
+/* === DELETE + MARK COMPLETE BUTTONS  === */
 
 .task-details-actions {
     display: flex;
@@ -882,7 +847,6 @@ body.can-manage-project .add-task {
     margin-top: 24px;
 }
 
-/* Delete Task button */
 .delete-task-btn {
     background-color: #D93025;
     color: white;
@@ -903,7 +867,6 @@ body.can-manage-project .add-task {
     background-color: #B71C1C;
 }
 
-/* Mark Complete button */
 .task-details-actions .project-complete-btn {
     background: #FBC02D;
     color: #1E1E1E;
@@ -924,29 +887,20 @@ body.can-manage-project .add-task {
     background: #F9A825;
 }
 
-/* =============================
-   Project Header – Right Actions
-============================= */
-.project-header-actions { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    gap: 20px; } 
-    
-.project-header-right { 
-    display: flex; 
-    align-items: center; 
-    gap: 12px; } 
-        
-.project-header-top {
-     display: flex; 
-     justify-content: space-between; 
-     align-items: center; } 
-     
-.project-header-right { 
-    display: flex; 
-    align-items: center; 
-    gap: 12px; }
+.project-header-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.project-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* === TASK SEARCH === */
 
 .task-search-wrap {
     position: relative;
@@ -998,9 +952,7 @@ body.can-manage-project .add-task {
     cursor: pointer;
 }
 
-/* =============================
-   Filter Group (Button + Panel)
-============================= */
+/* === FILTER GROUP (BUTTON + PANEL) === */
 
 .filter-group {
     position: relative;
@@ -1008,7 +960,6 @@ body.can-manage-project .add-task {
     align-items: center;
 }
 
-/* Filters button */
 .filter-toggle {
     height: 42px;
     padding: 0 14px;
@@ -1033,9 +984,6 @@ body.can-manage-project .add-task {
     box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.25);
 }
 
-
-/* Filter Panel (Dropdown) */
-
 .filter-panel {
     position: absolute;
     top: calc(100% + 10px);
@@ -1052,13 +1000,9 @@ body.can-manage-project .add-task {
     z-index: 999;
 }
 
-/* Hide panel by default (JS toggles this) */
 .filter-panel[hidden] {
     display: none;
 }
-
-
-/* filter fields */
 
 .filter-panel label {
     display: flex;
@@ -1069,7 +1013,6 @@ body.can-manage-project .add-task {
     color: #555;
 }
 
-/* Select inputs */
 .filter-panel select {
     height: 40px;
     padding: 0 12px;
@@ -1111,437 +1054,266 @@ body.can-manage-project .add-task {
 }
 
 .task-move-btn {
-  margin: 8px 0;
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  background: #f5f5f5;
-  cursor: pointer;
+    margin: 8px 0;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+    cursor: pointer;
 }
 
 .task-move-btn:hover {
-  background: #eaeaea;
+    background: #eaeaea;
 }
 
 .task-actions {
-  display: flex;
-  gap: 6px;
-  margin: 8px 0;
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
 }
 
 .task-actions button {
-  padding: 5px 10px;
-  font-size: 12px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  background: #f1f3f5;
-  color: #333;
-  transition: background 0.15s ease, transform 0.1s ease;
+    color: #333;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    background: #f1f3f5;
+    transition: background 0.15s ease;
+    user-select: none;
 }
 
 .task-actions button:hover {
-  background: #e6e8eb;
-  transform: translateY(-1px);
-}
-
-
-.task-actions {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.task-actions button {
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  background: #f1f3f5;
-  transition: background 0.15s ease;
-}
-
-/* Prevent drag grabbing buttons */
-.task-actions button {
-  user-select: none;
-}
-
-.task-actions button:hover {
-  background: #e4e6e9;
-}
-
-.task-actions {
-  margin-top: 6px;
+    transform: translateY(-1px);
+    background: #e4e6e9;
 }
 
 .task-move-select {
-  width: 100%;
-  padding: 5px 8px;
-  font-size: 12px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  background: #fff;
-  cursor: pointer;
-}
-
-/* Prevent drag grabbing the select */
-.task-move-select {
-  user-select: none;
+    width: 100%;
+    padding: 5px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    user-select: none;
 }
 
 .task-status-menu {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  margin: 0;
-  z-index: 20;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 60;
 }
 
-
+/* === STATUS PILL BUTTON === */
 
 .status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.status-pill:hover {
-  background: #f0f0f0;
-}
-
-.status-pill.icon-only {
-  font-size: 0; /* hides any accidental text */
-}
-
-
-.status-pill.todo {
-  background: #fdecea;
-  color: #b3261e;
-}
-
-.status-pill.inprogress {
-  background: #fff4cc;
-  color: #9a6700;
-}
-
-.status-pill.review {
-  background: #e7f3ff;
-  color: #1a73e8;
-}
-
-.status-pill.completed {
-  background: #e6f4ea;
-  color: #137333;
-}
-
-.status-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);   
-  right: 0;
-  min-width: 160px;
-  background: #ffffff;    
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
-  padding: 6px;
-  z-index: 100;
-}
-
-.status-dropdown button {
-  width: 100%;
-  padding: 8px 12px;
-  font-size: 13px;
-  border: none;
-  background: transparent;
-  text-align: left;
-  cursor: pointer;
-  border-radius: 6px;
-}
-
-.status-dropdown button:hover {
-  background: #f5f5f5;
-}
-
-
-.ellipsis {
-  font-size: 18px;
-  line-height: 1;
-  letter-spacing: 2px;
-  color: #555;
-}
-
-
-.status-pill {
-  background: #f7f7f7;
-}
-
-.dropdown-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #777;
-  padding: 6px 10px 4px;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: #eee;
-  margin: 6px 0;
-}
-
-.assignee-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  margin-right: 6px;
-  border-radius: 12px;
-  background: #f3f4f6;
-  font-size: 13px;
-}
-
-.assignee-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-html, body {
-  height: 100%;
-}
-
-.dashboard-container {
-  height: 100vh; 
-}
-
-/*make sure task board fills remaining space and allows scrolling */
-.task-title{
-  margin: 0 0 2px 0;   
-}
-
-.task-due-date{
-  margin: 0 0 4px 0;   
-  line-height: 1.2;    
-}
-
-.task-footer{
-  margin-top: 6px;     
-  gap: 4px;            
-}
-
-.task-assignees{
-  margin-top: 2px;     
-}
-
-
-.status-dropdown .dropdown-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #555;
-  padding: 6px 10px 4px;
-  text-transform: none;
-}
-
-.status-dropdown .dropdown-divider {
-  height: 1px;
-  background: #eee;
-  margin: 8px 0;
-}
-
-.status-dropdown button {
-  width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: none;
-  background: #fff;
-  text-align: left;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  color: #212121;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.status-dropdown button:hover {
-  background: #f0f0f0;
-}
-
-/* ========================================
-   TASK CARD DROPDOWN - Match Manager Progress Modal EXACTLY
-   ======================================== */
-
-.task-status-menu {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 60;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border-radius: 6px;
-  border: none;
-  background: #f7f7f7;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.status-pill:hover {
-  background: #e8e8e8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border-radius: 6px;
+    border: none;
+    background: #f7f7f7;
+    cursor: pointer;
+    transition: background 0.15s ease;
 }
 
 .status-pill .ellipsis {
-  font-size: 18px;
-  line-height: 1;
-  letter-spacing: 2px;
-  color: #555;
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 2px;
+    color: #555;
 }
 
-/* Dropdown Menu - EXACT copy from manager-progress.css */
+.status-pill:hover {
+    background: #e8e8e8;
+}
+
+.status-pill.icon-only {
+    font-size: 0;
+}
+
+.status-pill.todo {
+    background: #fdecea;
+    color: #b3261e;
+}
+
+.status-pill.inprogress {
+    background: #fff4cc;
+    color: #9a6700;
+}
+
+.status-pill.review {
+    background: #e7f3ff;
+    color: #1a73e8;
+}
+
+.status-pill.completed {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+/* === STATUS DROPDOWN PANEL === */
+
 .status-dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  padding: 8px;
-  min-width: 220px;
-  z-index: 10000;
-  animation: fadeIn 0.2s ease;
+    border: 1px solid #e0e0e0;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 6px;
+    min-width: 180px;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
 }
 
-/* Animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 
-/* Section Container - No padding on sections themselves */
-.dropdown-section {
-  padding: 0;
-}
-
-/* Section Labels - EXACT spacing from manager-progress */
-.dropdown-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 8px 12px 4px 12px;
-  margin: 0;
-}
-
-/* Dropdown Buttons - EXACT copy from .menu-item */
 .status-dropdown button {
-  width: 100%;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 10px 12px;
-  margin: 0;
-  cursor: pointer;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #111;
-  border-radius: 6px;
-  transition: background 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: auto;
-  line-height: 1.4;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 4px 10px;
+    margin: 0;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+    color: #111;
+    border-radius: 6px;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    line-height: 1.2;
 }
+
+/*  Dropdown text / dividers  */
 
 .status-dropdown button:hover {
-  background: #f5f5f5;
+    background: #f5f5f5;
+}
+
+.ellipsis {
+    font-size: 18px;
+    line-height: 1;
+    letter-spacing: 2px;
+    color: #555;
+}
+
+.dropdown-label {
+    letter-spacing: 0.4px;
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: #777;
+    padding: 4px 10px 2px;
+    text-transform: uppercase;
+}
+
+.dropdown-divider {
+    background: #f0f0f0;
+    height: 1px;
+    margin: 6px 0;
+}
+
+.assignee-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    margin-right: 6px;
+    border-radius: 12px;
+    background: #f3f4f6;
+    font-size: 13px;
+}
+
+.assignee-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.task-assignees {
+    margin-top: 2px;
+}
+
+/* === TASK CARD DROPDOWN (MANAGER PROGRESS MATCH) === */
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.dropdown-section {
+    padding: 2px 0;
 }
 
 .status-dropdown button:active {
-  background: #ebebeb;
+    background: #ebebeb;
 }
 
-/* Icons - match manager-progress modal exactly */
 .status-dropdown button svg {
-  width: 16px;
-  height: 16px;
+    width: 14px;
+    height: 14px;
 }
 
-/* Arrow icon for status - use SVG approach like modal */
+/* === DROPDOWN ICONS  === */
+
 .status-dropdown button[data-action="status"]::before {
-  content: '';
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-size: contain;
-  flex-shrink: 0;
+    content: '';
+    width: 16px;
+    height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='5' y1='12' x2='19' y2='12'%3E%3C/line%3E%3Cpolyline points='12 5 19 12 12 19'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    flex-shrink: 0;
 }
 
-/* Flag icon for priority - use SVG approach like modal */
 .status-dropdown button[data-action="priority"]::before {
-  content: '';
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'%3E%3C/path%3E%3Cline x1='4' y1='22' x2='4' y2='15'%3E%3C/line%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-size: contain;
-  flex-shrink: 0;
+    content: '';
+    width: 16px;
+    height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'%3E%3C/path%3E%3Cline x1='4' y1='22' x2='4' y2='15'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    flex-shrink: 0;
 }
 
 .status-dropdown button[data-action="delete"] {
-  color: #ef4444;
+    color: #ef4444;
 }
 
 .status-dropdown button[data-action="delete"]::before {
-  content: '';
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ef4444' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-size: contain;
-  flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    background-repeat: no-repeat;
+    background-size: contain;
+    flex-shrink: 0;
+    content: none !important;
+    background-image: none !important;
 }
 
 .status-dropdown button[data-action="delete"]:hover {
-  background: #fef2f2;
+    background: #fef2f2;
 }
 
-/* Divider between sections - matches manager-progress */
-.dropdown-divider {
-  height: 1px;
-  background: #f0f0f0;
-  margin: 8px 0;
-}
+/* === EDIT TASK BUTTON STYLES === */
 
-/* =============================
-   EDIT TASK BUTTON STYLES
-   ============================= */
-
-/* Edit button in dropdown - distinct styling */
 .dropdown-edit-btn {
     display: flex;
     align-items: center;
@@ -1552,14 +1324,14 @@ html, body {
     border: none;
     text-align: left;
     font-size: 14px;
-    color: #1a73e8; /* Blue color for edit */
+    color: #1a73e8;
     cursor: pointer;
     transition: background-color 0.2s;
     font-weight: 500;
 }
 
 .dropdown-edit-btn:hover {
-    background-color: #e8f0fe; /* Light blue background on hover */
+    background-color: #e8f0fe;
 }
 
 .dropdown-edit-btn i {
@@ -1568,7 +1340,8 @@ html, body {
     stroke: currentColor;
 }
 
-/* Delete button - distinct styling */
+/* === DELETE TASK BUTTON STYLES === */
+
 .dropdown-delete-btn {
     display: flex;
     align-items: center;
@@ -1579,14 +1352,14 @@ html, body {
     border: none;
     text-align: left;
     font-size: 14px;
-    color: #d93025; /* Red color for delete */
+    color: #d93025;
     cursor: pointer;
     transition: background-color 0.2s;
     font-weight: 500;
 }
 
 .dropdown-delete-btn:hover {
-    background-color: #fce8e6; /* Light red background on hover */
+    background-color: #fce8e6;
 }
 
 .dropdown-delete-btn i {
@@ -1595,17 +1368,7 @@ html, body {
     stroke: currentColor;
 }
 
-/* Dropdown divider - visual separator */
-.dropdown-divider {
-    height: 1px;
-    background-color: #e0e0e0;
-    margin: 4px 0;
-}
-
-/* Dropdown section spacing */
-.dropdown-section {
-    padding: 4px 0;
-}
+/*Dropdown section spacing fixes*/
 
 .dropdown-section:first-child {
     padding-top: 0;
@@ -1615,17 +1378,17 @@ html, body {
     padding-bottom: 0;
 }
 
-/* Modal adjustments for edit mode */
+/* === EDIT MODE STYLING === */
+
 .assign-task-modal[data-edit-mode="true"] .modal-header h2 {
-    color: #1a73e8; /* Blue title when editing */
+    color: #1a73e8;
 }
 
 .assign-task-modal[data-edit-mode="true"] .modal-header h2::before {
-    content: "✏️ "; /* Pencil emoji before title */
+    content: "✏️ ";
     margin-right: 4px;
 }
 
-/* Optional: Highlight changed fields */
 .assign-task-modal[data-edit-mode="true"] input:focus,
 .assign-task-modal[data-edit-mode="true"] select:focus,
 .assign-task-modal[data-edit-mode="true"] textarea:focus {
@@ -1633,7 +1396,6 @@ html, body {
     box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
 }
 
-/* Update button styling when in edit mode */
 .assign-task-modal[data-edit-mode="true"] button[type="submit"] {
     background-color: #1a73e8;
 }
@@ -1642,283 +1404,259 @@ html, body {
     background-color: #1557b0;
 }
 
-/* Remove ONLY the CSS-injected delete icon (the first bin) */
-.status-dropdown button[data-action="delete"]::before{
-  content: none !important;
-  background-image: none !important;
+#details-close-modal-btn {
+    position: static;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    line-height: 0;
 }
 
-/* Details modal X (ONLY this one should sit inline) */
-#details-close-modal-btn{
-  position: static;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  margin: 0;
-  line-height: 0;
+/* === MODAL HEADER ACTIONS: POSITIONING CONSISTENCY FIXES === */
+
+.assign-task-modal .modal-header {
+    position: relative;
 }
 
-/* Edit/Create modal X (keep top-right) */
-.assign-task-modal .modal-header{
-  position: relative;
+/* Place the close (X) button in the top-right of Edit/Create modal */
+.assign-task-modal .modal-header .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    margin: 0;
+    line-height: 0;
 }
 
-.assign-task-modal .modal-header .close-btn{
-  position: absolute;
-  top: 16px;
-  right: 16px;
-
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 0;
-  margin: 0;
-  line-height: 0;
-}
-
-/* Make sure the X icon centres correctly */
 #details-close-modal-btn svg,
-.modal-header .close-btn svg{
-  width: 20px;
-  height: 20px;
-  display: block;
+.modal-header .close-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 
-/* Pin the ... to the LEFT of the X */
-.task-status-menu.details-menu{
-  position: static;
-  top: 16px;
-  right: 58px; /* 36px button + ~6-8px gap */
-  z-index: 50;
+.task-status-menu.details-menu {
+    position: static;
+    top: 16px;
+    right: 58px;
+    z-index: 50;
 }
 
-.task-status-menu.details-menu .status-pill{
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #f7f7f7;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;       /* <-- centres the dots */
+.task-status-menu.details-menu .status-pill {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #f7f7f7;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-status-menu.details-menu .status-pill:hover {
+    background: #e8e8e8;
+}
+
+.details-header-actions {
+    position: absolute;
+    right: 16px;
+    top: 40px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 50;
+}
+
+.details-header-actions .status-dropdown {
+    width: auto;
+    min-width: 160px;
+    max-width: 180px;
+    padding: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 
-.task-status-menu.details-menu .status-pill:hover{
-  background: #e8e8e8;
+.modal-header h2 {
+    padding-right: 100px;
 }
-
-/* Task Details modal: align ... and X with the title line */
-.details-header-actions{
-  position: absolute;
-  right: 16px;
-  top: 40px;                 /* <-- adjust this number if needed */
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  z-index: 50;
-}
-
-.details-header-actions .status-dropdown{
-  min-width: 180px;   
-  width: auto;
-  padding: 8px;
-}
-
-
-.modal-header h2{ padding-right: 100px; }
 
 /* EDIT/CREATE MODAL: force the close X top-right */
-.assign-task-modal .modal-header{
-  position: relative;
+.assign-task-modal .modal-header {
+    position: relative;
 }
 
 .modal-header .close-btn,
-.modal-header #close-modal-btn{
-  position: absolute !important;
-  top: 16px;
-  right: 16px;
+.modal-header #close-modal-btn {
+    position: absolute !important;
+    top: 16px;
+    right: 16px;
 }
 
-
-/* ============================
-   EDIT/CREATE MODAL (only)
-   ============================ */
+/* === EDIT/CREATE MODAL: CLOSE BUTTON LAYOUT === */
 
 .assign-task-modal .modal-header,
-.modal-content.assign-task-modal .modal-header{
-  position: relative;
+.modal-content.assign-task-modal .modal-header {
+    position: relative;
 }
 
 /* close button in Edit/Create modal */
 .assign-task-modal .modal-header .close-btn,
 .modal-content.assign-task-modal .modal-header .close-btn,
 .assign-task-modal .modal-header #close-modal-btn,
-.modal-content.assign-task-modal .modal-header #close-modal-btn{
-  position: absolute !important;
-  top: 16px;
-  right: 16px;
+.modal-content.assign-task-modal .modal-header #close-modal-btn {
+    position: absolute !important;
+    top: 16px;
+    right: 16px;
 
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-  padding: 0;
-  margin: 0;
-  line-height: 0;
-}
-/* ============================
-   TASK DETAILS MODAL (only)
-   ============================ */
-
-.task-details-modal .modal-header{
-  display: flex !important;
-  align-items: center !important;     
-  justify-content: space-between !important;
-  gap: 12px;
+    padding: 0;
+    margin: 0;
+    line-height: 0;
 }
 
-.task-details-modal .details-header-actions{
-  position: static !important;
-  top: auto !important;
-  right: auto !important;
-  transform: none !important;
+/* === TASK DETAILS MODAL: HEADER FLOW FIXES === */
 
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 10px;
-  margin-left: auto;
+.task-details-modal .modal-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px;
 }
 
-/* X inside task details should NOT be absolute */
-.task-details-modal #details-close-modal-btn{
-  position: static !important;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.task-details-modal .details-header-actions {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    transform: none !important;
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 0;
-  margin: 0;
-  line-height: 0;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px;
+    margin-left: auto;
 }
 
-/* dots inside task details should NOT be absolute */
-.task-details-modal .task-status-menu.details-menu{
-  position: static !important;
-  margin: 0;
+.task-details-modal #details-close-modal-btn {
+    position: static !important;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    margin: 0;
+    line-height: 0;
 }
 
-/* Remove any big default margins that push things visually */
+.task-details-modal .task-status-menu.details-menu {
+    position: static !important;
+    margin: 0;
+}
+
 .task-details-modal .modal-header h1,
-.task-details-modal .modal-header h2{
-  margin: 0 !important;
+.task-details-modal .modal-header h2 {
+    margin: 0 !important;
 }
 
-/* Task Details Modal Dropdown - Clean Version */
-.details-header-actions .status-dropdown {
-  min-width: 200px;
-  max-width: 220px;
-  padding: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-}
+/* === TASK DETAILS DROPDOWN: ICON + LAYOUT NORMALISATION === */
 
-/* Remove ALL pseudo-element icons */
 .details-header-actions .status-dropdown button::before {
-  content: none !important;
-  display: none !important;
+    content: none !important;
+    display: none !important;
 }
 
-/* Style buttons with background icons */
 .details-header-actions .status-dropdown button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 10px 12px 10px 38px;
-  border: none;
-  background-color: transparent;
-  cursor: pointer;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #111;
-  border-radius: 6px;
-  transition: background 0.15s;
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px 10px 38px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #111;
+    border-radius: 6px;
+    transition: background 0.15s;
 }
 
 .details-header-actions .status-dropdown button:hover {
-  background-color: #f5f5f5;
+    background-color: #f5f5f5;
 }
 
 /* Edit icon */
 .details-header-actions .status-dropdown button[data-action="edit"] {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'%3E%3C/path%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: 12px center;
-  background-size: 16px 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23111' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7'%3E%3C/path%3E%3Cpath d='M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 16px 16px;
 }
 
 /* Delete icon and styling */
 .details-header-actions .status-dropdown button[data-action="delete"] {
-  color: #d93025;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d93025' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: 12px center;
-  background-size: 16px 16px;
+    color: #d93025;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d93025' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 6 5 6 21 6'%3E%3C/polyline%3E%3Cpath d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 16px 16px;
 }
 
 .details-header-actions .status-dropdown button[data-action="delete"]:hover {
-  background-color: #fef2f2;
+    background-color: #fef2f2;
 }
 
-/* Hide any feather icons */
 .details-header-actions .status-dropdown button svg {
-  display: none !important;
+    display: none !important;
 }
 
 .task-details-modal {
-  overflow: hidden;
+    overflow: hidden;
 }
 
-/* Overdue styling for task cards */
 .task-due-date.overdue {
-  color: #d93025;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+    color: #d93025;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .task-due-date.overdue::before {
-  content: '';
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23d93025' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-size: contain;
-  flex-shrink: 0;
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23d93025' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cline x1='12' y1='8' x2='12' y2='12'%3E%3C/line%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    flex-shrink: 0;
 }
 
-/* =============================
-   Success Notification
-   ============================= */
+/* === SUCCESS NOTIFICATION STYLING === */
 
 .success-notification {
     position: fixed;
@@ -1950,329 +1688,323 @@ html, body {
         transform: translateX(400px);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
     }
 }
 
-/* ========================================
-   FLOATING TODO WIDGET
-   ======================================== */
+/* === FLOATING TODO WIDGET === */
 
 .floating-todo-widget {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 999;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
 }
 
 /* Floating Action Button */
 .todo-fab {
-  position: relative;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FFB000, #FBC02D);
-  border: none;
-  box-shadow: 0 4px 12px rgba(251, 176, 45, 0.4);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FFB000, #FBC02D);
+    border: none;
+    box-shadow: 0 4px 12px rgba(251, 176, 45, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
 }
 
 .todo-fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(251, 176, 45, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(251, 176, 45, 0.5);
 }
 
 .todo-fab i {
-  width: 24px;
-  height: 24px;
-  color: #1E1E1E;
+    width: 24px;
+    height: 24px;
+    color: #1E1E1E;
 }
 
 /* Badge for unfinished todos count */
 .todo-badge {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #D93025;
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  min-width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 6px;
-  border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #D93025;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .todo-badge.hidden {
-  display: none;
+    display: none;
 }
 
-/* Todo Panel */
 .todo-panel {
-  position: absolute;
-  bottom: 72px;
-  right: 0;
-  width: 360px;
-  max-height: 480px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-  transform: translateY(10px) scale(0.95);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  pointer-events: none;
+    position: absolute;
+    bottom: 72px;
+    right: 0;
+    width: 360px;
+    max-height: 480px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
 }
 
 .todo-panel:not([hidden]) {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: all;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
 }
 
-/* Panel Header */
 .todo-panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #E0E0E0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #E0E0E0;
 }
 
 .todo-panel-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1E1E1E;
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1E1E1E;
 }
 
 .todo-close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: background 0.2s;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
 }
 
 .todo-close-btn:hover {
-  background: #F5F5F5;
+    background: #F5F5F5;
 }
 
 .todo-close-btn i {
-  width: 20px;
-  height: 20px;
-  color: #666;
+    width: 20px;
+    height: 20px;
+    color: #666;
 }
 
-/* Panel Content */
 .todo-panel-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .todo-panel-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 20px;
-  max-height: 360px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 20px;
+    max-height: 360px;
 }
 
 /* Individual Todo Item */
 .floating-todo-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  background: #FEFBF4;
-  border: 1px solid #E8E4D9;
-  transition: all 0.2s;
-  cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: #FEFBF4;
+    border: 1px solid #E8E4D9;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
 .floating-todo-item:hover {
-  background: #F5F2E7;
-  border-color: #D4CDB8;
+    background: #F5F2E7;
+    border-color: #D4CDB8;
 }
 
 .floating-todo-item.completed {
-  opacity: 0.6;
+    opacity: 0.6;
 }
 
 .floating-todo-item.completed .floating-todo-text {
-  text-decoration: line-through;
-  color: #8C8C8C;
+    text-decoration: line-through;
+    color: #8C8C8C;
 }
 
-/* Checkbox */
 .floating-todo-checkbox {
-  width: 20px;
-  height: 20px;
-  min-width: 20px;
-  border: 2px solid #8C8C8C;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border: 2px solid #8C8C8C;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .floating-todo-checkbox:hover {
-  border-color: #FFB000;
+    border-color: #FFB000;
 }
 
 .floating-todo-checkbox.checked {
-  background: #34A853;
-  border-color: #34A853;
+    background: #34A853;
+    border-color: #34A853;
 }
 
 .floating-todo-checkbox i {
-  width: 14px;
-  height: 14px;
-  color: white;
+    width: 14px;
+    height: 14px;
+    color: white;
 }
 
-/* Todo Content */
 .floating-todo-content {
-  flex: 1;
-  min-width: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .floating-todo-text {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1E1E1E;
-  margin-bottom: 4px;
-  line-height: 1.4;
-  word-wrap: break-word;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1E1E1E;
+    margin-bottom: 4px;
+    line-height: 1.4;
+    word-wrap: break-word;
 }
 
 .floating-todo-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: #8C8C8C;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #8C8C8C;
+    flex-wrap: wrap;
 }
 
 .floating-todo-priority {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .floating-priority-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
 }
 
 .floating-priority-dot.urgent {
-  background: #D93025;
+    background: #D93025;
 }
 
 .floating-priority-dot.high {
-  background: #FF6B35;
+    background: #FF6B35;
 }
 
 .floating-priority-dot.medium {
-  background: #FFB000;
+    background: #FFB000;
 }
 
 .floating-priority-dot.low {
-  background: #34A853;
+    background: #34A853;
 }
 
 /* Empty State */
 .floating-todo-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #8C8C8C;
+    text-align: center;
+    padding: 40px 20px;
+    color: #8C8C8C;
 }
 
 .floating-todo-empty i {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 12px;
-  color: #D0D0D0;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    color: #D0D0D0;
 }
 
 .floating-todo-empty p {
-  margin: 0;
-  font-size: 14px;
+    margin: 0;
+    font-size: 14px;
 }
 
-/* Panel Footer */
 .todo-panel-footer {
-  padding: 12px 20px;
-  border-top: 1px solid #E0E0E0;
+    padding: 12px 20px;
+    border-top: 1px solid #E0E0E0;
 }
 
 .todo-add-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px;
-  background: #FFB000;
-  color: #1E1E1E;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px;
+    background: #FFB000;
+    color: #1E1E1E;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .todo-add-btn:hover {
-  background: #FFA000;
-  transform: translateY(-1px);
+    background: #FFA000;
+    transform: translateY(-1px);
 }
 
 .todo-add-btn i {
-  width: 16px;
-  height: 16px;
+    width: 16px;
+    height: 16px;
 }
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
-  .floating-todo-widget {
-    bottom: 16px;
-    right: 16px;
-  }
+    .floating-todo-widget {
+        bottom: 16px;
+        right: 16px;
+    }
 
-  .todo-panel {
-    width: calc(100vw - 32px);
-    max-width: 360px;
-  }
+    .todo-panel {
+        width: calc(100vw - 32px);
+        max-width: 360px;
+    }
 }
 
-/* Settings */
+/* === SETTINGS STYLING === */
+
 #settings-page .kb-main-content {
-  padding-top: 20px;
+    padding-top: 20px;
 }
 
 .profile-content {
@@ -2322,9 +2054,8 @@ html, body {
     background-color: #c0392b;
 }
 
-/* ===================
-   REGISTRATION PILL
-======================= */
+/* === REGISTRATION PILL === */
+
 .registered-pill {
   display: inline-flex;
   padding: 4px 10px;

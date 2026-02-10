@@ -2,20 +2,30 @@
 * Progress Page Styles
 */
 
+/* === PROGRESS PAGE GRID LAYOUT === */
+
 #progress-page .progress-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    padding: 10px 30px;
+    gap: 30px;
+    padding: 30px 40px;
     overflow-y: auto;
     flex-grow: 1;
+    align-items: start;
+    grid-template-rows: auto auto;
 }
 
-#progress-page .progress-left,
+#progress-page .countdown-card {
+    grid-column: 1 / -1;
+    /* span both columns */
+}
+
+#progress-page .progress-left {
+    grid-column: 1 / 2;
+}
+
 #progress-page .progress-right {
-    display: flex;
-    flex-direction: column;
-    gap: 30px;
+    grid-column: 2 / 3;
 }
 
 /* === PROGRESS CARD === */
@@ -24,7 +34,7 @@
     border-radius: 12px;
     padding: 30px;
     margin-bottom: 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .progress-card h2 {
@@ -60,7 +70,7 @@
 
 .progress-icon {
     font-size: 24px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .progress-text {
@@ -73,13 +83,13 @@
 .countdown-card {
     background: #fff;
     border-radius: 12px;
-    padding: 20px 15px 18px; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    padding: 20px 15px 18px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     position: relative;
     overflow: hidden;
     border: 1px solid #f0f0f0;
-      max-width: 1200px;      
-  width: 100%;
+    width: 100%;
+    height: 280px;
 }
 
 .countdown-card::before {
@@ -94,8 +104,15 @@
 }
 
 @keyframes shimmer {
-    0%, 100% { opacity: 0.6; }
-    50% { opacity: 1; }
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
 }
 
 .countdown-header {
@@ -112,26 +129,27 @@
     color: #1E1E1E;
 }
 
-.countdown-pulse{
-  position: absolute;
-  top: 22px;          
-  right: 22px;        
-  left: auto;
+.countdown-pulse {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    left: auto;
 
-  width: 12px;
-  height: 12px;
-  background: #FBC02D;
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(251, 192, 45, 0.7);
-  animation: pulse 2s ease-in-out infinite;
+    width: 12px;
+    height: 12px;
+    background: #FBC02D;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0 rgba(251, 192, 45, 0.7);
+    animation: pulse 2s ease-in-out infinite;
 }
 
-
-
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 0 0 0 rgba(251, 192, 45, 0.7);
     }
+
     50% {
         box-shadow: 0 0 0 8px rgba(251, 192, 45, 0);
     }
@@ -142,6 +160,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    max-height: 220px; 
 }
 
 .countdown-task-name {
@@ -168,7 +187,7 @@
 }
 
 .countdown-value {
-    font-size: 46px;
+    font-size: clamp(32px, 3vw, 46px); 
     font-weight: 700;
     color: #1E1E1E;
     line-height: 1;
@@ -177,9 +196,10 @@
     padding: 16px 12px;
     min-width: 60px;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     border: 2px solid #FBC02D;
     font-variant-numeric: tabular-nums;
+    
 }
 
 .countdown-label {
@@ -258,12 +278,13 @@
 .deadlines-card {
     background: #fff;
     border-radius: 12px;
-    padding: 30px;
+    padding: 30px 30px 20px 30px;
     margin-bottom: 0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    height: 195px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
+    height: auto;
+    max-height: 198px;
 }
 
 .deadlines-card h2 {
@@ -277,6 +298,8 @@
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;
+    max-height: 80px;
+    min-height: 80px;
 }
 
 .deadline-item {
@@ -315,7 +338,7 @@
 .deadline-date {
     font-size: 13px;
     color: #8C8C8C;
-    text-align: center;
+    text-align: left;
 }
 
 .deadline-status {
@@ -324,7 +347,8 @@
     padding: 4px 10px;
     border-radius: 12px;
     text-align: center;
-    justify-self: end;
+    justify-self: start; 
+    margin-right: 0; 
 }
 
 .deadline-status.overdue {
@@ -357,250 +381,18 @@
 }
 
 .deadlines-list-header span:nth-child(2) {
-    text-align: center;
+    text-align: left;
 }
 
 .deadlines-list-header span:nth-child(3) {
-    text-align: right;
-    padding-right: 10px;
-}
-.deadlines-list-header-left {
-    display: flex;
-    align-items: center;
-}
-
-.deadlines-list-header-right {
-    display: flex;
-    align-items: center;
-    gap: 60px;
-}
-
-/* === SPENDING CARD === */
-.spending-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 60px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.spending-icon-container {
-    width: 200px;
-    height: 200px;
-    position: relative;
-}
-
-.spending-icon {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #2C2C2C 0%, #1A1A1A 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    position: relative;
-}
-
-.spending-icon::before {
-    content: '';
-    position: absolute;
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #3C3C3C 0%, #2C2C2C 100%);
-}
-
-.dollar-sign {
-    font-size: 72px;
-    font-weight: 700;
-    color: #FBC02D;
-    position: relative;
-    z-index: 1;
-}
-
-/* === WORKLOAD CARD === */
-.workload-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.workload-card h2 {
-    font-size: 22px;
-    font-weight: 600;
-    margin: 0 0 25px 0;
-}
-
-.workload-bars {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.workload-item {
-    display: grid;
-    grid-template-columns: 120px 1fr 80px;
-    align-items: center;
-    gap: 15px;
-}
-
-.workload-label {
-    font-size: 15px;
-    font-weight: 500;
-    color: #1E1E1E;
-}
-
-.workload-bar-bg {
-    height: 30px;
-    background: #F0F0F0;
-    border-radius: 15px;
-    overflow: hidden;
-    position: relative;
-}
-
-.workload-bar-fill {
-    height: 100%;
-    background: #FBC02D;
-    border-radius: 15px;
-    transition: width 0.5s ease;
-}
-
-.workload-bar-fill.team-avg {
-    background: #E6A100;
-}
-
-.workload-count {
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
-    text-align: right;
-}
-
-/* === URGENT CARD === */
-.urgent-card {
-    background: #FFF5F5;
-    border: 2px solid #FFEBEB;
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 4px rgba(255,0,0,0.05);
-}
-
-.urgent-card h2 {
-    font-size: 20px;
-    font-weight: 600;
-    color: #D93025;
-    margin: 0 0 8px 0;
-}
-
-.urgent-subtitle {
-    font-size: 14px;
-    color: #8C8C8C;
-    margin: 0 0 20px 0;
-}
-
-.urgent-tasks-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.urgent-task {
-    background: #fff;
-    border-radius: 8px;
-    padding: 15px;
-    border-left: 4px solid #D93025;
-}
-
-.urgent-task-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #1E1E1E;
-    margin: 0 0 8px 0;
-}
-
-.urgent-task-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.urgent-task-date {
-    font-size: 13px;
-    color: #8C8C8C;
-}
-
-.urgent-task-status {
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 12px;
-    background: #FFEBEB;
-    color: #D93025;
-}
-
-/* === DISTRIBUTION CARD === */
-.distribution-card {
-    background: #fff;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.distribution-card h2 {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-}
-
-.distribution-subtitle {
-    font-size: 14px;
-    color: #8C8C8C;
-    margin: 0 0 25px 0;
-}
-
-.pie-chart-container {
-    width: 280px;
-    height: 280px;
-    margin: 0 auto 25px auto;
-}
-
-.distribution-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    color: #555;
-}
-
-.legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    flex-shrink: 0;
+    text-align: left;
+    padding-right: 0; /
 }
 
 @media (max-width: 1200px) {
     #progress-page .progress-layout {
         grid-template-columns: 1fr;
     }
-}
-
-.deadlines-list {
-    max-height: 240px;
-    overflow-y: auto;
-    padding-right: 6px;
 }
 
 .deadlines-list::-webkit-scrollbar {
@@ -620,6 +412,11 @@
     background: #b0b0b0;
 }
 
+.no-deadlines {
+    margin: 0; 
+    padding: 20px;
+}
+
 /* === TASK DETAILS MODAL === */
 .modal-overlay {
     display: none;
@@ -636,8 +433,13 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .task-detail-modal {
@@ -647,7 +449,7 @@
     max-width: 600px;
     max-height: 90vh;
     overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     animation: slideUp 0.3s ease;
     display: flex;
     flex-direction: column;
@@ -658,6 +460,7 @@
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -820,25 +623,4 @@
 .project-complete-btn:hover {
     background: linear-gradient(90deg, #F9A825 0%, #F57F17 100%);
     transform: translateY(-1px);
-}
-
-/* Grid: 2 columns + explicit rows */
-#progress-page .progress-layout{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  padding: 30px 40px;
-  align-items: start;
-}
-
-#progress-page .countdown-card{
-  grid-column: 1 / -1;  /* span both columns */
-}
-
-#progress-page .progress-left{
-  grid-column: 1 / 2;
-}
-
-#progress-page .progress-right{
-  grid-column: 2 / 3;
 }

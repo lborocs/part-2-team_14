@@ -263,7 +263,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
           <p class="breadcrumbs"><a href="projects-overview.php">Projects</a> > <span id="project-name-breadcrumb">Project</span></p>
           <h1 id="project-name-header">Project</h1>
         </div>
-        <button class="close-project-btn" id="close-project-btn" style="display:none;"><i data-feather="archive"></i> Close Project</button>
+        <button class="close-project-btn" id="close-project-btn" style="display:none;"><i data-feather="archive"></i> Archive Project</button>
       </div>
 
       <nav class="project-nav" id="project-nav-links">
@@ -335,6 +335,36 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
   </main>
 </div>
 
+<!-- Archive Project Confirm Modal -->
+<div class="modal-overlay" id="close-project-modal" style="display:none;">
+    <div class="modal-content" style="max-width:520px;">
+        <div class="modal-header">
+            <h2>Archive Project</h2>
+            <button type="button" class="close-btn" id="close-project-x">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p style="margin:0 0 8px;">Are you sure you want to archive this project?</p>
+            <p style="margin:0 0 16px; color:#666;">
+                This project will be moved to archives.
+            </p>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button type="button" class="create-post-btn" id="close-project-cancel"
+                    style="background:#eee; color:#111;">
+                    Cancel
+                </button>
+                <button type="button" class="create-post-btn" id="close-project-ok">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.__ROLE__ = <?= json_encode($_SESSION['role'] ?? 'team_member') ?>;
+</script>
 <script src="../app.js"></script>
 
 <script>

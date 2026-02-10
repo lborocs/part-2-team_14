@@ -15,8 +15,8 @@ try {
     $database = new Database();
     $pdo = $database->getConnection();
     
-    $sql = "SELECT COUNT(*) as count 
-            FROM personal_tasks 
+    $sql = "SELECT COUNT(*) as count
+            FROM user_personal_tasks
             WHERE user_id = ? AND is_completed = 0";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$userId]);
