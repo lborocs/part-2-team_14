@@ -1211,7 +1211,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                             <div class="projects-card">
                                 <h2>
                                     <i data-feather="folder"></i>
-                                    Current Projects
+                                    Projects
                                 </h2>
                                 <?php if (!empty($projects)): ?>
                                     <div class="projects-list">
