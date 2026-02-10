@@ -381,6 +381,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
         .banner-btn:hover {
             background: rgba(255, 255, 255, 0.25);
             border-color: rgba(255, 255, 255, 0.5);
+            color: #fff;
             transform: translateY(-1px);
         }
 
