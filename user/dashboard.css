@@ -2052,8 +2052,8 @@ body.can-manage-project .add-task {
     background-color: #c0392b;
 }
 
-/* ===================
-   REGISTRATION PILL
+/* === REGISTRATION PILL === */
+
 .registered-pill {
   display: inline-flex;
   padding: 4px 10px;
