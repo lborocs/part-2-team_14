@@ -460,7 +460,7 @@ DELIMITER ;
 -- Dates centred around: 9 February 2026
 -- ============================================================================
 
-SET @pw = '$2y$12$HxjFRWlMRdll/4IZR4ur4eIenbGY.lV4DzIhSQNaEU3zLy2Qq5M1a';
+SET @pw = '$2y$10$vWt.dbYkKKmjY/h90tXYLe.J5QNdsYeWNultz8IXltfOwZ7ilARRW';
 
 -- =============================================
 -- USERS (IDs 1-10)
