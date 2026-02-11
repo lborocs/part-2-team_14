@@ -91,6 +91,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'preview_remove') {
         $stmt->execute([':uid' => $removeUserId, ':pid' => $projectId]);
         $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // Split tasks into solo vs shared to show a clearer warning in the modal
         $soloTasks = [];
         $sharedTasks = [];
         foreach ($tasks as $task) {
@@ -115,6 +116,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'preview_remove') {
 
 // =============================
 // AJAX: Remove Member (POST)
+// removes user from project + unassigns them from all project tasks
 // =============================
 if (isset($_POST['action']) && $_POST['action'] === 'remove_member') {
     header('Content-Type: application/json');
@@ -204,7 +206,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'list_members') {
         $stmt->execute([':pid' => $projectId]);
         $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Also fetch the project manager (created_by) if not already in members
+        // Ensure the project manager appears even if they aren't in project_members
         $managerId = (int) $project['created_by'];
         $managerInList = false;
         foreach ($members as $m) {
@@ -403,7 +405,7 @@ function getMemberColor($uid, $bannerColors, &$colorMap) {
                             $specialties = array_map('trim', $specialties);
                         }
 
-                        // Can this member be removed?
+                        // Only managers can remove members, and never the manager/team leader
                         $canRemove = $isManager && $uid !== $managerId && $uid !== $teamLeaderId;
 
                         // Managers can click cards (except their own) to go to profile
@@ -511,7 +513,6 @@ function getMemberColor($uid, $bannerColors, &$colorMap) {
                 const memberName = btn.dataset.name;
                 modalName.textContent = memberName;
 
-                // Fetch task impact preview
                 let warningHtml = '';
                 try {
                     const res = await fetch(`project-members.php?action=preview_remove&user_id=${removeUserId}`);

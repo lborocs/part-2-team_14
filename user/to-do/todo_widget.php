@@ -119,7 +119,7 @@ if (realpath($includerDir) === realpath(dirname($todoDir))) {
         deleteTask(todoId);
     }
 
-    // TOGGLE STATUS
+    // Toggle task completion status
     async function toggleTaskStatus(todoId, currentStatus) {
         try {
             const response = await fetch(TODO_BASE + 'update_todo_status.php', {
@@ -145,7 +145,7 @@ if (realpath($includerDir) === realpath(dirname($todoDir))) {
         }
     }
 
-    // DELETE TASK
+    // Delete a task
     async function deleteTask(todoId) {
         if(!confirm("Delete this task?")) return;
 

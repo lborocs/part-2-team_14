@@ -160,7 +160,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    max-height: 220px; 
+    max-height: 220px;
 }
 
 .countdown-task-name {
@@ -187,7 +187,7 @@
 }
 
 .countdown-value {
-    font-size: clamp(32px, 3vw, 46px); 
+    font-size: clamp(32px, 3vw, 46px);
     font-weight: 700;
     color: #1E1E1E;
     line-height: 1;
@@ -199,7 +199,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     border: 2px solid #FBC02D;
     font-variant-numeric: tabular-nums;
-    
+
 }
 
 .countdown-label {
@@ -297,26 +297,27 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-right: 6px;
-    max-height: 80px;
-    min-height: 80px;
+    padding-right: 2px;
+    max-height: 75px;
+    min-height: 75px;
 }
 
 .deadline-item {
     display: grid;
     grid-template-columns: 1fr 100px 100px;
     align-items: center;
-    gap: 12px;
-    padding: 12px 0;
+    gap: 2px;
+    padding: 6px 0;
     border-bottom: 1px solid #F0F0F0;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    min-height: 40px;
 }
 
 .deadline-item:hover {
     background-color: #fafafa;
-    margin: 0 -12px;
-    padding: 12px 12px;
+    margin: 0 -8px;
+    padding: 8px 8px;
     border-radius: 8px;
 }
 
@@ -347,8 +348,9 @@
     padding: 4px 10px;
     border-radius: 12px;
     text-align: center;
-    justify-self: start; 
-    margin-right: 0; 
+    justify-self: flex-start;
+    margin-right: 0;
+    white-space: nowrap;
 }
 
 .deadline-status.overdue {
@@ -372,7 +374,7 @@
     gap: 12px;
     padding: 0 0 12px 0;
     border-bottom: 2px solid #f0f0f0;
-    margin-bottom: 15px;
+    margin-bottom: 3px;
     font-size: 11px;
     font-weight: 600;
     color: #8C8C8C;
@@ -386,7 +388,7 @@
 
 .deadlines-list-header span:nth-child(3) {
     text-align: left;
-    padding-right: 0; /
+    padding-right: 0;/
 }
 
 @media (max-width: 1200px) {
@@ -413,7 +415,7 @@
 }
 
 .no-deadlines {
-    margin: 0; 
+    margin: 0;
     padding: 20px;
 }
 
