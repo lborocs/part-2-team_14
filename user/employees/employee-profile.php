@@ -1175,24 +1175,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                             </p>
                         </div>
                     </div>
-                    <div class="banner-right">
-                        <?php if ($_SESSION['role'] === 'manager'): ?>
-                        <a href="employee-directory.php" class="banner-btn">
-                            <i data-feather="arrow-left"></i>
-                            Back to Directory
-                        </a>
-                        <?php endif; ?>
-                        <a href="mailto:<?= htmlspecialchars($employee['email']) ?>" class="banner-btn">
-                            <i data-feather="mail"></i>
-                            Send Email
-                        </a>
-                        <?php if ($_SESSION['role'] === 'manager'): ?>
-                        <a href="#" class="banner-btn" onclick="assignToProject()">
-                            <i data-feather="user-plus"></i>
-                            Add to Project
-                        </a>
-                        <?php endif; ?>
-                    </div>
                 </div>
             </section>
 

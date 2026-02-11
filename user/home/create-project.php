@@ -186,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <main class="main-content">
             <header class="kb-header">
-                <p class="breadcrumbs">Home > Create Project</p>
+                <p class="breadcrumbs"><a href="home.php" style="color: #8C8C8C; text-decoration: none;">Home</a> > Create Project</p>
                 <h1>Create a New Project</h1>
             </header>
 
