@@ -1,5 +1,5 @@
 /*
-* Make-It-All Knowledge Base
+* Make-It-All Project Management Platform
 * This file simulates a backend and user authentication for the prototype.
 */
 
@@ -10,8 +10,8 @@
 
 const IS_ARCHIVED = !!window.__IS_ARCHIVED__;
 
+// Show success notification that auto-dismisses after 3 seconds
 function showSuccessNotification(message) {
-    // Create notification element
     const notification = document.createElement('div');
     notification.className = 'success-notification';
     notification.innerHTML = `
@@ -19,26 +19,18 @@ function showSuccessNotification(message) {
         <span>${message}</span>
     `;
 
-    // Add to body
     document.body.appendChild(notification);
 
-    // Replace feather icons
     feather.replace();
 
-    // Remove after 3 seconds
     setTimeout(() => {
         notification.remove();
     }, 3000);
 }
 
+// Get users map from PHP-injected data
 function getUsersMap() {
-    // Prefer PHP injected users
     if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
-
-    // Fallback if you still have simUsers defined somewhere else
-    if (typeof window.simUsers === "object") return window.simUsers;
-
-    // Final fallback
     return {};
 }
 
@@ -50,14 +42,15 @@ const DEFAULT_TOPIC_ICONS = {
     'Development Guidelines': 'code',
 };
 
+// Render topic icon - handles feather icons and emojis
 function renderTopicIcon(iconValue, topicName) {
     const val = (iconValue || '').trim();
 
-    // feather icon name (like "tool", "users", "code")
+    // feather icon name 
     const featherPattern = /^[a-z0-9-]+$/;
     if (val && featherPattern.test(val)) return `<i data-feather="${val}"></i>`;
 
-    // emoji (non-ascii, not corrupted "?")
+    // check emoji 
     if (val && val !== '?' && /[^\u0000-\u007F]/.test(val)) {
         return `<span class="topic-emoji">${val}</span>`;
     }
@@ -67,221 +60,11 @@ function renderTopicIcon(iconValue, topicName) {
     return `<i data-feather="${fallback}"></i>`;
 }
 
+/* ===========================
+   AUTHENTICATION & SESSION
+   =========================== */
 
-// Initial hardcoded posts
-const initialPosts = [
-    // Software Issues
-    {
-        id: 1,
-        topic: 'Software Issues',
-        title: 'Jasmine software crashing on startup',
-        author: 'Steve Adams',
-        authorEmail: 'user@make-it-all.co.uk',
-        date: '3 October 2025',
-        content: "Every time I try to open the Jasmine client on my machine, it shows the splash screen and then immediately closes. \n\nI've tried: \n- Restarting my computer \n- Reinstalling the software \n\nNothing seems to work. Any ideas?",
-        reactions: { up: 4, lightbulb: 1, comments: 1 },
-        replies: [
-            {
-                id: 101,
-                author: 'Jane Doe',
-                authorRole: 'specialist',
-                avatarClass: 'avatar-4',
-                date: '3 October 2025',
-                content: "Hi Steve, this is a known issue with the latest Windows update. The team is working on a patch. \n\nFor now, you can fix this by deleting the cache file at: \n`C:\\Users\\[YourName]\\AppData\\Local\\Jasmine\\cache.dat` \n\nLet me know if that works!"
-            }
-        ]
-    },
-    {
-        id: 3,
-        topic: 'Software Issues',
-        title: 'Cannot access shared drive',
-        author: 'Maria Garcia',
-        authorEmail: 'maria@make-it-all.co.uk',
-        date: '1 October 2025',
-        content: 'I keep getting a "Permission Denied" error when trying to access the //PROJECTS/ shared drive. I had access yesterday. Did something change?',
-        reactions: { up: 7, lightbulb: 0, comments: 0 },
-        replies: []
-    },
-    // Printing
-    {
-        id: 2,
-        topic: 'Printing',
-        title: 'Printer not connecting to WiFi',
-        author: 'Steve Adams',
-        authorEmail: 'user@make-it-all.co.uk',
-        date: '2 October 2025',
-        content: 'I have tried to connect my printer (HP LaserJet M404) to WiFi numerous times, even tried restarting it and the router. My laptop can see the WiFi, but the printer cannot. \n\nAny suggestions to fix it?',
-        reactions: { up: 2, lightbulb: 0, comments: 0 },
-        replies: []
-    },
-    // Network
-    {
-        id: 4,
-        topic: 'Network',
-        title: 'Company VPN is extremely slow today',
-        author: 'Ben Carter',
-        authorEmail: 'manager@make-it-all.co.uk',
-        date: '4 October 2025',
-        content: 'Is anyone else experiencing very slow speeds on the company VPN? My file transfers are timing out and video calls are impossible.',
-        reactions: { up: 12, lightbulb: 0, comments: 0 },
-        replies: []
-    },
-    // Security
-    {
-        id: 5,
-        topic: 'Security',
-        title: 'Suspicious Phishing Email Received',
-        author: 'Steve Adams',
-        authorEmail: 'user@make-it-all.co.uk',
-        date: '4 October 2025',
-        content: "I received an email from 'IT Support' asking me to validate my password by clicking a link. This looks like a phishing attempt. Forwarding to the security team, but wanted to warn others.",
-        reactions: { up: 9, lightbulb: 3, comments: 1 },
-        replies: [
-            {
-                id: 102,
-                author: 'Jane Doe',
-                authorRole: 'specialist',
-                avatarClass: 'avatar-4',
-                date: '4 October 2025',
-                content: "Thanks, Steve. This is correct. That is a phishing email. **DO NOT** click the link. Our team is working to block it now. Well spotted!"
-            }
-        ]
-    },
-    // Database
-    {
-        id: 6,
-        topic: 'Database',
-        title: 'Query timeout on customer_report table',
-        author: 'Jane Doe',
-        authorEmail: 'specialist@make-it-all.co.uk',
-        date: '1 October 2025',
-        content: 'Running a standard SELECT query on the `customer_report` view is timing out after 30 seconds. This report is critical for month-end. Investigating now.',
-        reactions: { up: 1, lightbulb: 1, comments: 0 },
-        replies: []
-    },
-    // Finance
-    {
-        id: 7,
-        topic: 'Finance',
-        title: 'Question about new expense reporting tool',
-        author: 'Maria Garcia',
-        authorEmail: 'maria@make-it-all.co.uk',
-        date: '29 September 2025',
-        content: "Where can I find the training guide for the new 'Expensify' tool? The old Concur portal is now read-only.",
-        reactions: { up: 3, lightbulb: 0, comments: 0 },
-        replies: []
-    }
-];
-
-// Load posts from localStorage or use initial set
-let simPosts = JSON.parse(localStorage.getItem('simPosts')) || initialPosts;
-if (!localStorage.getItem('simPosts')) {
-    localStorage.setItem('simPosts', JSON.stringify(simPosts));
-}
-
-// Projects data
-const initialProjects = [
-    {
-        id: 'project15',
-        name: 'Project 15',
-        createdBy: 'manager@make-it-all.co.uk',
-        createdDate: '2025-09-15',
-        teamLeader: 'leader@make-it-all.co.uk'
-    },
-    {
-        id: 'apollo',
-        name: 'Project Apollo',
-        createdBy: 'manager@make-it-all.co.uk',
-        createdDate: '2025-08-20',
-        teamLeader: 'member2@make-it-all.co.uk'
-    }
-];
-
-
-let simProjects = JSON.parse(localStorage.getItem('simProjects')) || initialProjects;
-if (!localStorage.getItem('simProjects')) {
-    localStorage.setItem('simProjects', JSON.stringify(simProjects));
-}
-
-function saveProjects() {
-    localStorage.setItem('simProjects', JSON.stringify(simProjects));
-}
-
-// Personal to-do items (created by users themselves)
-const initialPersonalTodos = [
-    // Steve Adams (user@make-it-all.co.uk)
-    {
-        id: 101,
-        title: 'Review project 15 documentation',
-        project: 'Project 15',
-        projectId: 'project15',
-        owner: 'user@make-it-all.co.uk',
-        priority: 'medium',
-        status: 'todo',
-        deadline: '2025-10-26',
-        type: 'personal'
-    },
-    {
-        id: 102,
-        title: 'Prepare weekly report',
-        project: 'Project Apollo',
-        projectId: 'apollo',
-        owner: 'user@make-it-all.co.uk',
-        priority: 'low',
-        status: 'completed', // One completed task
-        deadline: '2025-10-27',
-        type: 'personal'
-    },
-    // Jane Doe (specialist@make-it-all.co.uk)
-    {
-        id: 103,
-        title: 'Research new security patch',
-        project: 'Security',
-        projectId: null,
-        owner: 'specialist@make-it-all.co.uk',
-        priority: 'high',
-        status: 'todo',
-        deadline: '2025-10-28',
-        type: 'personal'
-    },
-    // Ben Carter (manager@make-it-all.co.uk)
-    {
-        id: 104,
-        title: 'Schedule 1-on-1s',
-        project: 'Project 15',
-        projectId: null,
-        owner: 'manager@make-it-all.co.uk',
-        priority: 'medium',
-        status: 'todo',
-        deadline: '2025-10-27',
-        type: 'personal'
-    }
-];
-
-// Load tasks from localStorage or use initial set
-let simTasks = JSON.parse(localStorage.getItem('simTasks')) || [];
-if (!localStorage.getItem('simTasks')) {
-    localStorage.setItem('simTasks', JSON.stringify([]));
-}
-
-let simPersonalTodos = JSON.parse(localStorage.getItem('simPersonalTodos')) || initialPersonalTodos;
-if (!localStorage.getItem('simPersonalTodos')) {
-    localStorage.setItem('simPersonalTodos', JSON.stringify(simPersonalTodos));
-}
-
-function saveTasks() {
-    localStorage.setItem('simTasks', JSON.stringify(simTasks));
-}
-
-function savePersonalTodos() {
-    localStorage.setItem('simPersonalTodos', JSON.stringify(simPersonalTodos));
-}
-
-
-// HELPER FUNCTIONS
-/**
- * Gets the current user from the PHP session.
- */
+// Get current user from PHP session
 async function getCurrentUser() {
     try {
         const actionsBase = window.__ACTIONS_BASE__ || '../../actions/';
@@ -292,7 +75,6 @@ async function getCurrentUser() {
         const data = await response.json();
 
         if (!data.loggedIn) {
-            // Redirects if not logged in
             window.location.href = '../index.html';
             return null;
         }
@@ -305,15 +87,7 @@ async function getCurrentUser() {
     }
 }
 
-function getUsersSource() {
-    // Prefer users injected by PHP
-    if (window.__USERS__ && typeof window.__USERS__ === "object") return window.__USERS__;
-    // fallback (if you ever define simUsers elsewhere)
-    if (typeof simUsers !== "undefined") return simUsers;
-    return {}; // safe fallback
-}
-
-
+// Get current user's project permissions
 function getCurrentUserStatus() {
     if (window.__CAN_MANAGE_PROJECT__) {
         return {
@@ -328,6 +102,7 @@ function getCurrentUserStatus() {
     };
 }
 
+// Show/hide "Add Task" buttons based on permissions
 function updateAddTaskButtonsVisibility() {
     const canManage = !!window.__CAN_MANAGE_PROJECT__;
     document.querySelectorAll(".add-task").forEach(btn => {
@@ -335,31 +110,28 @@ function updateAddTaskButtonsVisibility() {
     });
 }
 
+/* ===========================
+   PROJECT CONTEXT
+   =========================== */
 
-/**
- * NEW: Gets the current project ID from the URL.
- * Defaults to 'NULL' if none is set.
- */
+// Get current project ID from URL
 function getCurrentProjectId() {
     const params = new URLSearchParams(window.location.search);
     if (params.has('project_id')) {
-        return params.get('project_id'); // numeric string like "2"
+        return params.get('project_id'); 
     }
     return null;
 }
 
-/**
- * NEW: Dynamically updates sidebar links and project header/nav
- */
+// Update sidebar links and project header based on user role
 function updateSidebarAndNav() {
     const project = window.__PROJECT__ || {};
     const role = (window.__ROLE__ || "team_member").toLowerCase();
 
-    // 1) Update header/breadcrumb (do NOT overwrite with "Project")
+    // Update header/breadcrumb 
     const breadcrumb = document.getElementById("project-name-breadcrumb");
     const header = document.getElementById("project-name-header");
 
-    // Use best available name WITHOUT flashing back to "Project"
     const projectName =
         (project && project.project_name) ||
         sessionStorage.getItem("currentProjectName") ||
@@ -369,22 +141,18 @@ function updateSidebarAndNav() {
         if (breadcrumb) breadcrumb.textContent = projectName;
         if (header) header.textContent = projectName;
     }
-    // else: leave whatever PHP already rendered
 
-
-    // 2) Read project_id from URL
+    // get project_id from URL
     const params = new URLSearchParams(window.location.search);
     const projectId = params.get("project_id");
     if (!projectId) return;
 
-    // 3) Decide which Progress page to use (manager/team_leader)
+    // Decide which Progress page to use (manager/team_leader)
     const isManager = (role === "manager");
     const canManageProject = !!window.__CAN_MANAGE_PROJECT__;
     const progressPage = (isManager || canManageProject) ? "manager-progress.php" : "progress.php";
 
-
-
-    // 4) Build nav links
+    // Build nav links
     const navLinks = document.getElementById("project-nav-links");
     if (navLinks) {
         const path = window.location.pathname.toLowerCase();
@@ -410,20 +178,24 @@ function updateSidebarAndNav() {
     `;
     }
 
-    // 5) Example: manager-only button
+    // Show/hide manager-only buttons
     const closeProjectBtn = document.getElementById("close-project-btn");
     if (closeProjectBtn) {
         closeProjectBtn.style.display = (role === "manager") ? "inline-flex" : "none";
     }
 }
 
-
+/* ===========================
+   KNOWLEDGE BASE - POSTS
+   =========================== */
 
 /**
  * Generates the HTML for a single post card.
  * @param {object} post - The post object.
  * @param {string} currentUserEmail - The email of the current user.
  */
+
+// Generate HTML for a single post card
 function createPostCardHTML(post, currentUserEmail) {
     const postLink = `knowledge-base-post.html?post_id=${post.id}`;
     const topicClass = post.topic.toLowerCase().split(' ')[0];
@@ -461,14 +233,6 @@ function createPostCardHTML(post, currentUserEmail) {
 }
 
 
-/**
- * Saves the current state of simPosts to localStorage.
- */
-function savePosts() {
-    localStorage.setItem('simPosts', JSON.stringify(simPosts));
-}
-
-
 /* ===========================
    PAGE-SPECIFIC LOGIC
    =========================== */
@@ -488,32 +252,33 @@ function renderPostList(posts, currentUserEmail) {
     } else {
         postListContainer.innerHTML = '<p>No posts found for this topic.</p>';
     }
-    // Re-activate icons after rendering
     feather.replace();
 }
 
-let KB_ACTIVE_TOPIC = null;      // string or null
-let KB_ACTIVE_POSTS = [];        // array of posts currently in that topic
+// Track active topic and posts
+let KB_ACTIVE_TOPIC = null;      
+let KB_ACTIVE_POSTS = [];        
 
 /**
  * Switches the main KB page to show a specific topic.
  * @param {string} topicName - The name of the topic, e.g., "Software Issues".
  * @param {object} currentUser - The current user object.
  */
+
+// Switch KB page to show a specific topic
 async function showTopicView(topicName, currentUser) {
-    // tell CSS we’re in “topic page” mode
     document.body.dataset.topicsView = "topic";
 
-    // 1. Hide the topic grid and its parent section
+    // Hide the topic grid and its parent section
     document.getElementById('kb-topics-section').style.display = 'none';
 
-    // 2. Hide the main page sidebar (Announcements)
+    // Hide the main page sidebar (Announcements)
     document.getElementById('announcements-widget').style.display = 'none';
 
-    // 3. Show the topic-specific sidebar
+    // Show the topic-specific sidebar
     document.getElementById('topic-sidebar-widgets').style.display = 'block';
 
-    // 4. Update the header to show breadcrumbs and new title
+    // Update the header to show breadcrumbs and new title
     const titleContainer = document.getElementById('kb-title-container');
     titleContainer.innerHTML = `
         <p class="breadcrumbs">
@@ -522,21 +287,21 @@ async function showTopicView(topicName, currentUser) {
         <h1>${topicName}</h1>
     `;
 
-    // Pass the topic to the create page via query param (FIXED: reference the element directly)
+    // Update create post button link
     const createHref = `knowledge-base-create.html?user=${currentUser.email}&topic=${encodeURIComponent(topicName)}`;
     const createBtnEl = document.getElementById('create-post-btn-topic');
     if (createBtnEl) createBtnEl.href = createHref;
 
-    // Also update the "Start new discussion" link in the sidebar
+    // Update sidebar "Start new discussion" link
     const startDiscussionLink = document.getElementById('start-discussion-link');
     if (startDiscussionLink) startDiscussionLink.href = createHref;
 
-    // 6. Update the "Posts" list title and hide tabs
+    // Update the "Posts" list title and hide tabs
     document.getElementById('posts-list-title').textContent = 'All Posts';
     document.getElementById('post-tabs-container').style.display = 'none';
 
-    // 7. Fetch posts from DB for this topic
-    const all = await fetchKbPostsFromDb("new", 50); // get latest + filter
+    // Fetch posts from DB for this topic
+    const all = await fetchKbPostsFromDb("new", 50); 
     const topicPosts = all.filter(p => p.topic === topicName);
 
     KB_ACTIVE_TOPIC = topicName;
@@ -551,23 +316,22 @@ async function showTopicView(topicName, currentUser) {
  * @param {boolean} showAll If true, render all topics (unused for main page now). If false, render main topics only.
  * @param {object} currentUser Current user (for click-through)
  */
+
+// Render topic cards into grid for main page
 async function renderTopicGrid(showAll, currentUser) {
     const grid = document.getElementById('topic-grid');
     if (!grid) return;
 
     await ensureKbTopicsLoaded();
 
-    // Main KB page: ONLY show original topics (ones with icons)
     const publicTopics = KB_TOPICS.filter(t => String(t.is_public) === "1");
 
-    // originals = ones that have a DB icon set OR a known default
+    // Only show topics that have icons set
     const originalTopics = publicTopics.filter(t =>
         (t.icon && t.icon.trim() !== "" && t.icon.trim() !== "?") || DEFAULT_TOPIC_ICONS[t.topic_name]
     );
 
-    // main page shows originals only
     const topicsToShow = showAll ? publicTopics : originalTopics;
-
 
     const topicCardsHtml = topicsToShow.map(t => `
     <a href="#" class="topic-card" data-topic="${t.topic_name}">
@@ -585,6 +349,7 @@ async function renderTopicGrid(showAll, currentUser) {
 
     grid.innerHTML = topicCardsHtml + addCardHtml;
 
+    // Add click handlers to topic cards
     grid.querySelectorAll('.topic-card:not(.add-topic-card)').forEach(card => {
         card.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -598,18 +363,17 @@ async function renderTopicGrid(showAll, currentUser) {
 
 
 /* ===========================
-   KB DB BACKEND (PHP actions)
+   KNOWLEDGE BASE - DATABASE
    =========================== */
 const KB_ACTIONS_BASE = "actions";
 
-// ===========================
-// TOPICS (DB-driven)
-// ===========================
-let KB_TOPICS = [];                 // array of {topic_id, topic_name, description, icon, ...}
-let TOPIC_ID_TO_NAME = {};          // { [id]: name }
-let TOPIC_NAME_TO_ID = {};          // { [name]: id }
-let TOPIC_NAME_TO_ICON = {};        // { [name]: icon }
+// KB topics data
+let KB_TOPICS = [];                 
+let TOPIC_ID_TO_NAME = {};          
+let TOPIC_NAME_TO_ID = {};          
+let TOPIC_NAME_TO_ICON = {};        
 
+// Fetch topics from database
 async function fetchKbTopicsFromDb() {
     const res = await fetch(`${KB_ACTIONS_BASE}/fetch_topics.php`, { credentials: "include" });
     const data = await res.json();
@@ -634,7 +398,7 @@ async function createKbTopicInDb({ topic_name, description, icon }) {
     return await res.json();
 }
 
-
+// Load topics and build lookup maps
 async function ensureKbTopicsLoaded() {
     if (KB_TOPICS.length) return;
 
@@ -656,8 +420,7 @@ function getTopicIdFromName(name) {
     return TOPIC_NAME_TO_ID[name] || 0;
 }
 
-
-// Format MySQL datetime -> "3 October 2025"
+// Format MySQL datetime to readable date
 function formatKbMysqlDate(mysqlDate) {
     if (!mysqlDate) return "";
     const d = new Date(String(mysqlDate).replace(" ", "T"));
@@ -713,11 +476,11 @@ async function createKbPostInDb({ title, topicName, details }) {
     });
 
     const data = await res.json();
-    return data; // {success, post_id} or {success:false,message}
+    return data; 
 }
 
 async function loadKbIndex(currentUser) {
-    // Make sure the Create Post button is visible
+    // Show Create Post button
     const createBtn = document.getElementById('create-post-btn-topic');
     if (createBtn) createBtn.style.display = 'inline-flex';
 
@@ -739,7 +502,7 @@ async function loadKbIndex(currentUser) {
     KB_ACTIVE_TOPIC = null;
     KB_ACTIVE_POSTS = [];
 
-    // Make Popular/New tabs actually fetch DB versions
+    // Setup Popular/New tabs
     const tabsContainer = document.getElementById("post-tabs-container");
     if (tabsContainer) {
         const buttons = tabsContainer.querySelectorAll("button");
@@ -797,7 +560,7 @@ function setupKbSearch(currentUser) {
             return;
         }
 
-        // if in a topic, filter locally (DON'T hit DB)
+        // if in a topic, filter locally 
         if (KB_ACTIVE_TOPIC) {
             const qLower = q.toLowerCase();
             const filtered = KB_ACTIVE_POSTS.filter(p =>
@@ -809,7 +572,6 @@ function setupKbSearch(currentUser) {
             return;
         }
 
-        // normal global search (DB)
         const type = getActiveType();
         const posts = await fetchKbPostsFromDb(type, 20, q);
         renderPostList(posts, currentUser.email);
@@ -825,18 +587,14 @@ function setupKbSearch(currentUser) {
     });
 }
 
-
-/**
- * Runs on the Create Post page 
- */
+// Setup create post form
 async function setupCreateForm(currentUser) {
     const form = document.getElementById("create-post-form");
 
-    // NEW elements (searchable)
-    const topicInput = document.getElementById("post-topic-input");   // visible
-    const topicsList = document.getElementById("topics-datalist");    // datalist
-    const topicHidden = document.getElementById("post-topic");        // hidden (submitted)
-    const topicError = document.getElementById("topic-error");        // optional msg
+    const topicInput = document.getElementById("post-topic-input");  
+    const topicsList = document.getElementById("topics-datalist");    
+    const topicHidden = document.getElementById("post-topic");        
+    const topicError = document.getElementById("topic-error");       
 
     if (!form || !topicInput || !topicsList || !topicHidden) return;
 
@@ -853,7 +611,7 @@ async function setupCreateForm(currentUser) {
         .map(name => `<option value="${escapeHtml(name)}"></option>`)
         .join("");
 
-    // Preselect if topic passed in URL (?topic=...)
+    // Preselect if topic passed in URL 
     const urlParams = new URLSearchParams(window.location.search);
     const preselectedTopic = urlParams.get("topic");
     if (preselectedTopic) {
@@ -861,6 +619,7 @@ async function setupCreateForm(currentUser) {
         topicHidden.value = topicNames.includes(preselectedTopic) ? preselectedTopic : "";
     }
 
+    // Sync hidden input with visible input
     function syncTopic() {
         const v = String(topicInput.value || "").trim();
         const ok = topicNames.includes(v);
@@ -909,141 +668,9 @@ function escapeHtml(str) {
         .replaceAll("'", "&#039;");
 }
 
-
-/**
- * Runs on the single Knowledge Base Post page (knowledge-base-post.html)
- */
-function loadKbPost(currentUser) {
-    const urlParams = new URLSearchParams(window.location.search);
-    const postId = parseInt(urlParams.get('id'));
-    const post = simPosts.find(p => p.id === postId);
-
-    if (!post) {
-        document.getElementById('post-title-placeholder').textContent = 'Post not found';
-        document.getElementById('post-full-content').innerHTML = '<p>Could not find a post with that ID. <a href="knowledge-base/knowledge-base.html">Go back to Knowledge Base</a></p>';
-        return;
-    }
-
-    // --- Determine avatar class for post author
-    let avatarClass = 'avatar-3'; // Default
-    if (post.authorEmail === 'user@make-it-all.co.uk') avatarClass = 'avatar-1';
-    if (post.authorEmail === 'specialist@make-it-all.co.uk') avatarClass = 'avatar-4';
-    if (post.authorEmail === 'manager@make-it-all.co.uk') avatarClass = 'avatar-2';
-
-    // --- Fill in post details ---
-    document.getElementById('post-title-placeholder').textContent = post.title;
-    document.getElementById('post-breadcrumbs').innerHTML = `
-        <a href="knowledge-base.html?user=${currentUser.email}">Knowledge Base</a> >
-        <a href="knowledge-base.html?user=${currentUser.email}" onclick="sessionStorage.setItem('returnToTopic', '${post.topic}');">${post.topic}</a> >
-        Post
-    `;
-    document.title = `Make-It-All - ${post.title}`; // Update browser tab title
-
-    const postContentEl = document.getElementById('post-full-content');
-    postContentEl.innerHTML = `
-        <div class="post-card">
-            <div class="post-card-header">
-                <div class="post-card-avatar ${avatarClass}"></div>
-                <div>
-                    <span class="post-card-author">${post.author}</span>
-                    <span class="post-card-date">${post.date}</span>
-                </div>
-            </div>
-            <div class="post-card-body">
-                <p>${post.content.replace(/\n/g, '<br>')}</p>
-            </div>
-            <div class="post-card-footer">
-                <span><i data-feather="thumbs-up"></i> ${post.reactions.up}</span>
-                <span><i data-feather="message-circle"></i> ${post.reactions.comments}</span>
-            </div>
-        </div>
-    `;
-
-    // --- Fill in replies ---
-    const repliesListEl = document.getElementById('post-replies-list');
-    if (post.replies.length > 0) {
-        const repliesHtml = post.replies.map(reply => `
-            <div class="reply-card">
-                <div class="reply-avatar ${reply.avatarClass}"></div>
-                <div class="reply-content">
-                    <div class="reply-header">
-                        <span class="reply-author">${reply.author} ${reply.authorRole === 'specialist' ? '(Specialist)' : ''}</span>
-                        <span class="reply-date">${reply.date}</span>
-                    </div>
-                    <div class="reply-body">
-                        <p>${reply.content.replace(/\n/g, '<br>')}</p>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        repliesListEl.innerHTML = repliesHtml;
-    } else {
-        repliesListEl.innerHTML = '<p>No replies yet.</p>';
-    }
-
-    // --- Handle Role-Based Permissions (Replying) ---
-    //Define technical vs non-technical topics
-    const technicalTopics = ['Printing', 'Software Issues', 'Network', 'Security', 'Database'];
-    const isTechnicalTopic = technicalTopics.includes(post.topic);
-
-    //Determine if current user can reply
-    let canReply = false;
-
-    if (isTechnicalTopic) {
-        //Technical topics: Only specialists can reply
-        canReply = (currentUser.role === 'specialist');
-    } else {
-        //Non-technical topics: Anyone can reply
-        canReply = true;
-    }
-
-    if (canReply) {
-        const replyForm = document.getElementById('reply-form');
-        replyForm.style.display = 'block';
-
-        replyForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const replyContent = document.getElementById('reply-content').value;
-
-            if (!replyContent) return;
-
-            //Create the new reply object
-            const newReply = {
-                id: new Date().getTime(), //Unique ID
-                author: currentUser.name,
-                authorRole: currentUser.role,
-                avatarClass: currentUser.avatarClass,
-                date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
-                content: replyContent
-            };
-
-            //Add reply to the post and save
-            post.replies.push(newReply);
-            post.reactions.comments = post.replies.length; //Update comment count
-            savePosts();
-
-            //Reload the page to show the new reply
-            window.location.reload();
-        });
-    } else {
-        //Show a message explaining why they can't reply
-        const replyForm = document.getElementById('reply-form');
-        replyForm.style.display = 'block';
-        replyForm.innerHTML = `
-            <div style="padding: 20px; background: #FFF3CD; border: 1px solid #FFE69C; border-radius: 8px; text-align: center;">
-                <p style="margin: 0; color: #856404; font-weight: 500;">
-                    <i data-feather="alert-circle" style="width: 18px; height: 18px; vertical-align: middle;"></i>
-                    Only Technical Specialists can reply to technical posts.
-                </p>
-            </div>
-        `;
-        feather.replace(); //Re-render the icon
-    }
-}
-
-/**
- * Runs on the Create Project page (create-project.html)
- */
+/* ===========================
+   PROJECT MANAGEMENT
+   =========================== */
 
 function setupCreateProjectPage(currentUser) {
     const form = document.getElementById("create-project-form");
@@ -1055,7 +682,6 @@ function setupCreateProjectPage(currentUser) {
         hiddenId: "team-leader-id",
         resultsId: "leader-results",
         endpointUrl: "create-project.php?ajax=leaders",
-        // endpointUrl: "search_leaders.php",
         formId: "create-project-form",
     });
 
@@ -1072,14 +698,16 @@ function setupCreateProjectPage(currentUser) {
     });
 }
 
-/**
- * Runs on the Settings page (settings.php)
- */
+/* ===========================
+   SETTINGS PAGE
+   =========================== */
+
 function loadSettingsPage(currentUser) {
     document.getElementById('profile-name').value = currentUser.name;
     document.getElementById('profile-email').value = currentUser.email;
     let role = document.getElementById('profile-role').value = currentUser.role;
 
+    // Format role for display
     if (role === 'manager') {
     role = 'Manager';
     } else if (role === 'technical_specialist') {
@@ -1110,7 +738,6 @@ function loadSettingsPage(currentUser) {
         };
         reader.readAsDataURL(file);
 
-        // Use file name as the database path
         const simulatedPath = `/${file.name}`;
 
         fetch("settings.php", {
@@ -1202,10 +829,7 @@ function loadSettingsPage(currentUser) {
 /* ===========================
    ALL TOPICS PAGE (all-topics.html)
    =========================== */
-/**
- * Runs on All Topics page (all-topics.html)
- * Shows a plain list (no buttons) of all topics: main + custom.
- */
+
 async function loadAllTopicsPage(currentUser) {
     // Title + breadcrumbs
     const titleContainer = document.getElementById('kb-title-container');
@@ -1218,7 +842,6 @@ async function loadAllTopicsPage(currentUser) {
      `;
     }
 
-    // Build clickable rows
     const listEl = document.getElementById('all-topics-list');
     if (listEl) {
         await ensureKbTopicsLoaded();
@@ -1256,27 +879,9 @@ async function loadAllTopicsPage(currentUser) {
         feather.replace();
         }
 
-        // initial render
         renderTopicsList(allTopics);
 
-        // bind search
         setupAllTopicsSearch(allTopics, renderTopicsList);
-
-
-        if (topics.length === 0) {
-            listEl.innerHTML = '<p>No topics yet.</p>';
-        } else {
-            listEl.innerHTML = topics
-                .map(
-                    (t) => `
-           <div class="topic-row" data-topic="${t}">
-             <span class="topic-name">${t}</span>
-             <i data-feather="arrow-right"></i>
-           </div>
-         `
-                )
-                .join('');
-        }
 
         // Make each row clickable
         listEl.querySelectorAll('.topic-row').forEach((row) => {
@@ -1319,9 +924,10 @@ function setupAllTopicsSearch(allTopics, renderFn) {
   });
 }
 
-/**
- * Runs on the Home page (home/home.php)
- */
+/* ===========================
+   HOME PAGE
+   =========================== */
+   
 function loadHomePage(currentUser) {
     // Update page label based on role
     const pageLabel = document.getElementById('page-label-text');
@@ -1335,20 +941,12 @@ function loadHomePage(currentUser) {
     if (currentUser.role === 'manager') {
         document.getElementById('manager-actions').style.display = 'block';
     } else if (currentUser.role === 'team_leader') {
-        // Team leaders don't have manager actions on home page in this design
-        // document.getElementById('leader-actions').style.display = 'block';
     }
 
-    // Render Total Tasks Chart
+    // Render widgets
     renderTotalTasksChart(currentUser);
-
-    // Render To-Do List
     renderToDoList(currentUser);
-
-    // Render Trending Posts
     renderTrendingPosts(currentUser);
-
-    // Render Notifications
     renderNotifications();
 
     feather.replace();
@@ -1455,7 +1053,7 @@ function renderTotalTasksChart(currentUser) {
                                 weight: 400
                             },
                             padding: 10,
-                            boxWidth: 60,  // Make legend boxes larger
+                            boxWidth: 60,  
                             boxHeight: 30
                         }
                     }
@@ -1505,9 +1103,7 @@ function renderTotalTasksChart(currentUser) {
     }
 }
 
-/**
- * Renders the to-do list with personal todos
- */
+/* Renders the to-do list  */
 function renderToDoList(currentUser) {
     const projectSelect = document.getElementById('project-select');
     const todoItemsList = document.getElementById('todo-items-list');
@@ -1515,9 +1111,9 @@ function renderToDoList(currentUser) {
 
     // Populate project filter from personal todos
     const projects = [...new Set(simPersonalTodos.filter(t => t.owner === currentUser.email).map(t => t.project))];
-    projectSelect.innerHTML = '<option value="">All Projects</option>'; // Add 'All' option
+    projectSelect.innerHTML = '<option value="">All Projects</option>';
     projects.forEach(project => {
-        if (project) { // Only add if project is not null
+        if (project) { 
             const option = document.createElement('option');
             option.value = project;
             option.textContent = project;
@@ -1591,8 +1187,7 @@ function renderTodoItems(tasks, currentUser) {
     todoItemsList.innerHTML = tasks.map(task => {
         const deadline = task.deadline ? new Date(task.deadline) : null;
         const formattedDate = deadline ? deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No date';
-        const isPersonal = task.type === 'personal'; // This will always be true now
-
+        const isPersonal = task.type === 'personal'; 
         return `
             <div class="todo-item ${task.status === 'completed' ? 'completed' : ''}" data-task-id="${task.id}" data-task-type="${task.type || 'assigned'}">
                 <div class="todo-checkbox ${task.status === 'completed' ? 'checked' : ''}">
@@ -1633,13 +1228,12 @@ function renderTodoItems(tasks, currentUser) {
                     checkbox.classList.toggle('checked');
                     if (task.status === 'completed') {
                         checkbox.innerHTML = '<i data-feather="check"></i>';
-                        feather.replace(); // Redraw the new icon
+                        feather.replace(); 
                     } else {
                         checkbox.innerHTML = '';
                     }
                 }
             }
-            // Removed 'else' block for assigned tasks, as they are no longer in this list
         });
     });
 
@@ -1650,7 +1244,7 @@ async function renderTrendingPosts(currentUser) {
     const trendingPostsList = document.getElementById('trending-posts-list');
     if (!trendingPostsList) return;
 
-    const posts = await fetchKbPostsFromDb("popular", 3); // DB
+    const posts = await fetchKbPostsFromDb("popular", 3); 
     trendingPostsList.innerHTML = posts.map(post => {
         const topicClass = post.topic.toLowerCase().split(' ')[0];
         return `
@@ -1709,9 +1303,9 @@ function renderNotifications() {
     feather.replace();
 }
 
-/**
- * Runs on the Progress page (progress.php) - shows only assigned tasks
- */
+/* ===========================
+   PROGRESS PAGE
+   =========================== */
 async function loadProgressPage(currentUser) {
     const currentProjectId = getCurrentProjectId();
 
@@ -1733,9 +1327,9 @@ async function loadProgressPage(currentUser) {
         }
     } catch (err) {
         console.error("Error fetching project:", err);
-        // don't hard-fail; we still have __PROJECT__ from PHP
     }
 
+    // Redirect managers to manager progress page
     if (window.__CAN_MANAGE_PROJECT__) {
         window.location.href = `manager-progress.php?project_id=${encodeURIComponent(currentProjectId)}`;
         return;
@@ -1743,6 +1337,7 @@ async function loadProgressPage(currentUser) {
 
     updateSidebarAndNav();
 
+    // Load tasks from database
     let projectTasks = [];
     try {
         projectTasks = await fetchProjectTasksFromDb(currentProjectId);
@@ -1751,13 +1346,13 @@ async function loadProgressPage(currentUser) {
         projectTasks = [];
     }
     window.__TASKS_NORM__ = projectTasks;
-
+     // Filter to current user's tasks
     const userEmail = String(currentUser.email || "").toLowerCase();
     const userTasks = projectTasks.filter(t =>
         Array.isArray(t.assignedTo) &&
         t.assignedTo.map(e => String(e).toLowerCase()).includes(userEmail)
     );
-
+     // Update progress bar
     const fillEl = document.getElementById("task-progress-fill");
     const textEl = document.getElementById("progress-text");
 
@@ -1775,6 +1370,7 @@ async function loadProgressPage(currentUser) {
 
     console.log('Tasks loaded for countdown:', projectTasks.length);
     console.log('Current user email:', currentUser?.email);
+    // Render upcoming deadlines
     const listEl = document.getElementById("deadlines-list");
     if (listEl) {
         const today = new Date();
@@ -1836,7 +1432,7 @@ async function loadProgressPage(currentUser) {
 function renderUpcomingDeadlines(userTasks) {
     const deadlinesList = document.getElementById('deadlines-list');
 
-    const today = new Date("2025-10-25T12:00:00"); // Hardcode date for demo consistency
+    const today = new Date("2025-10-25T12:00:00"); 
     today.setHours(0, 0, 0, 0);
 
     const upcomingTasks = userTasks
@@ -1994,7 +1590,6 @@ function setupCreateTopicForm(currentUser) {
         const topicName = document.getElementById('topic-name').value.trim();
         const topicDescription = document.getElementById('topic-description').value.trim();
 
-        // If you have an icon input, use it. If not, default to "tag".
         const iconInput = document.getElementById('topic-icon');
         const topicIcon = iconInput ? iconInput.value.trim() : "";
 
@@ -2002,8 +1597,7 @@ function setupCreateTopicForm(currentUser) {
             alert('Please enter a topic name.');
             return;
         }
-
-        // duplicate check (case-insensitive) against DB-loaded topics
+         // Check for duplicates
         const exists = KB_TOPICS.some(t => t.topic_name.toLowerCase() === topicName.toLowerCase());
         if (exists) {
             alert('A topic with that name already exists. Please choose a different name.');
@@ -2091,7 +1685,6 @@ function setupAssignTaskForm() {
 
         try {
             if (isEditMode && editingTaskId) {
-                // ✨ UPDATE existing task
                 formData.append("ajax", "update_task");
                 formData.append("task_id", editingTaskId);
 
@@ -2128,10 +1721,8 @@ function setupAssignTaskForm() {
                 showSuccessNotification("Task created successfully!");
             }
 
-            // Close modal and reset
             closeTaskModal();
 
-            // Refresh the board
             fetchAndRenderTasks();
 
         } catch (err) {
@@ -2142,9 +1733,7 @@ function setupAssignTaskForm() {
 }
 
 
-/**
- * Runs on the Create Project page (create-project.html)
- */
+/* Runs on the Create Project page (create-project.html) */
 function setupCreateProjectForm(currentUser) {
     const form = document.getElementById('create-project-form');
     if (!form) return;
@@ -2176,6 +1765,9 @@ function setupCreateProjectForm(currentUser) {
     });
 }
 
+/* ===========================
+   TASK BOARD
+   =========================== */
 function createTaskCardHTML(task, currentUser) {
     function renderStatusPill(task) {
         const statuses = {
@@ -2294,7 +1886,6 @@ function createTaskCardHTML(task, currentUser) {
         today.setHours(0, 0, 0, 0);
         deadlineDate.setHours(0, 0, 0, 0);
 
-        // Check if overdue (and not completed)
         if (deadlineDate < today && task.status !== 'completed') {
             isOverdue = true;
             dueDateClass = 'task-due-date overdue';
@@ -2348,9 +1939,7 @@ function denormalizeStatus(uiStatus) {
     return map[uiStatus] || "to_do";
 }
 
-/**
- * Renders all tasks onto the project board
- */
+/* Renders all tasks onto the project board */
 function renderTaskBoard(currentUser, currentProjectId) {
     updateAddTaskButtonsVisibility();
 
@@ -2380,7 +1969,6 @@ function renderTaskBoard(currentUser, currentProjectId) {
 
     const isLeaderOnApollo = (currentUser.email === 'leader@make-it-all.co.uk' && currentProjectId === 'apollo');
 
-    // Prefer the normalized array if it exists (because we mutate it during drag/drop)
     let tasksToRender = Array.isArray(window.__TASKS_NORM__) && window.__TASKS_NORM__.length
         ? window.__TASKS_NORM__
         : [];
@@ -2434,8 +2022,6 @@ function renderTaskBoard(currentUser, currentProjectId) {
         }
     });
 
-    // *** NEW: Initialize D&D and Modals ***
-    // Re-initialize drag and drop if user is manager/leader (and not the exception)
     if (isManagerView && !isLeaderOnApollo) {
         setupBoardDnDOnce(currentUser, currentProjectId);
     }
@@ -2526,7 +2112,6 @@ async function deleteTaskInDb(taskId) {
             })
         });
 
-        // Check if response is ok first
         if (!res.ok) {
             throw new Error(`Server error: ${res.status}`);
         }
@@ -2535,7 +2120,6 @@ async function deleteTaskInDb(taskId) {
 
         // Check if response is empty or not JSON
         if (!raw || raw.trim() === '') {
-            // If empty response but status was ok, consider it success
             return { success: true };
         }
 
@@ -2544,7 +2128,6 @@ async function deleteTaskInDb(taskId) {
             data = JSON.parse(raw);
         } catch (parseError) {
             console.error("JSON parse error. Raw response:", raw);
-            // If we can't parse but got 200 OK, assume success
             if (res.status === 200) {
                 return { success: true };
             }
@@ -2572,27 +2155,30 @@ function setupStatusPillActions(currentUser, currentProjectId) {
     board.dataset.statusActionsbound = "1";
 
     // Open/close dropdown (using event delegation on board)
-    board.addEventListener("click", (e) => {
-        const pill = e.target.closest(".status-pill");
-        if (!pill) return;
+board.addEventListener("click", (e) => {
+    const pill = e.target.closest(".status-pill");
+    if (!pill) return;
 
-        e.preventDefault();
-        e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
 
-        if (!window.__CAN_MANAGE_PROJECT__) return;
+    if (!window.__CAN_MANAGE_PROJECT__) return;
 
-        // Close all others
-        document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
-        document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+    const menu = pill.nextElementSibling;
+    const card = pill.closest(".task-card");
 
-        const menu = pill.nextElementSibling;
-        const card = pill.closest(".task-card");
+    // Check if THIS menu is currently open
+    const isCurrentlyOpen = menu && !menu.hidden;
 
-        if (menu && card) {
-            menu.hidden = false;
-            card.classList.add("menu-open");
-        }
-    });
+    // Close all menus first
+    document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
+    document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
+
+    if (!isCurrentlyOpen && menu && card) {
+        menu.hidden = false;
+        card.classList.add("menu-open");
+    }
+});
 
     // Handle dropdown actions (using event delegation on board)
     board.addEventListener("click", async (e) => {
@@ -2683,17 +2269,22 @@ function setupStatusPillActions(currentUser, currentProjectId) {
         renderTaskBoard(currentUser, currentProjectId);
     });
 
-    // Close all menus when clicking outside (single listener on document)
-    document.addEventListener("click", (e) => {
-        if (e.target.closest(".task-status-menu")) return;
+   // Close all menus when clicking outside or on the pill again
+document.addEventListener("click", (e) => {
+    const clickedPill = e.target.closest(".status-pill");
+    const clickedMenu = e.target.closest(".task-status-menu");
+    
+    if (clickedPill) return;
+    
+    // If clicked anywhere else (including inside dropdown options), close all menus
+    if (!clickedMenu) {
         document.querySelectorAll(".status-dropdown").forEach(m => m.hidden = true);
         document.querySelectorAll(".task-card").forEach(c => c.classList.remove("menu-open"));
-    }, { once: false }); // Don't use 'once' here as we want it to persist
+    }
+}, { once: false });
 }
 
-/**
- * Opens the assign task modal in EDIT mode with pre-filled data
- */
+// Open edit task modal with pre-filled data
 function openEditTaskModal(taskId) {
     const tasks = window.__TASKS_NORM__ || [];
     const task = tasks.find(t => String(t.id) === String(taskId));
@@ -2761,9 +2352,7 @@ function openEditTaskModal(taskId) {
     if (window.feather) feather.replace();
 }
 
-/**
- * Closes the task modal and resets it to CREATE mode
- */
+// Close task modal
 function closeTaskModal() {
     const modal = document.getElementById("assign-task-modal");
     if (!modal) return;
@@ -2791,9 +2380,6 @@ function closeTaskModal() {
     if (countEl) countEl.textContent = "Selected: 0";
 }
 
-/**
- * Helper function to update assignee selected count
- */
 function updateSelectedCount() {
     const selectedCountEl = document.getElementById("assignee-selected-count");
     if (!selectedCountEl) return;
@@ -2802,11 +2388,7 @@ function updateSelectedCount() {
     selectedCountEl.textContent = `Selected: ${checked.length}`;
 }
 
-
-
-/**
- * Initializes drag and drop functionality for the board
- */
+/*  Initializes drag and drop functionality for the board */
 function setupBoardDnDOnce(currentUser, currentProjectId) {
     if (!IS_ARCHIVED) {
         const board = document.querySelector(".task-board");
@@ -2816,7 +2398,7 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
         if (board.dataset.dndBound === "1") return;
         board.dataset.dndBound = "1";
 
-        // 1) dragstart/dragend using event delegation
+        // dragstart/dragend using event delegation
         board.addEventListener("dragstart", (e) => {
             const card = e.target.closest('.task-card[draggable="true"]');
             if (!card) return;
@@ -2834,12 +2416,12 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
                 .forEach((l) => l.classList.remove("drag-over"));
         });
 
-        // 2) dragover/dragleave/drop delegation for columns/lists
+        // dragover/dragleave/drop delegation for columns/lists
         board.addEventListener("dragover", (e) => {
             const col = e.target.closest(".task-column");
             if (!col) return;
 
-            e.preventDefault(); // required
+            e.preventDefault(); 
             e.dataTransfer.dropEffect = "move";
 
             const list = col.querySelector(".task-list");
@@ -2851,7 +2433,6 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
             if (!col) return;
 
             const related = e.relatedTarget;
-            // if still inside the same column, ignore
             if (related && col.contains(related)) return;
 
             const list = col.querySelector(".task-list");
@@ -2901,7 +2482,6 @@ function setupBoardDnDOnce(currentUser, currentProjectId) {
 }
 
 function ensureTaskDetailsMenuUI(detailsModal) {
-    // Add a unique scope class so CSS only affects THIS modal
     detailsModal.classList.add("task-details-modal");
 
     const header = detailsModal.querySelector(".modal-header");
@@ -2915,7 +2495,6 @@ function ensureTaskDetailsMenuUI(detailsModal) {
         header.appendChild(actions);
     }
 
-    // Move the CLOSE button into the actions container
     const closeBtn =
         header.querySelector("#details-close-modal-btn") ||
         header.querySelector(".close-btn");
@@ -2924,7 +2503,6 @@ function ensureTaskDetailsMenuUI(detailsModal) {
         actions.appendChild(closeBtn);
     }
 
-    // If menu already exists, return references
     let wrap = actions.querySelector(".task-status-menu.details-menu");
     if (wrap) {
         return {
@@ -2933,7 +2511,6 @@ function ensureTaskDetailsMenuUI(detailsModal) {
         };
     }
 
-    // Create menu WITHOUT any feather icons - use pure text
     wrap = document.createElement("div");
     wrap.className = "task-status-menu details-menu";
 
@@ -3006,7 +2583,7 @@ function initTaskDetailsModal(currentUser) {
         const task = allTasks.find((t) => String(t.id) === String(taskId));
         if (!task) return;
 
-        const usersObj = getUsersSource();
+        const usersObj = getUsersMap();
 
         // Fill modal fields
         document.getElementById("details-task-title").textContent = task.title || "";
@@ -3053,7 +2630,6 @@ function initTaskDetailsModal(currentUser) {
         }
 
         // Buttons
-        // Buttons
         const markBtn = document.getElementById("project-complete-btn");
         const deleteBtn = document.getElementById("delete-task-btn");
 
@@ -3087,7 +2663,6 @@ function initTaskDetailsModal(currentUser) {
             menuBtn.dataset.taskId = String(task.id);
             dropdown.dataset.taskId = String(task.id);
 
-            // **FIX: Remove old listeners and rebind**
             const newMenuBtn = menuBtn.cloneNode(true);
             menuBtn.parentNode.replaceChild(newMenuBtn, menuBtn);
 
@@ -3203,7 +2778,6 @@ function initTaskDetailsModal(currentUser) {
         if (window.feather) feather.replace();
     });
 
-    // Close dropdown on ESC
     document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
         const dd = detailsModal.querySelector(".status-dropdown");
@@ -3269,7 +2843,6 @@ function setupCloseProjectControls() {
 
             if (!res.ok || !data.success) throw new Error(data.message || "Close project failed");
 
-            // success -> go overview
             window.location.href = "projects-overview.php";
         } catch (err) {
             console.error(err);
@@ -3325,7 +2898,6 @@ function loadProjectsPage(currentUser) {
 
         deadlineInput.min = minDate;
 
-        // optional: if the input already has a past value, clear it
         if (deadlineInput.value && deadlineInput.value < minDate) {
             deadlineInput.value = "";
         }
@@ -3351,7 +2923,6 @@ function loadProjectsPage(currentUser) {
     if (modalAssigneeList) {
         modalAssigneeList.innerHTML = "";
 
-        // Prefer DB users injected by PHP
         const usersObj = window.__USERS__ || simUsers || {};
 
         Object.entries(usersObj).forEach(([email, user]) => {
@@ -3479,9 +3050,7 @@ function loadProjectsPage(currentUser) {
         });
     }
 
-
-
-    // Notifications (leave as-is)
+    // Notifications 
     const showProjectNotification = sessionStorage.getItem("projectCreated");
     if (showProjectNotification) {
         showSuccessNotification(showProjectNotification);
@@ -3677,15 +3246,12 @@ async function loadManagerProgressPage(currentUser) {
     const projectTasks = await fetchProjectTasksFromDb(currentProjectId);
     console.log("Manager progress tasks:", projectTasks.length, projectTasks);
 
-    //renderManagerDeadlines(projectTasks);
-    initManagerMemberProgressList(); // renders the left list via ajax=member_progress
+    initManagerMemberProgressList(); 
 
     feather.replace();
 }
 
-/**
- * (Manager) Renders the overall project task progress
- */
+/* (Manager) Renders the overall project task progress */
 function renderManagerTaskProgress(projectTasks) {
     const completedTasks = projectTasks.filter(t => t.status === 'completed').length;
     const totalTasks = projectTasks.length;
@@ -3696,9 +3262,7 @@ function renderManagerTaskProgress(projectTasks) {
         `Your team has completed ${progressPercent}% of tasks assigned for this project.`;
 }
 
-/**
- * (Manager) Renders upcoming deadlines for the whole team
- */
+/* (Manager) Renders upcoming deadlines for the whole team */
 function renderManagerDeadlines(projectTasks) {
     const deadlinesList = document.getElementById('deadlines-list');
 
@@ -3754,9 +3318,8 @@ function renderManagerDeadlines(projectTasks) {
     }).join('');
 }
 
-/**
- * (Manager) Renders the Project Resources card
- */
+/* (Manager) Renders the Project Resources card 
+*/
 function renderProjectResources(projectTasks) {
     const today = new Date("2025-10-25T12:00:00"); // Hardcode date
     today.setHours(0, 0, 0, 0);
@@ -3773,26 +3336,21 @@ function renderProjectResources(projectTasks) {
     card.classList.remove('status-green', 'status-yellow', 'status-red');
 
     if (overdueTasks === 0) {
-        // Green
         card.classList.add('status-green');
         statusText.textContent = 'Sufficiently Resourced';
         statusDesc.textContent = 'No tasks are overdue. Resources are efficiently allocated.';
     } else if (overdueTasks >= 1 && overdueTasks <= 3) {
-        // Yellow
         card.classList.add('status-yellow');
         statusText.textContent = 'Tightly Resourced';
         statusDesc.textContent = `One or more tasks are overdue. These tasks may need more resources to be completed.`;
     } else {
-        // Red
         card.classList.add('status-red');
         statusText.textContent = 'Under-Resourced';
         statusDesc.textContent = `More than three tasks are overdue. This project needs more resources, and your team members may require additional training.`;
     }
 }
 
-/**
- * (Manager) Renders the "Tasks per member" stacked bar chart
- */
+/* (Manager) Renders the "Tasks per member" stacked bar chart */
 function renderTasksPerMemberChart(projectTasks) {
     // Get all unique users in this project
     const userEmails = [...new Set(projectTasks.flatMap(t => t.assignedTo))];
@@ -3818,7 +3376,7 @@ function renderTasksPerMemberChart(projectTasks) {
 
     //Render the chart
     const container = document.getElementById('tasks-per-member-chart-container');
-    container.innerHTML = '<canvas id="tasksPerMemberChart"></canvas>'; // Clear and add canvas
+    container.innerHTML = '<canvas id="tasksPerMemberChart"></canvas>'; 
     const ctx = document.getElementById('tasksPerMemberChart');
 
     if (ctx) {
@@ -3888,16 +3446,13 @@ function renderTasksPerMemberChart(projectTasks) {
                         }
                     }
                 },
-                // Adjust height dynamically based on number of users
                 aspectRatio: Math.max(0.5, 4 / labels.length),
             }
         });
     }
 }
 
-/**
- * Runs on the Project Resources page (project-resources.php)
- */
+/* Runs on the Project Resources page (project-resources.php)*/
 async function loadProjectResourcesPage(currentUser) {
     updateSidebarAndNav();
     setupCloseProjectControls();
@@ -3961,9 +3516,7 @@ async function loadProjectResourcesPage(currentUser) {
 }
 
 
-/**
- * Runs on the Create Personal To-Do page (create-todo.html)
- */
+/* Runs on the Create Personal To-Do page (create-todo.html) */
 function setupCreateTodoForm(currentUser) {
     const form = document.getElementById('create-todo-form');
     if (!form) return;
@@ -3994,7 +3547,6 @@ function setupCreateTodoForm(currentUser) {
             return;
         }
 
-
         const newTodo = {
             id: new Date().getTime(),
             title: title,
@@ -4014,7 +3566,6 @@ function setupCreateTodoForm(currentUser) {
         window.location.href = `home.php?user=${currentUser.email}`;
     });
 }
-
 
 function sortProjects() {
     const sortSelect = document.getElementById('sortProjects');
@@ -4068,7 +3619,6 @@ function sortProjects() {
     });
 }
 
-
 function archivedJump() {
     const btn = document.getElementById("jumpToArchived");
     const archived = document.getElementById("archived-section");
@@ -4100,7 +3650,7 @@ function setupArchivedToggle() {
 }
 
 function setupProjectCardMenus() {
-    // 1) Open/close the 3-dots menu
+    // Open/close the 3-dots menu
 
     document.addEventListener("click", (e) => {
         const menuBtn = e.target.closest(".card-menu-btn");
@@ -4121,7 +3671,6 @@ function setupProjectCardMenus() {
             return;
         }
 
-        // If user clicked an option in the menu (Mark complete / Archive / Reinstate / Update)
         if (menuItem) {
             const card = menuItem.closest(".project-card");
             const projectId = card.dataset.projectId;
@@ -4136,11 +3685,9 @@ function setupProjectCardMenus() {
                 return;
             }
 
-            // others go to PHP action handler
             runProjectAction(projectId, action, card);
             return;
         }
-
 
         // If user clicked anywhere else, close all menus
         document.querySelectorAll(".card-menu-dropdown").forEach((m) => (m.hidden = true));
@@ -4155,12 +3702,10 @@ async function runProjectAction(projectId, action, cardEl) {
             body: new URLSearchParams({ project_id: projectId, action }),
         });
 
-        // Read ONCE as text so we can debug whatever the server returns
         const raw = await res.text();
         console.log("Status:", res.status);
         console.log("Raw response:", raw);
 
-        // If server didn't return 2xx, show it
         if (!res.ok) {
             alert(`Server error ${res.status}. Check console.`);
             return;
@@ -4393,7 +3938,6 @@ function insertCardInSortedPosition(card, grid, sortBy = "due") {
         grid.appendChild(card);
     }
 }
-
 
 
 function updateCardUIAfterAction(action, cardEl) {
@@ -4649,7 +4193,6 @@ function applyUpdatedProjectToCard(card, updated) {
             }
         }
     } else {
-        // No picture - show default avatar
         if (avatarImg) avatarImg.remove();
 
         if (!avatarDefault && leaderRow) {
@@ -4707,12 +4250,9 @@ function updateDeadlinePillUI(card, deadlineStr) {
     const span = pill.querySelector("span");
     if (span) span.textContent = text;
 
-    // keep datasets in sync for restore + future
     card.dataset.deadlineText = text;
     card.dataset.deadlineClass = cls;
 }
-
-
 
 function setupLeaderAutocomplete({
     inputId,
@@ -4762,8 +4302,8 @@ function setupLeaderAutocomplete({
     function selectItem(idx) {
         const u = items[idx];
         if (!u) return;
-        input.value = u.label;     // what user sees
-        hidden.value = u.id;       // what gets submitted
+        input.value = u.label;     
+        hidden.value = u.id;       
         closeResults();
     }
 
@@ -4786,9 +4326,7 @@ function setupLeaderAutocomplete({
         return await res.json();
     }
 
-
     input.addEventListener("input", () => {
-        // user typed something new -> reset hidden until they pick from list
         hidden.value = "";
 
         const q = input.value.trim();
@@ -4869,7 +4407,6 @@ function setupProjectsOverviewSearch() {
     const archivedGrid = archivedContent?.querySelector(".projects-grid");
     const archivedCards = archivedGrid ? Array.from(archivedGrid.querySelectorAll(".project-card")) : [];
 
-    // Toggle button (your arrow) — id is jumpToArchived
     const archiveToggleBtn = document.getElementById("jumpToArchived");
 
     // Remember default state (usually hidden)
@@ -4893,7 +4430,6 @@ function setupProjectsOverviewSearch() {
       `;
             gridEl.appendChild(el);
 
-            // Make feather icons render for newly added elements
             if (window.feather) feather.replace();
         }
         return el;
@@ -4917,7 +4453,7 @@ function setupProjectsOverviewSearch() {
     function filterCards(cards, queryLower) {
         let matches = 0;
         for (const card of cards) {
-            const name = (card.dataset.name || "").toLowerCase(); // you already set data-name
+            const name = (card.dataset.name || "").toLowerCase(); 
             const ok = name.includes(queryLower);
             card.style.display = ok ? "" : "none";
             if (ok) matches++;
@@ -4966,7 +4502,6 @@ function setupProjectsOverviewSearch() {
             return;
         }
 
-        // Always show archived section while searching (your requirement)
         openArchived();
 
         // Filter
@@ -4978,7 +4513,6 @@ function setupProjectsOverviewSearch() {
         if (archivedNoMatch) archivedNoMatch.style.display = archivedMatches === 0 ? "" : "none";
     });
 
-    // When they click out (blur): clear text + reset to normal
     input.addEventListener("blur", () => {
         if (input.value.trim() !== "") {
             input.value = "";
@@ -4988,7 +4522,6 @@ function setupProjectsOverviewSearch() {
 }
 function setupProjectCardNavigation() {
     document.addEventListener("click", (e) => {
-        // Don’t navigate if they clicked menu / 3-dot / dropdown
         if (e.target.closest(".card-menu, .card-menu-btn, .card-menu-dropdown")) return;
 
         const card = e.target.closest(".project-card");
@@ -4997,10 +4530,8 @@ function setupProjectCardNavigation() {
         const projectId = card.dataset.projectId;
         if (!projectId) return;
 
-        // 🔍 DEBUG – BEFORE navigation
         console.log("Navigating to", projectId);
 
-        // 🔍 DEBUG – AFTER navigation attempt
         setTimeout(() => console.log("Still here"), 0);
 
         // Go to DB-backed project page
@@ -5221,7 +4752,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.__USER__ = currentUser;
     window.__CURRENT_USER__ = currentUser; // Also set for task board rendering
 
-    // Sync sidebar nav items based on role (for static HTML KB pages)
+    // Sync sidebar nav items based on role 
     const role = (currentUser.role || '').toLowerCase();
     const navHome = document.getElementById('nav-home');
     const navEmployees = document.getElementById('nav-employees');
@@ -5248,10 +4779,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (typeof feather !== 'undefined') feather.replace();
     }
 
-    // Run page-specific logic based on body ID
     const pageId = document.body.id;
 
-    // Inject the floating To-Do widget on KB pages (HTML pages can't use PHP include)
+    // Inject the floating To-Do widget on KB pages 
     const kbPages = ['kb-index', 'kb-post', 'kb-create', 'kb-create-topic', 'kb-topics-all'];
     if (kbPages.includes(pageId)) {
         injectTodoWidget('../to-do/');
@@ -5276,14 +4806,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (returnTopic) {
             sessionStorage.removeItem('returnToTopic');
 
-            await loadKbIndex(currentUser);          // attach listeners + load posts/topics
-            await showTopicView(returnTopic, currentUser); // then switch view safely
+            await loadKbIndex(currentUser);          
+            await showTopicView(returnTopic, currentUser); 
         } else {
             await loadKbIndex(currentUser);
         }
 
     } else if (pageId === 'kb-post') {
-        // DB-driven post page uses post.js now
     } else if (pageId === 'kb-create') {
         await setupCreateForm(currentUser);
     } else if (pageId === 'settings-page') {
@@ -5329,7 +4858,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     fetchAndRenderTasks();
     setupAssignTaskForm();
-    // Finally, activate all Feather icons
     feather.replace();
 });
 
@@ -5398,8 +4926,8 @@ function resetAllData() {
 })();
 
 function matchesDueFilter(deadline, filter, status) {
-    if (!filter) return true;           // no filter
-    if (!deadline) return false;        // no date → never matches
+    if (!filter) return true;           
+    if (!deadline) return false;        
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -5436,7 +4964,6 @@ async function fetchProjectTasksFromDb(projectId) {
     const data = await res.json();
     if (!data.success) return [];
 
-    // data.tasks are DB shape -> normalize to your UI shape
     return (data.tasks || []).map(t => ({
         id: t.task_id,
         title: t.task_name,
@@ -5456,7 +4983,6 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
 
     const pid = getCurrentProjectId();
 
-    // Always hit projects.php for task AJAX (works from ANY page)
     const url = new URL("projects.php", window.location.href);
     url.searchParams.set("project_id", pid || "");
     url.searchParams.set("ajax", "fetch_tasks");
@@ -5485,7 +5011,6 @@ function fetchAndRenderTasks({ search = "", status = "", priority = "", due = ""
 
             window.__TASKS_NORM__ = []; // force rebuild from filtered list
 
-            // If this page has a kanban board, rerender it
             if (document.querySelector(".task-board")) {
                 clearTaskColumns();
                 renderTaskBoard(window.__CURRENT_USER__, getCurrentProjectId());
@@ -5523,10 +5048,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-
-/**
- * Helper: Get current user email from various sources
- */
+/* Helper: Get current user email from various sources */
 function getCurrentUserEmail() {
     // Try from window object first (set by PHP)
     if (window.__USER__?.email) return window.__USER__.email;
@@ -5535,11 +5057,8 @@ function getCurrentUserEmail() {
     const params = new URLSearchParams(window.location.search);
     if (params.has('user')) return params.get('user');
 
-    // Default fallback (you might need to adjust this)
     return 'user@make-it-all.co.uk';
 }
-
-
 
 // =============================
 // CLEAR FILTERS BUTTON (fixed)
@@ -5560,7 +5079,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (filterPriority) filterPriority.value = "";
         if (filterDue) filterDue.value = "";
 
-        // Re-fetch tasks with no filters (keep search text if you want)
+        // Re-fetch tasks with no filters 
         fetchAndRenderTasks({
             search: searchInput?.value.trim() || "",
             status: "",
@@ -5569,7 +5088,7 @@ document.addEventListener("DOMContentLoaded", () => {
             page: 1
         });
 
-        // Close filter panel (match your toggle logic)
+        // Close filter panel 
         if (panel) panel.style.display = "none";
     });
 
@@ -5580,7 +5099,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!filterPanel || !filterToggle) return;
 
-        // If click is outside both the panel and toggle button
         if (!filterPanel.contains(e.target) && !filterToggle.contains(e.target)) {
             filterPanel.style.display = 'none';
         }
