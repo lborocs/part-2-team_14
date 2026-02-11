@@ -1,21 +1,21 @@
-/*
-* Knowledge Base Specific Styles
-*/
+/* === KNOWLEDGE BASE SPECIFIC STYLES === */
 
-/* --- General Layout & Header --- */
+/* === MAIN LAYOUT  === */
 
 .main-content {
-    /* Remove padding from dashboard.css to allow for full-width header */
     padding: 0;
 }
 
+/* === HEADER (TITLE + BREADCRUMBS + ACTIONS) === */
+
 .kb-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     flex-wrap: wrap;
     padding: 30px 40px;
     border-bottom: 1px solid #EAECEE;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
 }
 
 .kb-header h1 {
@@ -30,7 +30,6 @@
     margin: 0;
 }
 
-/* Header actions (Search + Create button aligned right) */
 .kb-header-actions {
     display: flex;
     align-items: center;
@@ -70,7 +69,7 @@
     margin-bottom: 0;
 }
 
-/* --- KB Index Page --- */
+/* === KB INDEX: TOPICS STRIP === */
 
 .kb-topics {
     display: flex;
@@ -94,10 +93,13 @@
     align-items: center;
     gap: 5px;
 }
+
 .view-more svg {
     width: 18px;
     height: 18px;
 }
+
+/* === TOPIC GRID === */
 
 .topic-grid {
     display: grid;
@@ -121,29 +123,27 @@
     font-weight: 600;
     font-size: 15px;
     transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
 }
 
-/* Icons inside topic cards (works before & after feather.replace) */
+/* Icons inside topic cards */
 .topic-card i,
 .topic-card svg {
     width: 36px;
     height: 36px;
     color: #555;
-    display: inline-block;   /* important for <i> */
+    display: inline-block;
+    /* important for <i> */
 }
 
-/* Feather SVGs are stroke-based */
 .topic-card svg {
     stroke: currentColor;
     fill: none;
 }
 
-
-
 .topic-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.07);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.07);
     border-color: #FBC02D;
 }
 
@@ -157,6 +157,7 @@
     color: #F9A825;
 }
 
+/* === MAIN + SIDEBAR LAYOUT === */
 
 .kb-layout-wrapper {
     padding: 0 40px 40px 40px;
@@ -165,14 +166,16 @@
 }
 
 .kb-main-content {
-    flex: 3; /* Takes up 3/4 of the space */
+    flex: 3;
     min-width: 0;
 }
 
 .kb-sidebar {
-    flex: 1; /* Takes up 1/4 of the space */
+    flex: 1;
     min-width: 280px;
 }
+
+/* === POSTS LIST + TABS === */
 
 .kb-posts h2 {
     font-size: 24px;
@@ -232,6 +235,8 @@
     background: #8c8c8c;
 }
 
+/* === POST CARD === */
+
 .post-card {
     background: #fff;
     border: 1px solid #EAECEE;
@@ -239,12 +244,12 @@
     padding: 20px;
     text-decoration: none;
     color: #1E1E1E;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
     transition: box-shadow 0.2s ease;
 }
 
 .post-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
 .post-card-header {
@@ -252,19 +257,14 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 15px;
-    width: 100%; /* ADD THIS */
+    width: 100%;
 }
 
 .post-actions {
     margin-left: auto;
     display: flex;
     gap: 8px;
-    flex-shrink: 0; /* ADD THIS */
-}
-
-.post-action-btn {
-    white-space: nowrap;
-    flex-shrink: 0;
+    flex-shrink: 0;/
 }
 
 .post-card-avatar {
@@ -279,6 +279,7 @@
     font-weight: 600;
     font-size: 14px;
 }
+
 .post-card-date {
     font-size: 13px;
     color: #8C8C8C;
@@ -294,7 +295,11 @@
     background: #E6F7F0;
     color: #34A853;
 }
-.post-card-tag.printing { background: #FFFBE5; color: #F9A825; }
+
+.post-card-tag.printing {
+    background: #FFFBE5;
+    color: #F9A825;
+}
 
 .post-card-body h3 {
     font-size: 18px;
@@ -315,9 +320,12 @@
     -webkit-box-orient: vertical;
 }
 
-a, u {
-  text-decoration: none;
+a,
+u {
+    text-decoration: none;
 }
+
+/* === POST FOOTER (COMMENTS / LIKES) === */
 
 .post-card-footer {
     display: flex;
@@ -333,6 +341,7 @@ a, u {
     font-weight: 500;
     color: #555;
 }
+
 .post-card-footer span svg,
 .post-card-footer .kb-like-btn svg {
     width: 18px;
@@ -340,17 +349,21 @@ a, u {
     color: #8C8C8C;
 }
 
+/* === ANNOUNCEMENTS SIDEBAR BOX === */
+
 .announcements-box {
     background: #fff;
     border: 1px solid #EAECEE;
     border-radius: 12px;
     padding: 20px;
 }
+
 .announcements-box h3 {
     margin: 0 0 15px 0;
     font-size: 18px;
     font-weight: 600;
 }
+
 .announcement-content-placeholder p {
     font-size: 14px;
     color: #555;
@@ -359,7 +372,7 @@ a, u {
 }
 
 
-/* --- KB Topic Page & Sidebar --- */
+/* === SIDEBAR WIDGETS + BUTTONS === */
 
 .create-post-btn {
     display: inline-flex;
@@ -377,14 +390,18 @@ a, u {
     transition: background 0.2s ease;
     margin-bottom: 20px;
 }
+
 .create-post-btn:hover {
     background: #F9A825;
 }
+
 .create-post-btn svg {
     width: 20px;
     height: 20px;
 }
 
+/* === SIDEBAR WIDGET CONTAINER === */
+/* Reusable card style for Related Topics / Best Practices / New Discussion  */
 .kb-sidebar-widget {
     background: #fff;
     border: 2px solid #FFFBE5;
@@ -393,16 +410,19 @@ a, u {
     margin-bottom: 20px;
     box-shadow: 0 4px 8px rgba(251, 192, 45, 0.05);
 }
+
 .kb-sidebar-widget h3 {
     margin: 0 0 15px 0;
     font-size: 18px;
     font-weight: 600;
 }
+
 .related-topics-list {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
+
 .topic-tag {
     font-size: 12px;
     font-weight: 500;
@@ -421,11 +441,13 @@ a, u {
     flex-direction: column;
     gap: 12px;
 }
+
 .best-practices-list li {
     font-size: 14px;
     color: #555;
     line-height: 1.5;
 }
+
 .best-practices-list li strong {
     color: #1E1E1E;
     display: block;
@@ -435,25 +457,30 @@ a, u {
     background: #FFFBE5;
     text-align: center;
 }
+
 .kb-new-discussion p {
     font-size: 14px;
     font-weight: 500;
     margin: 0 0 10px 0;
 }
+
 .kb-new-discussion a {
     font-size: 14px;
     font-weight: 600;
     color: #1E1E1E;
     text-decoration: none;
 }
+
 .kb-new-discussion a:hover {
     text-decoration: underline;
 }
 
-/* --- KB Single Post Page --- */
+/* === SINGLE POST PAGE  === */
+/* Make the post content fully readable  */
 #post-full-content .post-card-header {
     margin-bottom: 20px;
 }
+
 #post-full-content .post-card-body p {
     font-size: 16px;
     line-height: 1.7;
@@ -462,13 +489,17 @@ a, u {
     line-clamp: unset;
     white-space: pre-wrap;
 }
+
 #post-full-content .post-card-body h3 {
     display: none;
 }
 
+/* === REPLIES SECTION LAYOUT === */
+
 .post-replies-section {
     margin-top: 40px;
 }
+
 .post-replies-section h2 {
     font-size: 22px;
     font-weight: 600;
@@ -501,20 +532,24 @@ a, u {
     padding: 15px 20px;
     flex-grow: 1;
 }
+
 .reply-header {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;
 }
+
 .reply-author {
     font-weight: 600;
     font-size: 15px;
 }
+
 .reply-date {
     font-size: 13px;
     color: #8C8C8C;
 }
+
 .reply-body {
     font-size: 15px;
     color: #333;
@@ -528,11 +563,13 @@ a, u {
     border-radius: 12px;
     padding: 20px;
 }
+
 .reply-form h3 {
     margin: 0 0 15px 0;
     font-size: 18px;
     font-weight: 600;
 }
+
 .reply-form textarea {
     width: 100%;
     min-height: 120px;
@@ -544,31 +581,36 @@ a, u {
     resize: vertical;
     margin-bottom: 15px;
 }
+
 .reply-form textarea:focus {
     outline: 2px solid #FBC02D;
     border-color: #FBC02D;
 }
+
 .reply-form .create-post-btn {
     margin-bottom: 0;
 }
 
+/* === CREATE POST PAGE FORM CARD === */
 
-/* --- Create Post Page --- */
 .create-post-form {
     background: #fff;
     border: 1px solid #EAECEE;
     border-radius: 12px;
     padding: 30px;
 }
+
 .form-group {
     margin-bottom: 25px;
 }
+
 .form-group label {
     display: block;
     font-size: 15px;
     font-weight: 600;
     margin-bottom: 8px;
 }
+
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -580,6 +622,7 @@ a, u {
     font-size: 14px;
     background: #F8F9FA;
 }
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -587,6 +630,7 @@ a, u {
     background: #fff;
     border-color: #FBC02D;
 }
+
 .form-group textarea {
     resize: vertical;
     min-height: 150px;
@@ -598,7 +642,7 @@ a, u {
     margin-bottom: 10px;
 }
 
-/* --- Settings Page --- */
+/* === SETTINGS PAGE: CARD + FORM === */
 
 .settings-card {
     background: #fff;
@@ -667,67 +711,73 @@ a, u {
     cursor: pointer;
     transition: all 0.2s ease;
 }
+
 .sign-out-btn:hover {
     background: #D93025;
     color: #fff;
 }
+
 .sign-out-btn svg {
     width: 20px;
     height: 20px;
 }
-/* === Fix: Create Post page header alignment === */
+
+/* === CREATE POST PAGE: HEADER ALIGNMENT === */
+
 body#kb-create .kb-header {
-    display: block;            /* stack title + breadcrumbs vertically */
-    text-align: left;          /* left-align everything */
+    display: block;
+    text-align: left;
 }
 
 body#kb-create .kb-header h1 {
     margin-top: 10px;
 }
 
-/* --- All Topics Page Styling --- */
+/* === ALL TOPICS PAGE: LIST CARD === */
+
 #all-topics-list {
-  background: #fff;
-  border: 1px solid #EAECEE;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-  margin-top: 15px;
+    background: #fff;
+    border: 1px solid #EAECEE;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    margin-top: 15px;
 }
 
 .topic-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  font-size: 16px;
-  font-weight: 500;
-  color: #1E1E1E;
-  border-bottom: 1px solid #EAECEE;
-  cursor: pointer;
-  transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #1E1E1E;
+    border-bottom: 1px solid #EAECEE;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
 .topic-row:last-child {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .topic-row:hover {
-  background: #FFFBE5;
+    background: #FFFBE5;
 }
 
 .topic-row i {
-  color: #8C8C8C;
-  width: 18px;
-  height: 18px;
+    color: #8C8C8C;
+    width: 18px;
+    height: 18px;
 }
+/* === ALL TOPICS PAGE: SPACING TWEAK === */
 
-/* --- All Topics Page Spacing Fix --- */
 body#kb-topics-all .kb-layout-wrapper {
-  margin-top: 25px; /* shifts the whole content down slightly */
+    margin-top: 25px;
 }
 
-/* --- Success Notification --- */
+/* === SUCCESS NOTIFICATION  === */
+
 .success-notification {
     position: fixed;
     top: 20px;
@@ -757,6 +807,7 @@ body#kb-topics-all .kb-layout-wrapper {
         transform: translateX(400px);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -767,237 +818,212 @@ body#kb-topics-all .kb-layout-wrapper {
     from {
         opacity: 1;
     }
+
     to {
         opacity: 0;
     }
 }
 
 .topic-emoji {
-  font-size: 34px;
-  line-height: 1;
-}
-.post-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
+    font-size: 34px;
+    line-height: 1;
 }
 
+/* === INLINE EDIT MODE === */
+
 .post-action-btn {
-  font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 6px;
-  border: 1px solid #EAECEE;
-  cursor: pointer;
-  background: #fff;
-  transition: all 0.2s ease;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #EAECEE;
+    cursor: pointer;
+    background: #fff;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .post-action-btn--edit {
-  border-color: #FBC02D;
-  color: #1E1E1E;
+    border-color: #FBC02D;
+    color: #1E1E1E;
 }
 
 .post-action-btn--edit:hover {
-  background: #FFFBE5;
+    background: #FFFBE5;
 }
 
 .post-action-btn--delete {
-  border-color: #D93025;
-  color: #D93025;
+    border-color: #D93025;
+    color: #D93025;
 }
 
 .post-action-btn--delete:hover {
-  background: #FFEBEB;
+    background: #FFEBEB;
 }
 
-/* --- Inline Edit Post form actions --- */
 .edit-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-top: 15px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 15px;
 }
 
-/* Cancel Button - Styled to match Save button height/padding */
 .edit-cancel-btn {
-  font-family: 'Poppins', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 12px 20px;
-  border-radius: 8px;
-  border: 1px solid #EAECEE;
-  background: #fff;
-  color: #1E1E1E;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  /* Match the create-post-btn display style */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  
-  /* Ensure consistent height */
-  min-height: 44px;
-  box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: 1px solid #EAECEE;
+    background: #fff;
+    color: #1E1E1E;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    box-sizing: border-box;
 }
 
 .edit-cancel-btn:hover {
-  background: #F8F9FA;
-  border-color: #D0D0D0;
+    background: #F8F9FA;
+    border-color: #D0D0D0;
 }
 
-/* Ensure Save button (create-post-btn) matches inside edit-actions */
 .edit-actions .create-post-btn {
-  margin-bottom: 0;
-  font-size: 15px;
-  padding: 12px 20px;
-  
-  /* Match cancel button display */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  
-  /* Ensure consistent height */
-  min-height: 44px;
-  box-sizing: border-box;
+    margin-bottom: 0;
+    font-size: 15px;
+    padding: 12px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    box-sizing: border-box;
 }
 
-/* Hide search bar on single post page */
+/* === SINGLE POST PAGE: HIDE HEADER SEARCH === */
+
 body#kb-post .kb-header .search-bar {
-  display: none;
+    display: none;
 }
 
-.kb-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-}
 
 .kb-header-left {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0; /* prevents weird overflow */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
 }
 
 .post-page-title {
-  margin: 0;
-  line-height: 1.1;
+    margin: 0;
+    line-height: 1.1;
 }
 
 /* Hide Related Topics ONLY on topic pages (All Posts view) */
 body[data-topics-view="topic"] #related-topics-widget {
-  display: none !important;
+    display: none !important;
 }
 
+/* === ANNOUNCEMENTS LIST ITEMS === */
+
 .announcement-item {
-  padding: 10px 0;
-  border-bottom: 1px solid #f0f0f0;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .announcement-item:last-child {
-  border-bottom: none;
+    border-bottom: none;
 }
 
 .announcement-title {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 4px;
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
 }
 
 .announcement-body {
-  font-size: 13px;
-  color: #555;
-  margin: 0 0 6px;
-  line-height: 1.5;
+    font-size: 13px;
+    color: #555;
+    margin: 0 0 6px;
+    line-height: 1.5;
 }
 
 .announcement-date {
-  font-size: 12px;
-  color: #999;
+    font-size: 12px;
+    color: #999;
 }
 
+/* === LIKE BUTTON  === */
+
 .kb-like-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  color: inherit;
-  padding: 0;
-  font: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    font: inherit;
+    color: inherit;
 }
 
 .kb-like-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.kb-like-btn {
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  font: inherit;
-  color: inherit;
-}
-
-.kb-like-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .kb-like-btn.liked {
-  color: #E6A100;
+    color: #E6A100;
 }
 
 .kb-like-btn.liked svg {
-  fill: #E6A100;
-  color: #E6A100;
+    fill: #E6A100;
+    color: #E6A100;
 }
 
 .kb-like-btn:hover {
-  color: #E6A100;
+    color: #E6A100;
 }
 
-.kb-solved-badge{
-  font-family: 'Poppins', sans-serif;
-  display:inline-flex;
-  align-items:center;
-  padding:6px 10px;
-  border-radius:999px;
-  background:#E8F5E9;
-  color:#1B5E20;
-  font-size:12px;
-  font-weight:600;
-  border:1px solid #C8E6C9;
-  margin-left:8px;
+.kb-solved-badge {
+    font-family: 'Poppins', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #E8F5E9;
+    color: #1B5E20;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #C8E6C9;
+    margin-left: 8px;
 }
 
-.kb-solve-btn{
-  font-family: 'Poppins', sans-serif;
-  padding:8px 12px;
-  border-radius:10px;
-  border:1px solid #D0D5DD;
-  background:#fff;
-  font-weight:600;
-  cursor:pointer;
+.kb-solve-btn {
+    font-family: 'Poppins', sans-serif;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #D0D5DD;
+    background: #fff;
+    font-weight: 600;
+    cursor: pointer;
 }
 
-.kb-solve-btn:hover{ background:#F8FAFC; }
+.kb-solve-btn:hover {
+    background: #F8FAFC;
+}
 
 .kb-unsolve-btn {
-  background: #FFF3E0;
-  border-color: #FFE0B2;
-  color: #E65100;
+    background: #FFF3E0;
+    border-color: #FFE0B2;
+    color: #E65100;
 }
-.kb-unsolve-btn:hover { background: #FFE0B2; }
 
+.kb-unsolve-btn:hover {
+    background: #FFE0B2;
+}

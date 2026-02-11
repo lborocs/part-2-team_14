@@ -31,7 +31,7 @@ try {
   $database = new Database();
   $db = $database->getConnection();
 
-  // 1) Load comment author
+  // Load comment author
   $stmt = $db->prepare("SELECT author_id FROM kb_comments WHERE comment_id = ?");
   $stmt->execute([$commentId]);
   $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -41,14 +41,14 @@ try {
     exit();
   }
 
-  // 2) Author-only edit
+  // Author-only edit
   $currentUserId = (int)$_SESSION['user_id'];
   if ((int)$row['author_id'] !== $currentUserId) {
     echo json_encode(['success' => false, 'message' => 'Not allowed']);
     exit();
   }
 
-  // 3) Update + timestamp
+  //  Update + timestamp
   $upd = $db->prepare("
     UPDATE kb_comments
     SET content = :content,

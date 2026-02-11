@@ -16,9 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $topic_name   = trim($_POST['topic_name'] ?? '');
 $description  = trim($_POST['description'] ?? '');
-$icon         = trim($_POST['icon'] ?? 'tag'); // default feather icon
+$icon         = trim($_POST['icon'] ?? 'tag'); 
 $is_public    = isset($_POST['is_public']) ? (int)$_POST['is_public'] : 1;
-$restricted   = trim($_POST['restricted_to_role'] ?? 'all'); // 'all' or role name
+$restricted   = trim($_POST['restricted_to_role'] ?? 'all'); 
 
 if ($topic_name === '') {
     echo json_encode(['success' => false, 'message' => 'Topic name is required']);
