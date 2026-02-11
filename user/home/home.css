@@ -313,8 +313,8 @@ select:hover {
     height: 42px;
     gap: 10px;
     padding: 12px 20px;
-    background-color: white;
-    border: 1px solid #e0e0e0;
+    background-color: #FFF3E0;
+    border: 1px solid #FFB74D;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;

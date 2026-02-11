@@ -116,8 +116,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <button class="create-post-btn">Save Profile</button>
                             </div>
 
-                            <div class="profile-avatar">
-                                <img id="profile-picture" src="<?php echo htmlspecialchars($profile_picture); ?>" alt="Profile Picture">
+                            <div class="profile-avatar-wrapper">
+                                <div class="profile-avatar">
+                                    <img id="profile-picture" src="<?php echo htmlspecialchars($profile_picture); ?>" alt="Profile Picture">
+                                </div>
                                 <input type="file" id="profile-image-input" accept="image/*" style="display:none;">
                                 <div class="avatar-buttons">
                                     <button type="button" class="create-post-btn" id="upload-image-btn">Upload Icon</button>
