@@ -17,9 +17,8 @@ $role   = $_SESSION['role'] ?? null;
 $isLocal = in_array($_SERVER['REMOTE_ADDR'], ['127.0.0.1', '::1'], true);
 
 if (!$userId && $isLocal) {
-    // DEV BYPASS (remove when login is merged)
-    $userId = 1;              // pick a real user_id from your sample data
-    $role   = 'manager';       // or 'team_member' to test member view
+    $userId = 1;              
+    $role   = 'manager';       
 }
 
 if (!$userId) {
@@ -28,7 +27,7 @@ if (!$userId) {
 }
 
 // =============================
-// AJAX: GET PROJECT DATA FOR PROGRESS PAGES (SECURE)
+// AJAX: GET PROJECT DATA FOR PROGRESS PAGES 
 // =============================
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_project') {
     header('Content-Type: application/json; charset=utf-8');
@@ -39,12 +38,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_project') {
         echo json_encode(['success' => false, 'message' => 'Missing/invalid project_id']);
         exit;
     }
-
-    // ✅ ACCESS CHECK FIRST (prevents leaking project data)
+    //access control + fetch project details
     $access = guardProjectAccess($db, $pid, (int)$userId);
-    $baseProject = $access['project']; // already verified safe
+    $baseProject = $access['project']; 
 
-    // attach leader display info (still safe because access passed)
     $stmt = $db->prepare("
         SELECT 
             u.first_name AS team_leader_first_name,
@@ -72,7 +69,6 @@ if ($projectId <= 0) {
     exit("Missing/invalid project_id in the URL.");
 }
 
-// SINGLE SOURCE OF TRUTH
 $access = guardProjectAccess($db, $projectId, (int)$userId);
 
 $project = $access['project'];
@@ -91,16 +87,14 @@ $allowedTaskStatuses = ['to_do', 'in_progress', 'review', 'completed'];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_task_status') {
     header('Content-Type: application/json; charset=utf-8');
 
-    // Block status changes if project is archived
+    // Prevent any task changes when project is archived 
     if (($project['status'] ?? '') === 'archived') {
         http_response_code(409);
         echo json_encode(['success' => false, 'message' => 'This project is archived. Reinstate it to change tasks.']);
         exit;
     }
 
-
     $roleLower = strtolower((string)$role);
-
     $taskId    = isset($_POST['task_id']) ? (int)$_POST['task_id'] : 0;
     $newStatus = strtolower(trim($_POST['new_status'] ?? ''));
 
@@ -112,7 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
 
     // managers/leaders: allow any status change
     if ($canManageProject) {
-        // allowed
     } else {
         // members: ONLY allowed to move to review, and only if assigned
         if ($newStatus !== 'review') {
@@ -140,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
     }
 
     $dbStatus = $newStatus;
-
+    // Fetch previous status so we can correctly update timestamps/reopen tracking
     $oldStatusStmt = $db->prepare("
         SELECT status FROM tasks
         WHERE task_id = :tid AND project_id = :pid
@@ -156,7 +149,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
         echo json_encode(['success' => false, 'error' => 'Task not found']);
         exit;
     }
-
 
     // Update only if task is in this project
     $upd = $db->prepare("
@@ -229,24 +221,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
         exit;
     }
 
-    // Block task creation if project is archived
+    //Prevent task creation when archived
     if (($project['status'] ?? '') === 'archived') {
         http_response_code(409);
         echo json_encode(['success' => false, 'message' => 'This project is archived. Reinstate it to add tasks.']);
         exit;
     }
 
-
-
-    // Read inputs
     $taskName    = trim($_POST['task_name'] ?? '');
     $description = trim($_POST['description'] ?? '');
     $priority    = strtolower(trim($_POST['priority'] ?? 'medium'));
-    $status      = strtolower(trim($_POST['status'] ?? 'to_do')); // expects DB status
-    $deadline    = trim($_POST['deadline'] ?? ''); // expects "YYYY-MM-DD" from <input type="date">
-    $assignees   = $_POST['assignees'] ?? [];      // array of emails
+    $status      = strtolower(trim($_POST['status'] ?? 'to_do')); 
+    $deadline    = trim($_POST['deadline'] ?? ''); 
+    $assignees   = $_POST['assignees'] ?? [];      
 
-    // Validate
     if ($taskName === '' || $deadline === '' || empty($assignees)) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Missing required fields']);
@@ -265,7 +253,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
     try {
         $db->beginTransaction();
 
-        // 1) Insert task
         $ins = $db->prepare("
             INSERT INTO tasks (task_name, description, project_id, created_by, deadline, status, priority)
             VALUES (:name, :desc, :pid, :uid, :deadline, :status, :priority)
@@ -281,9 +268,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
         ]);
 
         $newTaskId = (int)$db->lastInsertId();
-
-        // 2) Resolve assignee emails -> user_ids
-        // Build placeholders for IN (...)
         $assignees = array_values(array_unique(array_map('strtolower', array_map('trim', $assignees))));
         $placeholders = implode(',', array_fill(0, count($assignees), '?'));
 
@@ -302,13 +286,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
             exit;
         }
 
-        // 3) Insert task_assignments
         $aIns = $db->prepare("
             INSERT INTO task_assignments (task_id, user_id, assigned_by)
             VALUES (:tid, :uid, :by)
         ");
 
-        // --- NEW: project_members upsert logic (no schema change) ---
+        // Keeps project_members consistent with task assignments
         $pmActiveCheck = $db->prepare("
             SELECT 1
             FROM project_members
@@ -337,27 +320,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
             $assigneeId = (int)$fu['user_id'];
             $assigneeEmail = strtolower(trim($fu['email']));
 
-            // assign the task
             $aIns->execute([
                 ':tid' => $newTaskId,
                 ':uid' => $assigneeId,
                 ':by'  => $userId,
             ]);
 
-            // ensure they are an ACTIVE project member
             $pmActiveCheck->execute([
                 ':pid' => $projectId,
                 ':uid' => $assigneeId,
             ]);
 
             if (!$pmActiveCheck->fetchColumn()) {
-                // try re-activate first (if they left before)
                 $pmReactivate->execute([
                     ':pid' => $projectId,
                     ':uid' => $assigneeId,
                 ]);
 
-                // if nothing reactivated, insert new membership
                 if ($pmReactivate->rowCount() === 0) {
                     $pmInsert->execute([
                         ':pid' => $projectId,
@@ -395,12 +374,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'create_
     }
 }
 // =============================
-// UPDATE TASK (AJAX) - PDO VERSION (FIXED)
+// UPDATE TASK (AJAX) 
 // =============================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_task') {
     header('Content-Type: application/json; charset=utf-8');
 
-    // Only manager/team_leader can update tasks (match your create/delete rules)
+    // Only manager/team_leader can update tasks 
     if (!$canManageProject) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'No permission']);
@@ -415,7 +394,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
     $status      = strtolower(trim($_POST['status'] ?? 'to_do'));
     $assignees   = $_POST['assignees'] ?? [];
 
-    // Validation
     if ($taskId <= 0) {
         http_response_code(400);
         echo json_encode(['success' => false, 'message' => 'Invalid task ID']);
@@ -437,20 +415,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
         exit;
     }
 
-    // Validate priority/status
     $validPriorities = ['low', 'medium', 'high'];
     if (!in_array($priority, $validPriorities, true)) $priority = 'medium';
 
     $validStatuses = ['to_do', 'in_progress', 'review', 'completed'];
     if (!in_array($status, $validStatuses, true)) $status = 'to_do';
 
-    // Normalise assignee emails
     $assignees = array_values(array_unique(array_map('strtolower', array_map('trim', $assignees))));
 
     try {
         $db->beginTransaction();
 
-        // 0) Make sure task belongs to this project
         $check = $db->prepare("
             SELECT 1
             FROM tasks
@@ -466,7 +441,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
             exit;
         }
 
-        // 1) Update task fields
         $upd = $db->prepare("
             UPDATE tasks
             SET task_name = :name,
@@ -487,11 +461,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
             ':pid'      => $projectId
         ]);
 
-        // 2) Delete old assignments
         $del = $db->prepare("DELETE FROM task_assignments WHERE task_id = :tid");
         $del->execute([':tid' => $taskId]);
 
-        // 3) Resolve emails -> user_ids
         $placeholders = implode(',', array_fill(0, count($assignees), '?'));
         $uStmt = $db->prepare("
             SELECT user_id, email
@@ -508,7 +480,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
             exit;
         }
 
-        // 4) Insert new assignments + ensure assignees are active project members
         $ins = $db->prepare("
             INSERT INTO task_assignments (task_id, user_id, assigned_by)
             VALUES (:tid, :uid, :by)
@@ -537,7 +508,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
                 ':by'  => (int)$userId
             ]);
 
-            // Ensure assignee is an active project member
             $pmActiveCheck->execute([':pid' => $projectId, ':uid' => $assigneeId]);
             if (!$pmActiveCheck->fetchColumn()) {
                 $pmReactivate->execute([':pid' => $projectId, ':uid' => $assigneeId]);
@@ -574,14 +544,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'close_project') {
     header('Content-Type: application/json; charset=utf-8');
 
-    // Only manager can close (change if you want team_leader too)
+    // Only manager can close projects
     if (!$canCloseProject) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'No permission']);
         exit;
     }
 
-    // Archive project
     $upd = $db->prepare("
         UPDATE projects
         SET status = 'archived'
@@ -607,7 +576,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'close_p
 if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["ajax"] ?? "") === "delete_task") {
     header("Content-Type: application/json; charset=UTF-8");
 
-    // Block deletes if project is archived
+    //  archived projects are read-only
     if (($project['status'] ?? '') === 'archived') {
         http_response_code(409);
         echo json_encode(['success' => false, 'message' => 'This project is archived. Reinstate it to change tasks.']);
@@ -635,11 +604,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST["ajax"] ?? "") === "delete_
     try {
         $db->beginTransaction();
 
-        // delete assignments first (your real junction table)
         $stmt = $db->prepare("DELETE FROM task_assignments WHERE task_id = :task_id");
         $stmt->execute([":task_id" => $taskId]);
 
-        // delete task scoped to project
         $stmt = $db->prepare("DELETE FROM tasks WHERE task_id = :task_id AND project_id = :project_id");
         $stmt->execute([
             ":task_id" => $taskId,
@@ -676,8 +643,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
         exit;
     }
 
-
-    // Only manager or team leader
     if (!$canManageProject) {
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'No permission']);
@@ -695,7 +660,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax'] ?? '') === 'update_
         exit;
     }
 
-    // Ensure task belongs to THIS project
     $stmt = $db->prepare("
         UPDATE tasks
         SET priority = :priority
@@ -766,7 +730,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tas
     }
 
 
-    // ROLE VISIBILITY
+    // Role visibility
     if (!$canManageProject) {
         $where[] = "
         EXISTS (
@@ -780,7 +744,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tas
         $params[':uid'] = $userId;
     }
 
-    // SEARCH
+    // Search
     if ($search !== '') {
         $where[] = "(
         LOWER(t.task_name) LIKE :search
@@ -790,7 +754,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tas
         $params[':search'] = '%' . strtolower($search) . '%';
     }
 
-    // FILTERS
+    // Filters
     if ($status !== '' && in_array($status, $allowedTaskStatuses, true)) {
         $where[] = "t.status = :status";
         $params[':status'] = $status;
@@ -867,7 +831,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tas
         }
     }
 
-    // attach to tasks
     foreach ($tasks as &$t) {
         $tid = (int)$t['task_id'];
         $t['assignedUsers'] = $assigneesByTask[$tid] ?? [];
@@ -893,7 +856,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'fetch_tas
 // =============================
 $roleLower = strtolower((string)$role);
 
-// If you can manage THIS project, you must see ALL tasks in it
 if ($canManageProject) {
     $stmt = $db->prepare("
       SELECT 
@@ -911,7 +873,6 @@ if ($canManageProject) {
     ");
     $stmt->execute([':pid' => $projectId]);
 } else {
-    // Otherwise you're a normal member: only tasks assigned to YOU
     $stmt = $db->prepare("
       SELECT 
         t.task_id,
@@ -936,12 +897,8 @@ if ($canManageProject) {
 }
 
 $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-
-
 $taskIds = array_column($tasks, 'task_id');
 
-// Build assignees per task WITH profile pictures
 $assigneesByTask = [];
 
 if (!empty($taskIds)) {
@@ -978,9 +935,6 @@ if (!empty($taskIds)) {
     }
 }
 
-// Attach BOTH:
-// - assignedTo (emails) for your existing JS
-// - assignedUsers (objects) so profile pictures always have direct data
 foreach ($tasks as &$t) {
     $tid = (int)$t['task_id'];
 
@@ -994,7 +948,6 @@ foreach ($tasks as &$t) {
 unset($t);
 
 
-// Fetch users from DB
 $stmt = $db->prepare("
   SELECT user_id, email, first_name, last_name, role, profile_picture
   FROM users
@@ -1003,7 +956,6 @@ $stmt = $db->prepare("
 $stmt->execute();
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Map DB roles -> your JS roles
 $roleMap = [
     'team_member' => 'member',
     'technical_specialist' => 'specialist',
@@ -1011,13 +963,11 @@ $roleMap = [
     'manager' => 'manager',
 ];
 
-// Build simUsers object keyed by email
 $simUsers = [];
 foreach ($users as $u) {
     $email = strtolower(trim($u['email']));
     $fullName = trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? ''));
 
-    // stable avatar class 1..4 based on user_id (so it doesn't shuffle randomly)
     $avatarClass = 'avatar-' . ((int)$u['user_id'] % 4 + 1);
 
     $dbRole = $u['role'] ?? 'team_member';
@@ -1026,7 +976,7 @@ foreach ($users as $u) {
     $simUsers[$email] = [
         'name' => $fullName !== '' ? $fullName : $email,
         'role' => $jsRole,
-        'avatarClass' => $avatarClass, // keep as fallback
+        'avatarClass' => $avatarClass, 
         'avatarUrl' => !empty($u['profile_picture']) ? $u['profile_picture'] : null,
     ];
 }
@@ -1172,11 +1122,6 @@ foreach ($users as $u) {
 
             </header>
 
-
-
-
-
-
             <section class="task-board">
 
                 <div class="task-column" data-status="todo">
@@ -1271,7 +1216,6 @@ foreach ($users as $u) {
                         <div id="assignee-selected-count" class="assignee-selected-count">Selected: 0</div>
 
                         <div id="modal-task-assignees" class="assignee-checklist">
-                            <!-- JS will render checkboxes -->
                         </div>
                     </div>
 
@@ -1375,10 +1319,8 @@ foreach ($users as $u) {
         feather.replace();
 
         if (window.__IS_ARCHIVED__) {
-            // hide + buttons
             document.querySelectorAll('.add-task').forEach(btn => btn.style.display = 'none');
 
-            // also prevent opening assign modal if someone clicks via other UI
             document.querySelectorAll('.add-task').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();

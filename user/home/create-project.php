@@ -55,11 +55,6 @@ if (isset($_GET["ajax"]) && $_GET["ajax"] === "leaders") {
 // ===============================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Must be logged in
-    //   if (!isset($_SESSION['user_id'])) {
-    //     die("Not logged in.");
-    //   }
-
     // Collect fields from form
     $projectName = trim($_POST['project_name'] ?? '');
     $priority    = $_POST['priority'] ?? 'medium';
@@ -230,7 +225,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 autocomplete="off"
                                 required />
 
-                            <!-- This is what gets submitted to PHP -->
                             <input type="hidden" name="team_leader_id" id="team-leader-id" required />
 
                             <!-- Suggestions dropdown -->

@@ -2,10 +2,8 @@
 /* ============================
    BOOTSTRAP & DATABASE
    ============================ */
-// Start session
 session_start();
 
-// Load database configuration
 require_once __DIR__ . "/../../config/database.php";
 
 // Create DB instance & PDO connection
@@ -274,7 +272,6 @@ if (!empty($searchQuery)) {
 
 // specialty filter (ALL selected specialties must match)
 if (!empty($selectedSpecialties)) {
-    // DEBUG: Let's see what we're filtering for
     error_log("Selected specialties: " . print_r($selectedSpecialties, true));
     
     foreach ($selectedSpecialties as $i => $spec) {
@@ -357,7 +354,6 @@ $end = min($offset + count($employees), $totalEmployees);
 $isAjax = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 
 if ($isAjax) {
-    // Only return the grid + pagination (used by employees.js)
     include __DIR__ . '/partials/employee-grid.php';
     exit;
 }
@@ -427,6 +423,7 @@ if ($isAjax) {
                         <h1>Employee Directory</h1>
                 </div>
             </header>
+            <div class="section-divider"></div>
 
             <!-- EMPLOYEE CONTROLS (search bar and action buttons) -->
             <div class="employees-controls">
@@ -450,7 +447,6 @@ if ($isAjax) {
                     <button class="cancel-select-btn" id="cancel-select-btn" hidden>Cancel</button>
                 </div>      
             </div>
-            <div class="section-divider"></div>
 
             <div class="employee-meta">
 
@@ -562,7 +558,6 @@ if ($isAjax) {
                 </div>
             </div>
 
-            <div class="section-divider"></div>
 
             <!--Employee grid -->
             <div class="employee-section">
