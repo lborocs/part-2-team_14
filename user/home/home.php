@@ -325,8 +325,7 @@ if ($role === 'team_member') {
                             <span class="resource-badge ${badgeClass}">${project.resource_level.replace('_', ' ').toUpperCase()}</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Recommendation:</span>
-                            <span class="info-value">${recommendation}</span>
+                            <span class="info-label">Recommendation: <span style="color: black; font-weight: 600;">${recommendation}</span></span>
                         </div>
                     </div>
                     `;
