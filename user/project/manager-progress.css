@@ -341,7 +341,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1px 12px 8px;
+  padding: 1px 4px 8px 12px;
   position: relative;
   flex-shrink: 0;
 }
@@ -390,7 +390,7 @@
 .task-actions-menu {
   position: absolute;
   top: 60px;
-  right: 48px;
+  right: 40px;
   background: white;
   border-radius: 10px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14);

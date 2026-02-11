@@ -1064,6 +1064,7 @@ foreach ($users as $u) {
 </script>
 
 <body id="projects-page" class="<?= $canManageProject ? 'can-manage-project' : '' ?>">
+    <?php include '../to-do/todo_widget.php'; ?>
 
     <div class="dashboard-container">
         <nav class="sidebar">

@@ -267,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <main class="main-content">
             <header class="kb-header">
                 <p class="breadcrumbs">
-                    <a href="employee-directory.php" style="color: #8C8C8C; text-decoration: none;">Employee Directory</a>
+                    <a href="employee-directory.php">Employee Directory</a>
                     > Create New Project
                 </p>
                 <h1>Create a New Project</h1>
