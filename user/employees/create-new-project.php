@@ -258,6 +258,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="nav-footer">
                 <ul>
+                    <li id="nav-my-profile"><a href="employee-profile.php?id=<?= $_SESSION['user_id'] ?>"><i data-feather="user"></i>My Profile</a></li>
                     <li><a href="../settings.html"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>

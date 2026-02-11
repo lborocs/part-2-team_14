@@ -1138,7 +1138,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                     <?php endif; ?>
                     <li><a href="../project/projects-overview.php"><i data-feather="folder"></i>Projects</a></li>
                     <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'manager'): ?>
-                        <li class="active-parent">
+                        <li<?php if ($employeeId !== (int)$_SESSION['user_id']): ?> class="active-parent"<?php endif; ?>>
                             <a href="employee-directory.php"><i data-feather="users"></i>Employees</a>
                         </li>
                     <?php endif; ?>
@@ -1147,7 +1147,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             </div>
             <div class="nav-footer">
                 <ul>
-                    <li id="nav-my-profile"><a href="employee-profile.php?id=<?= $_SESSION['user_id'] ?>"><i data-feather="user"></i>My Profile</a></li>
+                    <li id="nav-my-profile"<?php if ($employeeId === (int)$_SESSION['user_id']): ?> class="active-parent"<?php endif; ?>><a href="employee-profile.php?id=<?= $_SESSION['user_id'] ?>"><i data-feather="user"></i>My Profile</a></li>
                     <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>
@@ -1261,7 +1261,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                                         <select id="projects-status-filter">
                                             <option value="all">All Statuses</option>
                                             <option value="active">Active</option>
-                                            <option value="completed">Completed</option>
                                             <option value="archived">Archived</option>
                                         </select>
                                     </div>
