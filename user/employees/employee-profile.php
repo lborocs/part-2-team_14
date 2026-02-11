@@ -471,20 +471,58 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
 
+        .projects-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
         .projects-card h2 {
             font-size: 18px;
             font-weight: 600;
             color: #333;
-            margin: 0 0 16px 0;
+            margin: 0;
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .projects-count {
+            font-weight: 500;
+            color: #888;
+            font-size: 16px;
         }
 
         .projects-card h2 i {
             width: 20px;
             height: 20px;
             color: #E6A100;
+        }
+
+        .projects-filter select {
+            appearance: none;
+            background: #f5f7fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 32px 8px 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+        }
+
+        .projects-filter select:hover {
+            border-color: #E6A100;
+        }
+
+        .projects-filter select:focus {
+            outline: none;
+            border-color: #E6A100;
+            box-shadow: 0 0 0 3px rgba(251, 192, 45, 0.25);
         }
 
         .projects-list {
@@ -1109,6 +1147,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             </div>
             <div class="nav-footer">
                 <ul>
+                    <li id="nav-my-profile"><a href="employee-profile.php?id=<?= $_SESSION['user_id'] ?>"><i data-feather="user"></i>My Profile</a></li>
                     <li><a href="../settings.php"><i data-feather="settings"></i>Settings</a></li>
                 </ul>
             </div>
@@ -1137,10 +1176,12 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                         </div>
                     </div>
                     <div class="banner-right">
+                        <?php if ($_SESSION['role'] === 'manager'): ?>
                         <a href="employee-directory.php" class="banner-btn">
                             <i data-feather="arrow-left"></i>
                             Back to Directory
                         </a>
+                        <?php endif; ?>
                         <a href="mailto:<?= htmlspecialchars($employee['email']) ?>" class="banner-btn">
                             <i data-feather="mail"></i>
                             Send Email
@@ -1210,14 +1251,26 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
 
                             <!-- Projects Card -->
                             <div class="projects-card">
-                                <h2>
-                                    <i data-feather="folder"></i>
-                                    Projects
-                                </h2>
+                                <div class="projects-header">
+                                    <h2>
+                                        <i data-feather="folder"></i>
+                                        Projects <span class="projects-count">(<?= count($projects) ?>)</span>
+                                    </h2>
+                                    <?php if (!empty($projects)): ?>
+                                    <div class="projects-filter">
+                                        <select id="projects-status-filter">
+                                            <option value="all">All Statuses</option>
+                                            <option value="active">Active</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="archived">Archived</option>
+                                        </select>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
                                 <?php if (!empty($projects)): ?>
-                                    <div class="projects-list">
+                                    <div class="projects-list" id="projects-list">
                                         <?php foreach ($projects as $project): ?>
-                                            <div class="project-item">
+                                            <div class="project-item" data-status="<?= htmlspecialchars($project['status']) ?>">
                                                 <span class="project-name">
                                                     <?= htmlspecialchars($project['project_name']) ?>
                                                 </span>
@@ -1227,6 +1280,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
+                                    <p class="no-projects" id="no-filtered-projects" style="display:none;">No projects match this filter</p>
                                 <?php else: ?>
                                     <div class="no-projects">
                                         <p>Not assigned to any projects</p>
@@ -1493,6 +1547,30 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                     overdueModal.classList.remove('show');
                 }
             });
+
+            // Projects status filter
+            const projectsFilter = document.getElementById('projects-status-filter');
+            if (projectsFilter) {
+                projectsFilter.addEventListener('change', function() {
+                    const status = this.value;
+                    const items = document.querySelectorAll('#projects-list .project-item');
+                    const noMsg = document.getElementById('no-filtered-projects');
+                    let visibleCount = 0;
+
+                    items.forEach(item => {
+                        if (status === 'all' || item.dataset.status === status) {
+                            item.style.display = '';
+                            visibleCount++;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    if (noMsg) {
+                        noMsg.style.display = visibleCount === 0 ? '' : 'none';
+                    }
+                });
+            }
 
             // Add to Project Function
             window.assignToProject = function() {
