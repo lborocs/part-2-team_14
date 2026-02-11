@@ -57,11 +57,11 @@
   gap: 12px;
 }
 
-/*Section Divider*/
-.section-divider {
+  .section-divider {
   border-top: 1px solid #EAECEE;
-  margin: 20px 40px 20px 40px;
+  margin: 39px 0px 10px 0px;
 }
+
 
 /* ------------------------
 ----EMPLOYEES META DATA----
