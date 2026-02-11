@@ -1,10 +1,10 @@
-/*
-* Homepage Styles
-*/
+/* === HOMEPAGE PAGE WRAPPER === */
+
 #home-page .main-content {
     padding: 30px 40px;
-    /* overflow-y removed - main-content handles scrolling */
 }
+
+/* === HEADER === */
 
 .home-header {
     margin-bottom: 30px;
@@ -16,11 +16,15 @@
     margin: 0;
 }
 
+/* === MAIN LAYOUT GRID === */
+
 .home-layout {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 30px;
 }
+
+/* === TOP CONTROLS ROWS === */
 
 .project-health-controls,
 .employee-performance-controls {
@@ -29,6 +33,8 @@
     align-items: center;
     margin-bottom: 10px;
 }
+
+/* === PROJECT HEALTH: SCROLLABLE CARD ROW === */
 
 .project-health-content {
     width: 100%;
@@ -62,6 +68,8 @@
     background: #8c8c8c;
 }
 
+/* === PROJECT CARD === */
+
 .project-card{
     background: white;
     border-radius: 12px;
@@ -79,6 +87,8 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     border-left-width: 6px;
 }
+
+/* === HEALTH INDICATOR (TOP STRIP INSIDE CARD) === */
 
 .health-indicator-container{
     display: inline-flex;
@@ -138,6 +148,7 @@
     border-left-color: #10b981;
 }
 
+/* === CARD TITLE === */
 
 .project-card h3{
     font-size: 20px;
@@ -146,6 +157,7 @@
     margin-bottom: 16px;
     color: #1a1a1a;
 }
+/* === PROJECT INFO ROWS === */
 
 .project-info {
     display: flex;
@@ -164,6 +176,8 @@
     color: #666;
     font-weight: 500;
 }
+
+/* === PRIORITY BADGE === */
 
 .priority-badge {
     display: inline-block;
@@ -189,6 +203,8 @@
     font-weight: 600;
 }
 
+/* === PROGRESS BAR === */
+
 .progress-bar {
     width: 100%;
     height: 8px;
@@ -205,6 +221,8 @@
     transition: width 0.3s;
 }
 
+/* === STATUS INDICATOR ROW === */
+
 .status-indicator {
     display: flex;
     align-items: center;
@@ -218,6 +236,8 @@
     border-radius: 50%;
     background-color: gray;
 }
+
+/* === RESOURCE BADGE === */
 
 .resource-badge {
     display: inline-block;
@@ -242,6 +262,8 @@
     color: #ffffff;
 }
 
+/* === FILTERS / SEARCH  === */
+
 .search-bar {
     position: relative;
     display: flex;
@@ -252,13 +274,12 @@
 .search-bar input {
     width: 250px;
     height: 42px;
-    padding: 10px 15px 10px 40px; /* space for icon */
+    padding: 10px 15px 10px 40px; 
     border: 1px solid #E0E0E0;
     border-radius: 8px;
     font-family: 'Poppins', sans-serif;
     font-size: 14px;
     background: #fff;
-    /*outline: none;*/
     transition: border-color 0.2s ease;
 }
 
@@ -387,6 +408,8 @@ select:hover {
     background: rgba(146, 64, 14, 0.1);
 }
 
+/* === EMPLOYEE TABLE SECTION === */
+
 .employee-table{
     padding-top: 30px;
 }
@@ -443,7 +466,6 @@ thead th {
 }
 
 tbody tr {
-    /*border-bottom: 1px solid #e0e0e0;*/
     transition: background-color 0.2s ease;
 }
 
@@ -506,6 +528,8 @@ tbody td:first-child {
 .red-percent {
     color: #dc3545;
 }
+
+/* === RESPONSIVE TABLE BREAKPOINT === */
 
 @media (max-width: 768px) {
     .table-container {

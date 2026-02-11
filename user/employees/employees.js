@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Only show button if content overflows
             if (container.scrollHeight > container.clientHeight) {
                 btn.hidden = false;
-                btn.textContent = 'Show More'; // INITIAL STATE
+                btn.textContent = 'Show More'; 
             } else {
                 btn.hidden = true;
             }
@@ -61,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Run once on initial page load
     initSpecialties();
 
     /* ========================================
@@ -272,9 +271,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // reset existing filter params - DELETE BOTH FORMATS
         url.searchParams.delete('specialty');
-        url.searchParams.delete('specialty[]');  // ← Add this line!
+        url.searchParams.delete('specialty[]');  
         url.searchParams.delete('project');
-        url.searchParams.delete('project[]');    // ← Add this line!
+        url.searchParams.delete('project[]');    
 
         // specialties - collect as array
         const selectedSpecs = Array.from(document.querySelectorAll('.filter-specialty:checked'))
@@ -418,7 +417,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Re-init feather icons (new DOM)
                 feather.replace();
 
-                // IMPORTANT: re-init specialties on new cards
                 initSpecialties();
                 restoreSelections();
             });
@@ -467,7 +465,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Clear filters on page refresh (not on back/forward navigation)
 window.addEventListener('beforeunload', () => {
-    // Mark that we're about to refresh
     sessionStorage.setItem('clearFiltersOnLoad', 'true');
 });
 

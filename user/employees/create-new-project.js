@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Check minimum employees on load
     if (!validateMinimumEmployees()) {
-        return; // Stop execution if validation fails
+        return; 
     }
     
     /* ========================================
@@ -40,10 +40,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = preselectedEmployees.length;
         
         if (count >= 4) {
-            // Green - requirement met
             minimumRequirementNote.classList.add('requirement-met');
         } else {
-            // Red - requirement not met
             minimumRequirementNote.classList.remove('requirement-met');
         }
     }
@@ -64,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update requirement note color
         updateRequirementNote();
         
-        // Fetch employee details from server (with colors!)
+        // Fetch employee details from server (with colors)
         try {
             const response = await fetch(`create-new-project.php?ajax=get_employees&ids=${preselectedEmployees.join(',')}`);
             const employees = await response.json();
@@ -148,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 leaderResults.style.display = 'block';
 
-                // Add click handlers
                 leaderResults.querySelectorAll('.autocomplete-item').forEach(item => {
                     item.addEventListener('click', () => {
                         const id = item.dataset.id;
@@ -251,6 +248,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    /* INITIALIZE */
     loadPreselectedEmployees();
 });

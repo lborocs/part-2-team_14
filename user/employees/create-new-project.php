@@ -11,16 +11,16 @@ if (!$db) {
 
 // Define same 10-color banner palette
 $bannerColors = [
-    '#5B9BD5',  // Soft Blue
-    '#7FB069',  // Sage Green
-    '#9B59B6',  // Muted Purple
-    '#D4926F',  // Muted Orange
-    '#45B7B8',  // Teal
-    '#6C8EAD',  // Slate Blue
-    '#2A9D8F',  // Deep Teal
-    '#B56576',  // Mauve/Rose
-    '#52796F',  // Forest Green
-    '#7D8FA0',  // Dusty Blue
+    '#5B9BD5',  
+    '#7FB069',  
+    '#9B59B6',  
+    '#D4926F',  
+    '#45B7B8',  
+    '#6C8EAD',  
+    '#2A9D8F',  
+    '#B56576',  
+    '#52796F',  
+    '#7D8FA0',  
 ];
 
 function getEmployeeColor($userId, $bannerColors, &$colorMap)

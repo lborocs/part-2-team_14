@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . "/../../config/database.php";
 
-// Start session for access control
 session_start();
 
 // Check login
@@ -21,7 +20,7 @@ $database = new Database();
 $pdo = $database->getConnection();
 
 // ============================================
-// 1. FETCH EMPLOYEE BASIC INFO
+//  FETCH EMPLOYEE BASIC INFO
 // ============================================
 $stmt = $pdo->prepare("
     SELECT user_id, first_name, last_name, email, role, profile_picture, specialties, is_registered
@@ -67,7 +66,7 @@ if (!empty($employee['specialties'])) {
 }
 
 // ============================================
-// 2. FETCH EMPLOYEE'S PROJECTS
+//  FETCH EMPLOYEE'S PROJECTS
 // ============================================
 $stmt = $pdo->prepare("
     SELECT DISTINCT p.project_id, p.project_name, p.status
@@ -81,7 +80,7 @@ $stmt->execute([$employeeId]);
 $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // ============================================
-// 3. FETCH TASK STATISTICS (ALL PROJECTS)
+//  FETCH TASK STATISTICS (ALL PROJECTS)
 // ============================================
 // Active tasks count (not completed, exclude archived projects)
 $stmt = $pdo->prepare("
@@ -114,7 +113,7 @@ $overdueTasks = (int) $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 $projectCount = count($projects);
 
 // ============================================
-// 4. FETCH TASK BREAKDOWN FOR DONUT CHART (ALL PROJECTS)
+// FETCH TASK BREAKDOWN FOR DONUT CHART (ALL PROJECTS)
 // ============================================
 $stmt = $pdo->prepare("
     SELECT
@@ -147,7 +146,7 @@ foreach ($taskBreakdown as $row) {
 $totalTasks = array_sum($taskStats);
 
 // ============================================
-// 5. AJAX ENDPOINT: CHART DATA BY PROJECT
+//  AJAX ENDPOINT: CHART DATA BY PROJECT
 // ============================================
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
     header('Content-Type: application/json');
@@ -196,7 +195,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'chart_data') {
     exit;
 }
 // ============================================
-// 6. AJAX ENDPOINT: GET ACTIVE TASKS
+// AJAX ENDPOINT: GET ACTIVE TASKS
 // ============================================
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'active_tasks') {
     header('Content-Type: application/json');
@@ -228,7 +227,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'active_tasks') {
 }
 
 // ============================================
-// 7. AJAX ENDPOINT: GET OVERDUE TASKS
+//  AJAX ENDPOINT: GET OVERDUE TASKS
 // ============================================
 if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
     header('Content-Type: application/json');
@@ -394,7 +393,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             height: 16px;
         }
 
-        /* Analytics Section */
         .analytics-section {
             padding: 0 40px;
             width: 100%;
@@ -462,7 +460,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             gap: 8px;
         }
 
-        /* Projects Card */
         .projects-card {
             background: white;
             border-radius: 12px;
@@ -1028,7 +1025,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             font-size: 15px;
         }
 
-        /* Make stat cards clickable */
         .stat-card.clickable {
             cursor: pointer;
             user-select: none;
@@ -1550,7 +1546,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                     cutout: '70%',
                     plugins: {
                         legend: {
-                            display: false // We use custom legend
+                            display: false 
                         },
                         tooltip: {
                             backgroundColor: '#333',

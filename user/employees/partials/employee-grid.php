@@ -1,7 +1,5 @@
 <?php
-/* =======================
-   SPECIALTY → CSS CLASS MAP
-   ======================= */
+/* === SPECIALTY → CSS CLASS MAP === */
 $specialtyClassMap = [
     'Project Management' => 'spec-project-management',
     'Strategy'           => 'spec-strategy',
