@@ -1231,7 +1231,7 @@ async function loadAllTopicsPage(currentUser) {
         if (!listEl) return;
 
         if (!topicNames.length) {
-            listEl.innerHTML = '<p>No topics found.</p>';
+            listEl.innerHTML = '<p class="no-topics-message">No topics found.</p>';
             return;
         }
 

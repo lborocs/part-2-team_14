@@ -994,6 +994,10 @@ body[data-topics-view="topic"] #related-topics-widget {
 
 .kb-solve-btn:hover{ background:#F8FAFC; }
 
+.no-topics-message {
+  padding: 5px 15px;
+  color: #666;
+}
 .kb-unsolve-btn {
   background: #FFF3E0;
   border-color: #FFE0B2;
