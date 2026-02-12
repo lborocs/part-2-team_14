@@ -733,12 +733,18 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             flex-shrink: 0;
         }
 
+        .chart-wrapper canvas {
+            position: relative;
+            z-index: 2;
+        }
+
         .chart-center {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
+            z-index: 1;
         }
 
         .chart-center-value {
@@ -1273,10 +1279,10 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
-                                    <p class="no-projects" id="no-filtered-projects" style="display:none;">No projects match this filter</p>
+                                    <p class="no-projects" id="no-filtered-projects" style="display:none; font-style: normal;">No projects match this filter.</p>
                                 <?php else: ?>
-                                    <div class="no-projects">
-                                        <p>Not assigned to any projects</p>
+                                    <div class="no-projects" style="font-style: normal;">
+                                        <p>Not assigned to any projects.</p>
                                     </div>
                                 <?php endif; ?>
                             </div>
