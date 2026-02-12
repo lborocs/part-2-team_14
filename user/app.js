@@ -35,12 +35,23 @@ function getUsersMap() {
 }
 
 // Default feather icon for known topics (fallback when DB icon is missing/corrupted)
+
 const DEFAULT_TOPIC_ICONS = {
     'Technical Support': 'tool',
     'HR Policies': 'users',
     'Project Best Practices': 'bar-chart-2',
     'Development Guidelines': 'code',
+
+    'Best Practices': 'check-circle',
+    'Career Development': 'trending-up',
+    'DevOps & Infrastructure': 'server',
+    'General Discussion': 'message-circle',
+    'Project Updates': 'clipboard',
+    'Security & Compliance': 'shield',
+    'Technical Help': 'life-buoy',
+    'Tools & Resources': 'package'
 };
+
 
 // Render topic icon - handles feather icons and emojis
 function renderTopicIcon(iconValue, topicName) {
