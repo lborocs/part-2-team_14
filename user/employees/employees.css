@@ -1,6 +1,6 @@
 /*override scrolling in dashboard.css for main-content*/
 .main-content {
-  overflow: auto; 
+  overflow: auto;
   font-family: 'Poppins', sans-serif;
 }
 
@@ -8,15 +8,13 @@
 --Search & Action Buttons--
 ---------------------------
 */
-.employees-controls{
+.employees-controls {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 10px 40px 10px 40px;
-  position: relative;
+  gap: 12px;
+  margin-left: auto;
 }
 
-/*search bar*/
 .employee-search {
   display: flex;
   align-items: center;
@@ -25,9 +23,8 @@
   border: 1px solid #E0E0E0;
   border-radius: 8px;
   padding: 6px 10px;
-  min-width: 0;
+  min-width: 350px;
   position: relative;
-  flex: 1;
 }
 
 .employee-search svg {
@@ -36,6 +33,7 @@
   color: #8C8C8C;
   width: 18px;
   height: 18px;
+  flex-shrink: 0;
 }
 
 .employee-search input {
@@ -45,11 +43,12 @@
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
   background: transparent;
+  width: 100%;
 }
 
 .employee-search:focus-within {
-    border-color: #FBC02D;
-    box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.3);
+  border-color: #FBC02D;
+  box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.3);
 }
 
 .employee-actions {
@@ -57,11 +56,10 @@
   gap: 12px;
 }
 
-  .section-divider {
+.section-divider {
   border-top: 1px solid #EAECEE;
   margin: 39px 0px 10px 0px;
 }
-
 
 /* ------------------------
 ----EMPLOYEES META DATA----
@@ -82,7 +80,7 @@
   color: #555
 }
 
-.employees-count strong{
+.employees-count strong {
   font-weight: 1000;
   color: #555
 }
@@ -179,7 +177,7 @@
 }
 
 /* Section title */
-.filter-section > span {
+.filter-section>span {
   font-size: 12px;
   font-weight: 600;
   color: #555;
@@ -282,6 +280,7 @@
 .employee-section {
   padding: 20px 40px 0px 40px;
 }
+
 /*Employee grid*/
 .employee-grid {
   display: grid;
@@ -292,12 +291,12 @@
 .employee-card {
   display: flex;
   flex-direction: column;
-  min-height: 280px; 
+  min-height: 280px;
   border-radius: 12px;
   background: #fff;
   cursor: pointer;
   border: 1px solid #EAECEE;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
   transition: all 0.2s ease;
 }
 
@@ -307,12 +306,12 @@
   border-color: #FBC02D;
 }
 
-.employee-card.selected{
+.employee-card.selected {
   border-color: #FBC02D;
-  box-shadow: 0 0 0 2px rgba(251,192,45,0.25);
+  box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.25);
 }
 
-.employee-card-top{
+.employee-card-top {
   position: relative;
   display: flex;
   align-items: center;
@@ -322,7 +321,7 @@
   border-top-right-radius: 12px;
 }
 
-.employee-avatar{
+.employee-avatar {
   width: 90px;
   height: 90px;
   border-radius: 50%;
@@ -355,13 +354,16 @@
   padding-top: 6px;
   padding-bottom: 6px;
 }
-.employee-name{
+
+.employee-name {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
 }
 
-.employee-block{ margin-top: 10px; }
+.employee-block {
+  margin-top: 10px;
+}
 
 .specialties-container {
   display: flex;
@@ -369,12 +371,12 @@
   gap: 6px;
 
   overflow: hidden;
-  max-height: 20px;              
+  max-height: 20px;
   transition: max-height 0.2s ease;
 }
 
 .specialties-container.expanded {
-  max-height: 96px;             
+  max-height: 96px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -389,7 +391,7 @@
 }
 
 
-.block-title{
+.block-title {
   font-size: 12px;
   font-weight: 600;
   color: #8C8C8C;
@@ -401,7 +403,7 @@
 .see-more-btn {
   margin-top: 6px;
   font-size: 12px;
-  color: #555;        
+  color: #555;
   background: none;
   border: none;
   cursor: pointer;
@@ -438,8 +440,8 @@
 }
 
 .spec-default {
-  background:#ECEFF1;
-  color:#455A64;
+  background: #ECEFF1;
+  color: #455A64;
 }
 
 /* Muted specialty pill (de-emphasized state) */
@@ -453,34 +455,109 @@
 ---------------------------------- */
 
 /* Management & Strategy */
-.spec-project-management { background:#E3F2FD; color:#1565C0; }
-.spec-strategy           { background:#E1F5FE; color:#0277BD; }
-.spec-leadership         { background:#E8F5E9; color:#2E7D32; }
+.spec-project-management {
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.spec-strategy {
+  background: #E1F5FE;
+  color: #0277BD;
+}
+
+.spec-leadership {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
 
 /* Backend / Data */
-.spec-backend            { background:#EDE7F6; color:#512DA8; }
-.spec-python             { background:#FFFDE7; color:#F9A825; }
-.spec-sql                { background:#F1F8E9; color:#558B2F; }
-.spec-api-design         { background:#E0F2F1; color:#00695C; }
+.spec-backend {
+  background: #EDE7F6;
+  color: #512DA8;
+}
+
+.spec-python {
+  background: #FFFDE7;
+  color: #F9A825;
+}
+
+.spec-sql {
+  background: #F1F8E9;
+  color: #558B2F;
+}
+
+.spec-api-design {
+  background: #E0F2F1;
+  color: #00695C;
+}
 
 /* Frontend */
-.spec-frontend           { background:#FCE4EC; color:#AD1457; }
-.spec-react              { background:#E3F2FD; color:#0288D1; }
-.spec-css                { background:#E8EAF6; color:#3949AB; }
-.spec-javascript         { background:#FFF8E1; color:#F9A825; }
-.spec-node-js            { background:#E8F5E9; color:#2E7D32; }
-.spec-mongodb            { background:#E0F2F1; color:#00796B; }
+.spec-frontend {
+  background: #FCE4EC;
+  color: #AD1457;
+}
+
+.spec-react {
+  background: #E3F2FD;
+  color: #0288D1;
+}
+
+.spec-css {
+  background: #E8EAF6;
+  color: #3949AB;
+}
+
+.spec-javascript {
+  background: #FFF8E1;
+  color: #F9A825;
+}
+
+.spec-node-js {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.spec-mongodb {
+  background: #E0F2F1;
+  color: #00796B;
+}
 
 /* DevOps */
-.spec-devops             { background:#F3E5F5; color:#6A1B9A; }
-.spec-aws                { background:#FFF3E0; color:#EF6C00; }
-.spec-docker             { background:#E1F5FE; color:#0277BD; }
-.spec-ci-cd              { background:#ECEFF1; color:#455A64; }
+.spec-devops {
+  background: #F3E5F5;
+  color: #6A1B9A;
+}
+
+.spec-aws {
+  background: #FFF3E0;
+  color: #EF6C00;
+}
+
+.spec-docker {
+  background: #E1F5FE;
+  color: #0277BD;
+}
+
+.spec-ci-cd {
+  background: #ECEFF1;
+  color: #455A64;
+}
 
 /* Design */
-.spec-ui-design          { background:#FCE4EC; color:#C2185B; }
-.spec-figma              { background:#F3E5F5; color:#7B1FA2; }
-.spec-prototyping        { background:#E8EAF6; color:#303F9F; }
+.spec-ui-design {
+  background: #FCE4EC;
+  color: #C2185B;
+}
+
+.spec-figma {
+  background: #F3E5F5;
+  color: #7B1FA2;
+}
+
+.spec-prototyping {
+  background: #E8EAF6;
+  color: #303F9F;
+}
 
 
 .employee-card-footer {
@@ -509,7 +586,7 @@
 .employee-card-footer svg {
   width: 18px;
   height: 18px;
-  min-width: 18px;   
+  min-width: 18px;
   min-height: 18px;
   stroke-width: 2;
 }
@@ -605,99 +682,99 @@
 ============================= */
 
 .employee-actions {
-    display: flex;
-    gap: 12px;
+  display: flex;
+  gap: 12px;
 }
 
 .select-mode-btn,
 .select-all-btn,
 .cancel-select-btn {
-    height: 40px;
-    padding: 0 20px;
-    border-radius: 10px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
 .select-mode-btn {
-    border: 1.5px solid #FBC02D;
-    background: #FBC02D;
-    color: #1E1E1E;
+  border: 1.5px solid #FBC02D;
+  background: #FBC02D;
+  color: #1E1E1E;
 }
 
 .select-mode-btn:hover {
-    background: #E6AE24;
+  background: #E6AE24;
 }
 
 .select-all-btn {
-    border: 1.5px solid #FBC02D;
-    background: #FBC02D;
-    color: #1E1E1E;
+  border: 1.5px solid #FBC02D;
+  background: #FBC02D;
+  color: #1E1E1E;
 }
 
 .select-all-btn:hover {
-    background: #E6AE24;
+  background: #E6AE24;
 }
 
 .cancel-select-btn {
-    border: 1.5px solid #E0E0E0;
-    background: #fff;
-    color: #555;
+  border: 1.5px solid #E0E0E0;
+  background: #fff;
+  color: #555;
 }
 
 .cancel-select-btn:hover {
-    background: #f5f5f5;
-    border-color: #cfcfcf;
+  background: #f5f5f5;
+  border-color: #cfcfcf;
 }
 
 /* Employee card selection checkbox */
 .employee-card {
-    position: relative;
+  position: relative;
 }
 
 .employee-checkbox {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    width: 24px;
-    height: 24px;
-    background: #fff;
-    border: 2px solid #D6D6D6;
-    border-radius: 6px;
-    cursor: pointer;
-    z-index: 10;
-    display: none; 
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border: 2px solid #D6D6D6;
+  border-radius: 6px;
+  cursor: pointer;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 body.select-mode .employee-checkbox {
-    display: flex;
+  display: flex;
 }
 
 .employee-checkbox:hover {
-    border-color: #FBC02D;
+  border-color: #FBC02D;
 }
 
 /* Checkmark icon */
 .employee-checkbox svg {
-    display: none;
-    width: 16px;
-    height: 16px;
-    color: #fff;
+  display: none;
+  width: 16px;
+  height: 16px;
+  color: #fff;
 }
 
 .employee-card.selected .employee-checkbox {
-    background: #FBC02D;
-    border-color: #FBC02D;
+  background: #FBC02D;
+  border-color: #FBC02D;
 }
 
 .employee-card.selected .employee-checkbox svg {
-    display: block;
+  display: block;
 }
 
 /* =============================
@@ -707,20 +784,20 @@ body.select-mode .employee-checkbox {
   position: fixed;
   bottom: 20px;
   left: 50%;
-  margin-left: 155px; 
+  margin-left: 155px;
   transform: translateX(-50%);
-  
+
   background: #fff;
   border: 1px solid #E0E0E0;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  
+
   display: flex;
   align-items: center;
   gap: 20px;
   padding: 16px 24px;
-  
+
   animation: slideUp 0.3s ease;
 }
 
@@ -729,6 +806,7 @@ body.select-mode .employee-checkbox {
     opacity: 0;
     transform: translateX(-50%) translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
@@ -789,10 +867,9 @@ body.select-mode .employee-checkbox {
 }
 
 .bottom-action-bar .create-post-btn {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 
 body.select-mode .employee-section {
   padding-bottom: 20px;
 }
-
