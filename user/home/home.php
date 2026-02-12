@@ -157,9 +157,11 @@ if ($role === 'team_member') {
                                     <th>Tasks Assigned</th>
                                     <th>Tasks Completed</th>
                                     <th>Overdue Tasks</th>
-                                    <th class="tooltip-header">
-                                        On-Time
-                                        <span class="info-icon" title="Number of tasks completed on or before their deadline out of total completed tasks">ⓘ</span>
+                                    <th>
+                                        <span class="tooltip-header">
+                                            On-Time
+                                            <span class="info-icon" data-tooltip="Tasks completed on/before deadline out of total completed">ⓘ</span>
+                                        </span>
                                     </th>
                                 </tr>
                             </thead>
