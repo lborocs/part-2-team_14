@@ -76,6 +76,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 30px 40px 10px 40px;
+    text-align: center;
 }
 
 .kb-topics h2 {
