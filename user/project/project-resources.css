@@ -1,10 +1,7 @@
-/*
-* Project Resources Page Styles
-*/
+/* === PROJECT RESOURCES PAGE LAYOUT === */
 
 .resource-content {
     padding: 30px 40px;
-    /* ADDED for new full-height layout */
     overflow-y: auto;
     flex-grow: 1;
 }
@@ -29,6 +26,8 @@ text-transform: capitalize !important;
 #resource-desc {
     font-family: 'Poppins', sans-serif;
 }
+
+/* === UPLOAD AND DELETE FILE BUTTON  === */
 
 .upload-btn {
     display: inline-flex;
@@ -67,6 +66,8 @@ text-transform: capitalize !important;
     background: #F8F9FA;
 }
 
+/* === RESOURCE GRID + CARDS === */
+
 .resource-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -93,7 +94,8 @@ text-transform: capitalize !important;
     border-bottom: 1px solid #F0F0F0;
 }
 
-/* Contact List */
+/* === CONTACT LIST === */
+
 .contact-list {
     display: flex;
     flex-direction: column;
@@ -143,7 +145,8 @@ text-transform: capitalize !important;
     text-decoration: underline;
 }
 
-/* Details List */
+/* === PROJECT DETAILS LIST === */
+
 .details-list {
     list-style: none;
     padding: 0;
@@ -166,43 +169,7 @@ text-transform: capitalize !important;
     margin: 0;
 }
 
-/* Links List */
-.links-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.links-list li a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 15px;
-    font-weight: 500;
-    color: #1E1E1E;
-    text-decoration: none;
-    padding: 10px;
-    border-radius: 8px;
-    transition: background 0.2s ease;
-}
-.links-list li a:hover {
-    background: #F8F9FA;
-}
-.links-list li a svg {
-    width: 20px;
-    height: 20px;
-    color: #8C8C8C;
-}
-
-/* =====================================================
-   NEW: Uploaded Files (clean layout)
-   ===================================================== */
-
-.resource-files-card {
-    grid-column: 1 / -1; /* full width row */
-}
+/* === UPLOADED FILES TOOLBAR === */
 
 .file-hidden-input {
     display: none;
@@ -297,6 +264,8 @@ text-transform: capitalize !important;
 .files-status.is-error { color: #B3261E; }
 .files-status.is-ok { color: #0F7B3E; }
 .files-status.is-info { color: #555; }
+
+/* === UPLOADED FILES LIST === */
 
 .files-empty {
     color: #8C8C8C;

@@ -41,8 +41,8 @@ try {
 
   $del = $db->prepare("DELETE FROM kb_comments WHERE comment_id = ?");
   $del->execute([$commentId]);
-
-// Recalculate cached counter safely (prevents drift)
+    
+  // update comment count
     $db->prepare("
     UPDATE kb_posts p
     SET p.comment_count = (

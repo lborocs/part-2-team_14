@@ -42,7 +42,7 @@ try {
   ");
   $stmt->execute([$postId, $userId, $content]);
 
-  // Recalculate cached counter safely
+  // update comment count
     $db->prepare("
     UPDATE kb_posts p
     SET p.comment_count = (

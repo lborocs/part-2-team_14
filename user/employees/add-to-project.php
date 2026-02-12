@@ -3,16 +3,16 @@ session_start();
 
 // Define same 10-color banner palette
 $bannerColors = [
-        '#5B9BD5',  // Soft Blue
-        '#7FB069',  // Sage Green
-        '#9B59B6',  // Muted Purple
-        '#D4926F',  // Muted Orange
-        '#45B7B8',  // Teal
-        '#6C8EAD',  // Slate Blue
-        '#2A9D8F',  // Deep Teal
-        '#B56576',  // Mauve/Rose
-        '#52796F',  // Forest Green
-        '#7D8FA0',  // Dusty Blue
+        '#5B9BD5',  
+        '#7FB069',  
+        '#9B59B6',  
+        '#D4926F',  
+        '#45B7B8',  
+        '#6C8EAD',  
+        '#2A9D8F', 
+        '#B56576',  
+        '#52796F',  
+        '#7D8FA0',  
 ];
 
 // Define same specialty colors
@@ -77,7 +77,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_employees') {
         exit;
     }
     
-    // Convert comma-separated string to array
     $ids = explode(',', $employeeIds);
     $ids = array_filter(array_map('intval', $ids));
     
@@ -86,7 +85,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_employees') {
         exit;
     }
     
-    // Build placeholders for IN clause
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
     
     $stmt = $db->prepare("
@@ -99,7 +97,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'get_employees') {
     
     // Format response with colors
     $response = array_map(function($emp) use ($bannerColors) {
-        // Get color from session
         $color = getEmployeeColor(
             $emp['user_id'], 
             $bannerColors, 

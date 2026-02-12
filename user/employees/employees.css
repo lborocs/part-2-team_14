@@ -52,17 +52,16 @@
     box-shadow: 0 0 0 2px rgba(251, 192, 45, 0.3);
 }
 
-/* Right-side actions */
 .employee-actions {
   display: flex;
   gap: 12px;
 }
 
-/*Section Divider*/
-.section-divider {
+  .section-divider {
   border-top: 1px solid #EAECEE;
-  margin: 20px 40px 20px 40px;
+  margin: 39px 0px 10px 0px;
 }
+
 
 /* ------------------------
 ----EMPLOYEES META DATA----
@@ -293,7 +292,7 @@
 .employee-card {
   display: flex;
   flex-direction: column;
-  min-height: 280px; /* fixed height */
+  min-height: 280px; 
   border-radius: 12px;
   background: #fff;
   cursor: pointer;
@@ -370,18 +369,16 @@
   gap: 6px;
 
   overflow: hidden;
-  max-height: 20px;              /* default = 1 row */
+  max-height: 20px;              
   transition: max-height 0.2s ease;
 }
 
-/* expanded = scrollable, but compact */
 .specialties-container.expanded {
-  max-height: 96px;              /* NOT 90px */
+  max-height: 96px;             
   overflow-y: auto;
   padding-right: 4px;
 }
 
-/* scrollbar (optional, subtle) */
 .specialties-container::-webkit-scrollbar {
   width: 4px;
 }
@@ -415,7 +412,6 @@
 .see-more-btn:hover {
   text-decoration: underline;
 }
-
 
 .tag-row {
   display: flex;
@@ -513,7 +509,7 @@
 .employee-card-footer svg {
   width: 18px;
   height: 18px;
-  min-width: 18px;   /* prevents shrinking */
+  min-width: 18px;   
   min-height: 18px;
   stroke-width: 2;
 }
@@ -608,7 +604,6 @@
    SELECTION MODE STYLES
 ============================= */
 
-/* All action buttons in the same container */
 .employee-actions {
     display: flex;
     gap: 12px;
@@ -627,7 +622,6 @@
     transition: all 0.15s ease;
 }
 
-/* Select button (yellow) */
 .select-mode-btn {
     border: 1.5px solid #FBC02D;
     background: #FBC02D;
@@ -638,7 +632,6 @@
     background: #E6AE24;
 }
 
-/* Select All button (yellow) */
 .select-all-btn {
     border: 1.5px solid #FBC02D;
     background: #FBC02D;
@@ -649,7 +642,6 @@
     background: #E6AE24;
 }
 
-/* Cancel button (white) */
 .cancel-select-btn {
     border: 1.5px solid #E0E0E0;
     background: #fff;
@@ -677,13 +669,12 @@
     border-radius: 6px;
     cursor: pointer;
     z-index: 10;
-    display: none; /* Hidden by default */
+    display: none; 
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
 }
 
-/* Show checkbox when in select mode */
 body.select-mode .employee-checkbox {
     display: flex;
 }
@@ -700,7 +691,6 @@ body.select-mode .employee-checkbox {
     color: #fff;
 }
 
-/* When card is selected */
 .employee-card.selected .employee-checkbox {
     background: #FBC02D;
     border-color: #FBC02D;
@@ -717,7 +707,7 @@ body.select-mode .employee-checkbox {
   position: fixed;
   bottom: 20px;
   left: 50%;
-  margin-left: 155px; /* Half of sidebar width (280px / 2) to center within main content */
+  margin-left: 155px; 
   transform: translateX(-50%);
   
   background: #fff;
@@ -731,7 +721,6 @@ body.select-mode .employee-checkbox {
   gap: 20px;
   padding: 16px 24px;
   
-  /* Smooth appearance */
   animation: slideUp 0.3s ease;
 }
 
@@ -799,12 +788,10 @@ body.select-mode .employee-checkbox {
   flex-shrink: 0;
 }
 
-/* Fix for Create Project button in bottom action bar */
 .bottom-action-bar .create-post-btn {
     white-space: nowrap;
 }
 
-/* Minimal padding since bar is floating */
 body.select-mode .employee-section {
   padding-bottom: 20px;
 }

@@ -86,19 +86,16 @@ if ($role === 'team_member') {
                     <!-- Filter dropdown to filter by priority --> 
                     <select class="filter-dropdown" id="priority-filter">
                         <option value="">All Priorites</option>
-                        <!-- Options will be dynamically populated -->
                     </select>
 
                     <!-- Filter dropdown to filter by project health -->
                     <select class="filter-dropdown" id="health-filter">
                         <option value = "">All Health Levels</option>
-                        <!-- options will be dynamically populated -->
                     </select>
 
                     <!-- Filter dropdown to filter by resource level --> 
                     <select class="filter-dropdown" id="status-filter">
                         <option value="">All Resource Levels</option>
-                        <!-- options will be dynamically populated -->
                     </select>
 
                     <!-- Filter dropdown to sort by deadline --> 
@@ -118,7 +115,6 @@ if ($role === 'team_member') {
 
                 <!-- create filter fills -->
                 <div class="filter-pills" id="filter-pills">
-                    <!-- filter pills will be dynamically inserted here -->
                 </div>
 
                 <!-- project health cards will be displayed here -->
@@ -150,7 +146,6 @@ if ($role === 'team_member') {
                         <!-- Filter dropdown to filter by projects -->
                         <select class="filter-dropdown" id="filter-by-project-name">
                             <option value ="">All Projects</option>
-                            <!-- options will be dynamically populated -->
                         </select>
                     </div>
                     <div class="employee-table-content" id="employee-table-container">
@@ -166,7 +161,6 @@ if ($role === 'team_member') {
                                 </tr>
                             </thead>
                             <tbody id="employee-table">
-                                <!-- rows will be dynamically inserted here -->
                             </tbody>
                         </table>
                     </div>
