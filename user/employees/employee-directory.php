@@ -421,11 +421,7 @@ if ($isAjax) {
             <header class="project-header">
                 <div class="project-header-top">
                         <h1>Employee Directory</h1>
-                </div>
-            </header>
-            <div class="section-divider"></div>
-
-            <!-- EMPLOYEE CONTROLS (search bar and action buttons) -->
+                            <!-- EMPLOYEE CONTROLS (search bar and action buttons) -->
             <div class="employees-controls">
 
                 <!-- Search bar -->
@@ -447,6 +443,10 @@ if ($isAjax) {
                     <button class="cancel-select-btn" id="cancel-select-btn" hidden>Cancel</button>
                 </div>      
             </div>
+                </div>
+            </header>
+            <div class="section-divider"></div>
+
 
             <div class="employee-meta">
 
