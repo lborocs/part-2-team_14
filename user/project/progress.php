@@ -303,7 +303,7 @@ function startCountdown() {
         
         contentDiv.innerHTML = `
             <div class="countdown-task-name">
-                The Project Ends In
+                This Project Ends In
             </div>
 
             <div class="countdown-timer">
