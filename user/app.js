@@ -46,10 +46,6 @@ const DEFAULT_TOPIC_ICONS = {
     'Career Development': 'trending-up',
     'DevOps & Infrastructure': 'server',
     'General Discussion': 'message-circle',
-    'Project Updates': 'clipboard',
-    'Security & Compliance': 'shield',
-    'Technical Help': 'life-buoy',
-    'Tools & Resources': 'package'
 };
 
 
