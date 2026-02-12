@@ -27,6 +27,15 @@ try {
                 COALESCE(COUNT(DISTINCT ta.task_id),0) AS total_tasks,
                 COALESCE(SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END),0) AS completed_tasks,
                 COALESCE(SUM(CASE WHEN t.deadline < NOW() AND t.status != 'completed' THEN 1 ELSE 0 END),0) AS overdue_tasks,
+                COALESCE(SUM(
+                    CASE 
+                        WHEN t.status = 'completed' 
+                        AND t.completed_date IS NOT NULL 
+                        AND t.completed_date <= t.deadline 
+                        THEN 1 
+                        ELSE 0 
+                    END
+                ), 0) AS tasks_completed_on_time,
                 GROUP_CONCAT(DISTINCT p.project_id SEPARATOR ',') AS project_ids,
                 GROUP_CONCAT(DISTINCT p.project_name SEPARATOR ', ') AS projects
             FROM projects p

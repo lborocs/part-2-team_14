@@ -686,36 +686,46 @@ if ($role === 'team_member') {
             tableBody.innerHTML = "";
 
             employees.forEach(emp => {
-                const totalTasks = emp.total_tasks;
-                const completedTasks = emp.completed_tasks;
-                const tasksCompletedOnTime = emp.tasks_completed_on_time || 0;
+                const totalTasks = parseInt(emp.total_tasks) || 0;
+                const completedTasks = parseInt(emp.completed_tasks) || 0;
+                const tasksCompletedOnTime = parseInt(emp.tasks_completed_on_time) || 0;
+                
+                console.log('Employee:', emp.full_name);
+                console.log('Completed tasks:', completedTasks);
+                console.log('Tasks completed on time:', tasksCompletedOnTime);
                 
                 // Calculate on-time percentage: tasks completed before/on deadline / total completed tasks
-                const onTimePercent = completedTasks > 0 
-                    ? Math.round((tasksCompletedOnTime / completedTasks) * 100) 
-                    : 0;
+                let onTimeDisplay;
+                let percentClass = "";
+                
+                if (completedTasks === 0) {
+                    onTimeDisplay = '-';
+                    percentClass = "";
+                } else {
+                    const onTimePercent = Math.round((tasksCompletedOnTime / completedTasks) * 100);
+                    onTimeDisplay = onTimePercent + '%';
+                    
+                    if (onTimePercent > 70){
+                        percentClass = "green-percent";
+                    } else if (onTimePercent >= 30 && onTimePercent <= 70){
+                        percentClass = "amber-percent";
+                    } else {
+                        percentClass = "red-percent";
+                    }
+                }
                     
                 const row = document.createElement("tr");
 
                 // Determine if employee is struggling (3+ overdue tasks)
-                const isStruggling = emp.overdue_tasks >= 3;
+                const isStruggling = parseInt(emp.overdue_tasks) >= 3;
                 if (isStruggling) {
                     row.classList.add("struggling-employee");
-                }
-
-                let percentClass = "";
-                if (onTimePercent > 70){
-                    percentClass = "green-percent";
-                } else if (onTimePercent >= 30 && onTimePercent <= 70){
-                    percentClass = "amber-percent";
-                } else {
-                    percentClass = "red-percent";
                 }
 
                 let overdueTaskClass = "";
                 if (emp.overdue_tasks == 0){
                     overdueTaskClass = "green-percent";
-                } else if (emp.overdue_tasks == 1){
+                } else if (emp.overdue_tasks == 1 || emp.overdue_tasks == 2){
                     overdueTaskClass = "amber-percent";
                 } else{
                     overdueTaskClass = "red-percent";
@@ -737,7 +747,7 @@ if ($role === 'team_member') {
                     <td>${totalTasks}</td>
                     <td>${completedTasks}</td>
                     <td class="${overdueTaskClass}">${emp.overdue_tasks}</td>
-                    <td class="${percentClass}">${onTimePercent}%</td>
+                    <td class="${percentClass}">${onTimeDisplay}</td>
             `   ;
 
                 tableBody.appendChild(row);
