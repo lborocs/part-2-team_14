@@ -157,7 +157,10 @@ if ($role === 'team_member') {
                                     <th>Tasks Assigned</th>
                                     <th>Tasks Completed</th>
                                     <th>Overdue Tasks</th>
-                                    <th>On-Time</th>
+                                    <th class="tooltip-header">
+                                        On-Time
+                                        <span class="info-icon" title="Number of tasks completed on or before their deadline out of total completed tasks">ⓘ</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="employee-table">
@@ -694,7 +697,7 @@ if ($role === 'team_member') {
                 console.log('Completed tasks:', completedTasks);
                 console.log('Tasks completed on time:', tasksCompletedOnTime);
                 
-                // Calculate on-time percentage: tasks completed before/on deadline / total completed tasks
+                // Display on-time as fraction: tasks completed on time / total completed tasks
                 let onTimeDisplay;
                 let percentClass = "";
                 
@@ -702,8 +705,8 @@ if ($role === 'team_member') {
                     onTimeDisplay = '-';
                     percentClass = "";
                 } else {
+                    onTimeDisplay = `${tasksCompletedOnTime}/${completedTasks}`;
                     const onTimePercent = Math.round((tasksCompletedOnTime / completedTasks) * 100);
-                    onTimeDisplay = onTimePercent + '%';
                     
                     if (onTimePercent > 70){
                         percentClass = "green-percent";
