@@ -733,12 +733,18 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'overdue_tasks') {
             flex-shrink: 0;
         }
 
+        .chart-wrapper canvas {
+            position: relative;
+            z-index: 2;
+        }
+
         .chart-center {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
+            z-index: 1;
         }
 
         .chart-center-value {
