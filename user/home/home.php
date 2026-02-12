@@ -157,7 +157,10 @@ if ($role === 'team_member') {
                                     <th>Tasks Assigned</th>
                                     <th>Tasks Completed</th>
                                     <th>Overdue Tasks</th>
-                                    <th>On-Time</th>
+                                    <th class="tooltip-header">
+                                        On-Time
+                                        <span class="info-icon" title="Number of tasks completed on or before their deadline out of total completed tasks">ⓘ</span>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="employee-table">
@@ -685,24 +688,46 @@ if ($role === 'team_member') {
             tableBody.innerHTML = "";
 
             employees.forEach(emp => {
-                const totalTasks = emp.total_tasks;
-                const completedTasks = emp.completed_tasks;
-                const onTimePercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                const totalTasks = parseInt(emp.total_tasks) || 0;
+                const completedTasks = parseInt(emp.completed_tasks) || 0;
+                const tasksCompletedOnTime = parseInt(emp.tasks_completed_on_time) || 0;
+                
+                console.log('Employee:', emp.full_name);
+                console.log('Completed tasks:', completedTasks);
+                console.log('Tasks completed on time:', tasksCompletedOnTime);
+                
+                // Display on-time as fraction: tasks completed on time / total completed tasks
+                let onTimeDisplay;
+                let percentClass = "";
+                
+                if (completedTasks === 0) {
+                    onTimeDisplay = '-';
+                    percentClass = "";
+                } else {
+                    onTimeDisplay = `${tasksCompletedOnTime}/${completedTasks}`;
+                    const onTimePercent = Math.round((tasksCompletedOnTime / completedTasks) * 100);
+                    
+                    if (onTimePercent > 70){
+                        percentClass = "green-percent";
+                    } else if (onTimePercent >= 30 && onTimePercent <= 70){
+                        percentClass = "amber-percent";
+                    } else {
+                        percentClass = "red-percent";
+                    }
+                }
+                    
                 const row = document.createElement("tr");
 
-                let percentClass = "";
-                if (onTimePercent > 70){
-                    percentClass = "green-percent";
-                } else if (onTimePercent >= 30 && onTimePercent <= 69){
-                    percentClass = "amber-percent";
-                } else if (onTimePercent <= 29){
-                    percentClass = "red-percent";
+                // Determine if employee is struggling (3+ overdue tasks)
+                const isStruggling = parseInt(emp.overdue_tasks) >= 3;
+                if (isStruggling) {
+                    row.classList.add("struggling-employee");
                 }
 
                 let overdueTaskClass = "";
                 if (emp.overdue_tasks == 0){
                     overdueTaskClass = "green-percent";
-                } else if (emp.overdue_tasks == 1){
+                } else if (emp.overdue_tasks == 1 || emp.overdue_tasks == 2){
                     overdueTaskClass = "amber-percent";
                 } else{
                     overdueTaskClass = "red-percent";
@@ -724,7 +749,7 @@ if ($role === 'team_member') {
                     <td>${totalTasks}</td>
                     <td>${completedTasks}</td>
                     <td class="${overdueTaskClass}">${emp.overdue_tasks}</td>
-                    <td class="${percentClass}">${onTimePercent}%</td>
+                    <td class="${percentClass}">${onTimeDisplay}</td>
             `   ;
 
                 tableBody.appendChild(row);

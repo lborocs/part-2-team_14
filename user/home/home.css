@@ -177,6 +177,7 @@
     justify-content: space-between;
     align-items: center;
     font-size: 14px;
+    gap: 8px;
 }
 
 .info-label {
@@ -425,6 +426,7 @@ select:hover {
     max-height: 450px;
     overflow-y: auto;
     border-radius: 12px;
+    position: relative;
 }
 
 .employee-table-content::-webkit-scrollbar {
@@ -458,7 +460,8 @@ thead {
     background: linear-gradient(135deg, #FFB84D 0%, #F5A623 100%);
     position: sticky;
     top: 0;
-    z-index: 1;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 thead th {
@@ -469,14 +472,43 @@ thead th {
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #FFB84D 0%, #F5A623 100%);
+    position: sticky;
+    top: 0;
+}
+
+.tooltip-header {
+    position: relative;
+}
+
+.info-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 16px;
+    color: #666;
+    cursor: help;
+    font-weight: normal;
+    vertical-align: middle;
+}
+
+.info-icon:hover {
+    color: #333;
 }
 
 tbody tr {
     transition: background-color 0.2s ease;
 }
 
+tbody tr.struggling-employee {
+    background-color: #ffebee;
+}
+
 tbody tr:hover {
     background-color: #FFF9F0;
+}
+
+tbody tr.struggling-employee:hover {
+    background-color: #ffcdd2;
 }
 
 tbody tr:last-child {
