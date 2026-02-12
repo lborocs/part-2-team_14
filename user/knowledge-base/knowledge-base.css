@@ -404,10 +404,11 @@ u {
 /* Reusable card style for Related Topics / Best Practices / New Discussion  */
 .kb-sidebar-widget {
     background: #fff;
-    border: 1px solid #EAECEE;
+    border: 2px solid #FFFBE5;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(251, 192, 45, 0.05);
 }
 
 .kb-sidebar-widget h3 {
