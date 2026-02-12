@@ -860,6 +860,85 @@ INSERT INTO kb_posts (title, content, topic_id, author_id, tags, like_count) VAL
 'Level up your debugging with these Chrome DevTools tips:\n\n**Console:** console.table(), $0 for selected element, $_ for last result, monitor(fn)\n**Network:** Copy as fetch, domain filtering, network throttling\n**Sources:** Conditional breakpoints, debugger statement, blackbox scripts\n**Performance:** Record page load, screenshot timeline, memory heap snapshots\n**Application:** Inspect cookies/localStorage/IndexedDB, clear site data\n\nF12 is your best friend!',
 8, 7, '["chrome","devtools","debugging","tips"]', 7);
 
+INSERT INTO kb_posts 
+(title, content, topic_id, author_id, tags, like_count)
+VALUES (
+'Backend Coding Standards',
+'All backend code must follow these guidelines:
+
+- Use consistent naming conventions
+- Follow PSR-12 coding standards
+- Validate all inputs
+- Use prepared statements for database queries
+- Write unit tests for business logic
+
+Clean code improves maintainability and team collaboration.',
+12,
+2,
+'["backend","coding-standards","development","guidelines"]',
+0
+);
+
+INSERT INTO kb_posts 
+(title, content, topic_id, author_id, tags, like_count)
+VALUES
+(
+'Effective Sprint Planning Tips',
+'To run effective sprint planning sessions:
+
+- Clearly define sprint goals
+- Break tasks into manageable tickets
+- Estimate realistically
+- Identify blockers early
+- Confirm team capacity
+
+Proper planning reduces mid-sprint surprises.',
+11,
+2,
+'["agile","scrum","sprint","planning"]',
+0
+);
+
+INSERT INTO kb_posts 
+(title, content, topic_id, author_id, tags, like_count)
+VALUES
+(
+'Annual Leave Policy Overview',
+'Employees are entitled to 25 days of annual leave plus public holidays.
+
+Key points:
+- Leave must be approved by your manager
+- Requests should be submitted at least 2 weeks in advance
+- Unused leave cannot be carried over without approval
+
+See the HR portal for full details.',
+10,
+1,
+'["hr","leave","policy","benefits"]',
+0
+);
+
+INSERT INTO kb_posts 
+(title, content, topic_id, author_id, tags, like_count)
+VALUES
+(
+'How to Reset Your Company Password',
+'If you have forgotten your company password:
+
+1. Go to the login page
+2. Click "Forgot Password"
+3. Enter your company email
+4. Follow the reset link sent to your inbox
+
+If you do not receive the email, contact IT support.',
+9,
+1,
+'["password","support","account","help"]',
+0
+);
+
+
+
 -- =============================================
 -- KNOWLEDGE BASE COMMENTS
 -- =============================================
