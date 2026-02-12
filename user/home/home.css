@@ -426,6 +426,7 @@ select:hover {
     max-height: 450px;
     overflow-y: auto;
     border-radius: 12px;
+    position: relative;
 }
 
 .employee-table-content::-webkit-scrollbar {
@@ -471,6 +472,27 @@ thead th {
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #FFB84D 0%, #F5A623 100%);
+    position: sticky;
+    top: 0;
+}
+
+.tooltip-header {
+    position: relative;
+}
+
+.info-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 16px;
+    color: #666;
+    cursor: help;
+    font-weight: normal;
+    vertical-align: middle;
+}
+
+.info-icon:hover {
+    color: #333;
 }
 
 tbody tr {
