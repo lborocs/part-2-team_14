@@ -634,7 +634,7 @@ tbody td:first-child {
 
 /* === RESPONSIVE TABLE BREAKPOINT === */
 
-@media (max-width: 768px) {
+@media (max-width: 750px) {
     .table-container {
         padding: 15px;
         overflow-x: auto;
