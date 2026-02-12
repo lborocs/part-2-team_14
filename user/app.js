@@ -2033,7 +2033,6 @@ function setupAssignTaskForm() {
     const form = document.getElementById("assign-task-form");
     if (!form) return;
 
-    // ✅ Prevent double-binding
     if (form.dataset.bound === "1") return;
     form.dataset.bound = "1";
 
@@ -2469,7 +2468,7 @@ async function updateTaskStatusInDb(taskId, newStatus) {
         throw new Error(data.message || `Update failed (${res.status})`);
     }
 
-    // ✅ Trigger UI refresh after successful update
+    // Trigger UI refresh after successful update
     const currentUser = window.__CURRENT_USER__;
     const projectId = getCurrentProjectId();
     if (currentUser && projectId) {
@@ -2565,7 +2564,7 @@ async function deleteTaskInDb(taskId) {
 }
 
 function setupStatusPillActions(currentUser, currentProjectId) {
-    // ✅ PREVENT DUPLICATE BINDINGS
+    // PREVENT DUPLICATE BINDINGS
     const board = document.querySelector('.task-board');
     if (!board) return;
 
@@ -3255,7 +3254,6 @@ function setupCloseProjectControls() {
             const pid = getCurrentProjectId();
             if (!pid) throw new Error("Missing project_id in URL");
 
-            // ✅ POST BACK TO THE CURRENT PAGE (so manager-progress.php handler runs)
             const url = `${window.location.pathname}?project_id=${encodeURIComponent(pid)}`;
 
             const res = await fetch(url, {
@@ -4133,7 +4131,6 @@ function setupProjectCardMenus() {
             const menu = card.querySelector(".card-menu-dropdown");
             if (menu) menu.hidden = true;
 
-            // ✅ Update opens modal (no DB call here)
             if (action === "update") {
                 openUpdateProjectModal(card);
                 return;
@@ -4270,7 +4267,6 @@ function updateEmptyStates() {
 function restoreDeadlinePill(cardEl) {
     const deadlineStr = cardEl.dataset.deadline || "";
 
-    // ✅ Recalculate the deadline pill based on current date
     if (!deadlineStr) {
         const pill = cardEl.querySelector(".days-pill");
         if (pill) {
@@ -4305,7 +4301,6 @@ function restoreDeadlinePill(cardEl) {
         cls = "days-pill";
     }
 
-    // ✅ Update the pill in the DOM
     const pill = cardEl.querySelector(".days-pill");
     if (pill) {
         pill.className = cls;
@@ -4313,7 +4308,6 @@ function restoreDeadlinePill(cardEl) {
         if (span) span.textContent = text;
     }
 
-    // ✅ Update datasets for future reference
     cardEl.dataset.deadlineText = text;
     cardEl.dataset.deadlineClass = cls;
 }
@@ -4451,26 +4445,17 @@ function updateCardUIAfterAction(action, cardEl) {
 
 
     if (action === "reinstate") {
-        // ✅ Remove empty state first
         activeGrid?.querySelector(".empty-state")?.remove();
-
-        // ✅ Remove archived styling
         cardEl.classList.remove("project-card--archived");
-
-        // ✅ CRITICAL: Restore the deadline pill BEFORE moving the card
         restoreDeadlinePill(cardEl);
-
-        // ✅ Update the menu to show active options
         renderCardMenu(cardEl, "active");
 
-        // ✅ Insert card in the correct sorted position
         const deadline = cardEl.dataset.deadline || "";
         const sortDropdown = document.getElementById("sortProjects");
         const currentSort = sortDropdown ? sortDropdown.value : "due";
 
         insertCardInSortedPosition(cardEl, activeGrid, currentSort);
 
-        // ✅ Update empty states
         updateEmptyStates();
     }
 
@@ -4603,20 +4588,16 @@ function openUpdateProjectModal(card) {
                     return;
                 }
 
-                // ✅ Find the card and update it
                 const card = document.querySelector(`[data-project-id="${pid}"]`);
                 if (card) {
                     applyUpdatedProjectToCard(card, data.updated);
                 }
 
-                // ✅ Close modal
                 modal.style.display = "none";
                 document.body.style.overflow = "";
 
-                // ✅ Show success message
                 showSuccessNotification("Project updated successfully!");
 
-                // ✅ Re-render feather icons
                 if (window.feather) feather.replace();
 
             } catch (err) {
@@ -4631,26 +4612,21 @@ function openUpdateProjectModal(card) {
 function applyUpdatedProjectToCard(card, updated) {
     if (!card || !updated) return;
 
-    // ✅ Update title
     const titleEl = card.querySelector(".project-title");
     if (titleEl) titleEl.textContent = updated.project_name;
 
-    // ✅ Update description (if displayed anywhere)
     const descEl = card.querySelector(".project-description");
     if (descEl) descEl.textContent = updated.description || "";
 
-    // ✅ Update datasets
     card.dataset.name = String(updated.project_name || "").toLowerCase();
     card.dataset.deadline = updated.deadline || "";
     card.dataset.description = updated.description || "";
     card.dataset.teamLeaderId = updated.team_leader_id || "";
     card.dataset.teamLeaderName = updated.leader_name || "Unassigned";
 
-    // ✅ Update leader name
     const leaderNameEl = card.querySelector(".leader-name");
     if (leaderNameEl) leaderNameEl.textContent = updated.leader_name || "Unassigned";
 
-    // ✅ Update leader avatar
     const leaderRow = card.querySelector(".leader-row");
     const avatarImg = card.querySelector("img.leader-avatar");
     const avatarDefault = card.querySelector(".leader-avatar--default");
@@ -4686,10 +4662,8 @@ function applyUpdatedProjectToCard(card, updated) {
         }
     }
 
-    // ✅ Update deadline pill
     updateDeadlinePillUI(card, updated.deadline);
 
-    // ✅ Re-render icons
     if (window.feather) feather.replace();
 }
 

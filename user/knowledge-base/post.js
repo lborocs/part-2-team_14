@@ -20,10 +20,10 @@
   let post = null;
 
   try {
-    // 0) Fetch current logged-in user
+    // Fetch current logged-in user
     currentUser = await getCurrentUser();
 
-    // 1) Fetch post
+    // Fetch post
     const postRes = await fetch(`actions/fetch_post.php?post_id=${encodeURIComponent(postId)}`, {
       credentials: "include",
     });
@@ -42,7 +42,6 @@
     // Page title + breadcrumbs
     titleEl.textContent = post.title || "Untitled";
 
-    // If fetch_post.php returns topic_name use otherwise fallback.
     const topicName = post.topic_name || "Post";
     renderRelatedTopics({ currentTopicName: topicName, currentUser });
     breadcrumbsEl.innerHTML = `
@@ -51,7 +50,7 @@
       <span>Post</span>
     `;
 
-    // Render the post
+    // Render the post content
     const postAvatarSrc = post.profile_picture || '../../default-avatar.png';
 
     const isSolved = Number(post.is_solved || 0) === 1;
@@ -112,7 +111,7 @@
     wireSinglePostLike();
     wireMarkSolved();
 
-    // 2) Fetch comments for this post
+    // Load comments/replies for the post
     const comRes = await fetch(`actions/fetch_comments.php?post_id=${encodeURIComponent(postId)}`, {
       credentials: "include",
     });
@@ -125,8 +124,7 @@
       wireCommentActionButtons(); 
     }
 
-
-    // Show reply form only if post is not solved
+    // Hide reply form if post is already solved
     if (replyForm) {
       if (isSolved) {
         replyForm.style.display = "none";
@@ -170,7 +168,7 @@
           // Clear textarea
           textarea.value = "";
 
-          // Reload comments so it shows instantly
+          // Reload comments to show the new one
           const comRes = await fetch(`actions/fetch_comments.php?post_id=${encodeURIComponent(postId)}`, {
             credentials: "include",
           });
@@ -206,6 +204,7 @@
       .map((c) => {
         const replyAvatarSrc = c.profile_picture || '../../default-avatar.png';
 
+        //Show specialist tag if applicable
         const specialistTag =
           String(c.author_role || "").toLowerCase() === "specialist" ? " (Specialist)" : "";
 
@@ -256,9 +255,9 @@
   }
 
   function wireCommentActionButtons() {
-    // Event delegation on the replies container
+    
     if (!repliesEl) return;
-
+    // Handle edit/delete clicks on comments
     repliesEl.onclick = async (e) => {
       const btn = e.target.closest("button[data-action]");
       if (!btn) return;
@@ -284,11 +283,11 @@
     const p = body?.querySelector("p");
     if (!body || !p) return;
 
-    // prevent double-open
+    // Don't open editor if it's already open
     if (body.querySelector(".edit-comment-inline")) return;
 
     const originalHTML = body.innerHTML;
-    const existingText = p.innerText; // keeps line breaks
+    const existingText = p.innerText; 
 
     body.innerHTML = `
       <div class="edit-comment-inline">
@@ -332,7 +331,7 @@
           return;
         }
 
-        // refresh comments list
+        // Refresh to show updated comment
         const comRes = await fetch(`actions/fetch_comments.php?post_id=${encodeURIComponent(postId)}`, {
           credentials: "include",
         });
@@ -372,7 +371,7 @@
         return;
       }
 
-      // refresh comments list
+      // Refresh to remove deleted comment
       const comRes = await fetch(`actions/fetch_comments.php?post_id=${encodeURIComponent(postId)}`, {
         credentials: "include",
       });
@@ -410,7 +409,7 @@
     const header = contentEl.querySelector(".post-card-header");
     if (!header) return;
 
-    // Use CSS, not inline styles
+    
     const actions = document.createElement("div");
     actions.className = "post-actions";
 
@@ -436,7 +435,7 @@
   }
 
   function applyLastEditedText(postObj) {
-    // Only show if updated_at exists and is different from created_at
+    // Only show "Edited" text if the post was actually updated after creation
     const created = normalizeDateString(postObj.created_at);
     const updated = normalizeDateString(postObj.updated_at || postObj.last_edited_at);
 
@@ -452,7 +451,6 @@
 
   function normalizeDateString(s) {
     if (!s) return "";
-    // make "YYYY-MM-DD HH:MM:SS" stable
     return String(s).trim();
   }
 
@@ -464,11 +462,9 @@
     // Prevent opening twice
     if (card.querySelector(".edit-post-inline")) return;
 
-    // Grab current values
     const currentTitle = postObj.title || "";
     const currentContent = postObj.content || "";
 
-    // Replace the post body with a "Create Post"-style form
     const body = card.querySelector(".post-card-body");
     if (!body) return;
 
@@ -542,7 +538,7 @@
 
         body.innerHTML = `<p>${formatMultiline(contentTrim)}</p>`;
 
-        // Update edited label nicely
+        // Update edited label
         const dateEl = contentEl.querySelector(".post-card-date");
         if (dateEl) dateEl.textContent = formatDate(postObj.created_at);
         applyLastEditedText(postObj);
@@ -617,7 +613,6 @@
   }
 
     function formatMultiline(text) {
-    // Escape first, then replace newlines with <br>
     return escapeHtml(text).replace(/\n/g, "<br>");
   }
 
@@ -650,7 +645,6 @@
     const widget = document.getElementById("related-topics-widget");
     const el = document.getElementById("related-topics-list");
 
-    // If the post page doesn't have the widget, do nothing
     if (!widget || !el) return;
 
     const topics = await fetchTopics();
@@ -662,19 +656,15 @@
 
     const other = names.filter(n => n !== currentTopicName);
 
-    // pick up to 3 random topics
+    // Pick 3 random topics, or just show current if none available
     const picks = shuffle(other).slice(0, 3);
-
-    // if there are no other topics, show the current topic only
     const finalList = picks.length ? picks : [currentTopicName].filter(Boolean);
 
-    // if still nothing, hide widget
     if (!finalList.length) {
       widget.style.display = "none";
       return;
     }
 
-    // show widget when we have something to show
     widget.style.display = "";
 
     el.innerHTML = finalList
@@ -684,7 +674,7 @@
       })
       .join("");
 
-    // Save for KB page
+    // Save topic for navigation
     el.querySelectorAll("a[data-topic]").forEach(a => {
       a.addEventListener("click", () => {
         sessionStorage.setItem("returnToTopic", a.textContent || "");
@@ -774,7 +764,7 @@ function wireMarkSolved() {
       if (!data.success) throw new Error(data.message || "Failed");
 
 
-      // add badge if not already there
+      // Add solved badge
       const footer = contentEl.querySelector(".post-card-footer");
       if (footer && !footer.querySelector(".kb-solved-badge")) {
         const badge = document.createElement("span");
@@ -783,13 +773,11 @@ function wireMarkSolved() {
         footer.appendChild(badge);
       }
 
-      // remove the button
       btn.remove();
 
-      // update local state
       post.is_solved = 1;
 
-      // hide reply form
+      // Hide reply form since post is now solved
       const replyForm = document.getElementById("reply-form");
       if (replyForm) replyForm.style.display = "none";
 
@@ -846,10 +834,8 @@ function wireUnsolve() {
       const badge = footer?.querySelector(".kb-solved-badge");
       if (badge) badge.remove();
 
-      // remove unsolve button
       btn.remove();
 
-      // update local state
       post.is_solved = 0;
 
       // show reply form again

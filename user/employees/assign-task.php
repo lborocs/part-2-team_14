@@ -11,16 +11,16 @@ if (!$db) {
 
 // Define color palette (same as other files)
 $bannerColors = [
-    '#5B9BD5',  // Soft Blue
-    '#7FB069',  // Sage Green
-    '#9B59B6',  // Muted Purple
-    '#D4926F',  // Muted Orange
-    '#45B7B8',  // Teal
-    '#6C8EAD',  // Slate Blue
-    '#2A9D8F',  // Deep Teal
-    '#B56576',  // Mauve/Rose
-    '#52796F',  // Forest Green
-    '#7D8FA0',  // Dusty Blue
+    '#5B9BD5',  
+    '#7FB069',  
+    '#9B59B6',  
+    '#D4926F',  
+    '#45B7B8', 
+    '#6C8EAD',  
+    '#2A9D8F',  
+    '#B56576',  
+    '#52796F',  
+    '#7D8FA0',  
 ];
 
 function getEmployeeColor($userId, $bannerColors, &$colorMap) {
@@ -180,7 +180,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description'] ?? '');
     $employeeIds = $_POST['employee_ids'] ?? [];
     
-    // Validate
     if ($taskName === '' || $projectId <= 0 || $deadline === '' || empty($employeeIds)) {
         echo json_encode([
             'success' => false,
@@ -264,7 +263,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             
             if (!$pmActiveCheck->fetchColumn()) {
-                // Try to reactivate
                 $pmReactivate->execute([
                     ':pid' => $projectId,
                     ':uid' => $empId,

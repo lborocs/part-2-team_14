@@ -118,8 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'deadlines
     }
 
     try {
-        // Get upcoming/overdue tasks for THIS project (exclude completed)
-        // Get first assignee only (using MIN to avoid GROUP BY issues)
+        // Get all tasks with ALL assignees
         $stmt = $db->prepare("
             SELECT
                 t.task_id,
@@ -129,24 +128,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'deadlines
                 t.status,
                 t.priority,
                 t.description,
-
-                ta_first.user_id AS owner_id,
-                u.first_name,
-                u.last_name,
-                u.profile_picture
+                GROUP_CONCAT(DISTINCT u.user_id ORDER BY u.user_id) AS assignee_ids,
+                GROUP_CONCAT(DISTINCT u.first_name ORDER BY u.user_id) AS assignee_first_names,
+                GROUP_CONCAT(DISTINCT u.last_name ORDER BY u.user_id) AS assignee_last_names,
+                GROUP_CONCAT(DISTINCT u.profile_picture ORDER BY u.user_id SEPARATOR '|||') AS assignee_avatars
 
             FROM tasks t
-            LEFT JOIN (
-                SELECT task_id, MIN(user_id) AS user_id
-                FROM task_assignments
-                GROUP BY task_id
-            ) ta_first ON ta_first.task_id = t.task_id
-            LEFT JOIN users u ON u.user_id = ta_first.user_id
+            LEFT JOIN task_assignments ta ON ta.task_id = t.task_id
+            LEFT JOIN users u ON u.user_id = ta.user_id
 
             WHERE t.project_id = :pid
               AND t.status != 'completed'
               AND t.deadline IS NOT NULL
 
+            GROUP BY t.task_id, t.task_name, t.deadline, t.updated_at, t.status, t.priority, t.description
             ORDER BY t.deadline ASC
             LIMIT 30
         ");
@@ -154,8 +149,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'deadlines
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $items = array_map(function ($r) {
-            $ownerName = trim(($r['first_name'] ?? '') . ' ' . ($r['last_name'] ?? ''));
-            if ($ownerName === '') $ownerName = 'Unassigned';
+            // Parse multiple assignees
+            $assigneeIds = $r['assignee_ids'] ? explode(',', $r['assignee_ids']) : [];
+            $firstNames = $r['assignee_first_names'] ? explode(',', $r['assignee_first_names']) : [];
+            $lastNames = $r['assignee_last_names'] ? explode(',', $r['assignee_last_names']) : [];
+            $avatars = $r['assignee_avatars'] ? explode('|||', $r['assignee_avatars']) : [];
+
+            $owners = [];
+            foreach ($assigneeIds as $index => $userId) {
+                $firstName = $firstNames[$index] ?? '';
+                $lastName = $lastNames[$index] ?? '';
+                $ownerName = trim($firstName . ' ' . $lastName);
+                if ($ownerName === '') $ownerName = 'User ' . $userId;
+
+                $owners[] = [
+                    'user_id' => (int)$userId,
+                    'name' => $ownerName,
+                    'avatar' => !empty($avatars[$index]) ? $avatars[$index] : null,
+                ];
+            }
+
+            if (empty($owners)) {
+                $owners[] = [
+                    'user_id' => null,
+                    'name' => 'Unassigned',
+                    'avatar' => null,
+                ];
+            }
 
             return [
                 'task_id' => (int)$r['task_id'],
@@ -165,11 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['ajax'] ?? '') === 'deadlines
                 'status' => $r['status'] ?? 'in_progress',
                 'priority' => $r['priority'] ?? 'medium',
                 'description' => $r['description'] ?? '',
-                'owner' => [
-                    'user_id' => $r['owner_id'] ? (int)$r['owner_id'] : null,
-                    'name' => $ownerName,
-                    'avatar' => !empty($r['profile_picture']) ? $r['profile_picture'] : null,
-                ]
+                'owners' => $owners
             ];
         }, $rows);
 
@@ -1025,7 +1041,12 @@ document.getElementById('modal-task-name-input').value = task.task_name || '';
     const ownerEl = document.getElementById('modal-task-owner');
     const ownerSelectEl = document.getElementById('modal-task-owner-select');
 
-    ownerEl.textContent = task.owner?.name || 'Unassigned';
+// Display all owners
+if (task.owners && task.owners.length > 0) {
+    ownerEl.textContent = task.owners.map(o => o.name).join(', ');
+} else {
+    ownerEl.textContent = 'Unassigned';
+}
 
     // Fetch and populate project members
     fetchProjectMembers().then(members => {

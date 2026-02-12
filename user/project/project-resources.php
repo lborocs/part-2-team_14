@@ -28,7 +28,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
     try {
         $database = new Database();
         $pdo = $database->getConnection();
-
+        //only team leader or manager can upload/delete resources
         function canUploadDelete($pdo, $projectId, $userId) {
             $sql = "SELECT created_by, team_leader_id FROM projects WHERE project_id = ?";
             $stmt = $pdo->prepare($sql);
@@ -40,7 +40,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
             return ($project['created_by'] == $userId || $project['team_leader_id'] == $userId);
         }
 
-        // LIST FILES & PROJECT DETAILS
+        // List files and project details
         if ($action === 'list') {
             $sql = "
                 SELECT 
@@ -90,7 +90,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
             exit;
         }
 
-        // DELETE FILE
+        // removes resource row + deletes the physical file from uploads
         if ($action === 'delete') {
             // Check permission
             if (!canUploadDelete($pdo, $projectId, $userId)) {
@@ -104,7 +104,6 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
                 exit;
             }
 
-            // Get file path
             $stmt = $pdo->prepare("SELECT file_path FROM project_resources WHERE resource_id = ? AND project_id = ?");
             $stmt->execute([$resourceId, $projectId]);
             $file = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -128,7 +127,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
             exit;
         }
 
-        // UPLOAD FILE
+        // Upload file
         if ($action === 'upload') {
             // Check permission
             if (!canUploadDelete($pdo, $projectId, $userId)) {
@@ -145,7 +144,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
             $description = $_POST['description'] ?? '';
 
             // Validate file size (10MB max)
-            $maxSize = 10 * 1024 * 1024; // 10MB in bytes
+            $maxSize = 10 * 1024 * 1024; 
             if ($file['size'] > $maxSize) {
                 echo json_encode(['success' => false, 'message' => 'File too large (max 10MB)']);
                 exit;
@@ -298,7 +297,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
           </ul>
         </div>
 
-        <!-- NEW: Uploaded Files -->
+        <!-- Uploaded Files -->
         <div class="resource-card resource-files-card">
           <h3>Uploaded Files</h3>
 
@@ -329,7 +328,6 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
           <div class="files-list" id="files-list"></div>
           <div class="files-empty" id="files-empty">No files uploaded yet.</div>
         </div>
-        <!-- END NEW -->
       </div>
     </div>
   </main>
@@ -371,12 +369,14 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
 (function () {
   const $ = (id) => document.getElementById(id);
 
+  // Unified status messaging for upload/delete feedback
   function setStatus(msg, type) {
     const el = $('files-status');
     el.textContent = msg || '';
     el.className = 'files-status ' + (type ? ('is-' + type) : '');
   }
 
+  // Display file sizes nicely (B / KB / MB / GB)
   function formatBytes(bytes) {
     const b = Number(bytes || 0);
     if (b < 1024) return b + ' B';
@@ -473,7 +473,7 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
 
     feather.replace();
 
-    // Attach delete listeners **after DOM is rendered**
+    // Attach delete listeners, after DOM is rendered
     document.querySelectorAll('.delete-file-btn').forEach(btn => {
       btn.addEventListener('click', async () => {
         const resourceId = btn.dataset.resourceId;
@@ -512,7 +512,6 @@ if (isset($_GET['action']) || isset($_POST['action'])) {
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Choose button -> open hidden file input
     $('file-choose-btn').addEventListener('click', () => $('resource-file-input').click());
 
     // Update chosen filename

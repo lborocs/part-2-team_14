@@ -1,12 +1,12 @@
-/*
- * Project Members Page Styles
- */
+/* === PROJECT MEMBERS PAGE STYLES === */
 
 .members-content {
     padding: 30px 40px;
     overflow-y: auto;
     flex-grow: 1;
 }
+
+/* === HEADER ROW (TITLE + ADD BUTTON) === */
 
 .members-header {
     display: flex;
@@ -63,9 +63,8 @@
     height: 18px;
 }
 
-/* =====================
-   MEMBER CARDS GRID
-   ===================== */
+/* === MEMBER CARDS GRID  === */
+
 .members-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -94,7 +93,7 @@
     border-color: #FBC02D;
 }
 
-/* Card Top Banner */
+/* === CARD TOP BANNER (COLOURED STRIP) === */
 .member-card-top {
     position: relative;
     display: flex;
@@ -105,6 +104,8 @@
     border-top-left-radius: 12px;
     border-top-right-radius: 12px;
 }
+
+/* === AVATAR === */
 
 .member-avatar {
     width: 64px;
@@ -123,8 +124,8 @@
     border-radius: 50%;
     display: block;
 }
+/* === ROLE BADGE (TOP RIGHT) === */
 
-/* Role Badge */
 .member-role-badge {
     position: absolute;
     top: 8px;
@@ -153,8 +154,8 @@
     color: #fff;
     border: 1px solid rgba(255, 255, 255, 0.4);
 }
+/* === CARD BODY === */
 
-/* Card Body */
 .member-card-body {
     display: flex;
     flex-direction: column;
@@ -172,6 +173,8 @@
     text-align: center;
     line-height: 1.3;
 }
+
+/* === EMAIL ROW === */
 
 .member-email {
     display: flex;
@@ -195,8 +198,8 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
+/* === SPECIALTIES (PILLS) === */
 
-/* Specialties */
 .member-specialties {
     display: flex;
     flex-wrap: wrap;
@@ -207,9 +210,6 @@
     border-top: 1px solid #EAECEE;
     padding-top: 6px;
     overflow-y: auto;
-}
-
-.member-specialties {
     max-height: none;
 }
 
@@ -265,7 +265,8 @@
 .spec-prototyping        { background:#E8EAF6; color:#303F9F; }
 .spec-default            { background:#ECEFF1; color:#455A64; }
 
-/* Remove Button */
+/* === REMOVE BUTTON (MANAGER ONLY) === */
+
 .remove-member-btn {
     display: inline-flex;
     align-items: center;
@@ -295,7 +296,8 @@
     height: 14px;
 }
 
-/* Empty State */
+/* === EMPTY STATE === */
+
 .members-empty {
     text-align: center;
     padding: 60px 20px;
@@ -314,9 +316,8 @@
     font-size: 16px;
 }
 
-/* =====================
-   CONFIRM MODAL
-   ===================== */
+/* === CONFIRM MODAL OVERLAY === */
+
 .remove-modal-overlay {
     position: fixed;
     top: 0;
@@ -333,6 +334,8 @@
 .remove-modal-overlay.show {
     display: flex;
 }
+
+/* === MODAL  === */
 
 .remove-modal {
     background: #fff;
@@ -438,9 +441,8 @@
     background: #B71C1C;
 }
 
-/* =====================
-   RESPONSIVE
-   ===================== */
+/* === RESPONSIVE GRID BREAKPOINTS === */
+
 @media (max-width: 768px) {
     .members-content {
         padding: 20px;

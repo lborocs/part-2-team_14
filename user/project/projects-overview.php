@@ -53,7 +53,6 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'leaders') {
 $isLoggedIn = isset($_SESSION['role'], $_SESSION['email'], $_SESSION['user_id']);
 
 if (!$isLoggedIn) {
-  // you're viewing without login -> force safe defaults
   $role = 'manager';
   $isManager = true;
 
@@ -63,18 +62,6 @@ if (!$isLoggedIn) {
   $isManager = ($role === 'manager');
   $currentUserId = $_SESSION['user_id'];
 }
-
-
-// actual code should have this bit but keeping upper one for access since i view page w/o login
-
-// if (!isset($_SESSION['role'], $_SESSION['email'])) {
-//   header('Location: ../index.html');
-//   exit;
-// }
-
-// $role = $_SESSION['role'];     // no default
-// $isManager = ($role === 'manager');
-
 
 // =============================
 // ACTION HANDLER (same file)
@@ -88,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
     exit;
   }
 
-  // Get data sent from JS
   $projectId = isset($_POST['project_id']) ? (int)$_POST['project_id'] : 0;
   $action = $_POST['action'] ?? '';
 
@@ -99,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
 
   try {
     if ($action === 'archive') {
-      // Move to archived (keep progress as-is)
+      // Move to archived
       $sql = "UPDATE projects
               SET status = 'archived', archived_at = NOW()
               WHERE project_id = :id";
@@ -114,7 +100,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
       $stmt = $db->prepare($sql);
       $stmt->execute([':id' => $projectId]);
     } elseif ($action === 'reinstate') {
-      // Bring back from archive to active (keep whatever progress it had)
       $sql = "UPDATE projects
               SET status = 'active', archived_at = NULL
               WHERE project_id = :id";
@@ -142,12 +127,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
         exit;
       }
 
-      // --- Find current leader so we can demote them in project_members ---
+      // Capture previous leader so role can be downgraded safely
       $oldLeaderStmt = $db->prepare("SELECT team_leader_id FROM projects WHERE project_id = :pid LIMIT 1");
       $oldLeaderStmt->execute([':pid' => $projectId]);
       $oldLeaderId = (int)($oldLeaderStmt->fetchColumn() ?? 0);
 
-      // --- Update project main fields ---
+      // Update project details and leader
       $sql = "UPDATE projects
           SET project_name = :name,
               deadline = :deadline,
@@ -163,8 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
         ':id' => $projectId
       ]);
 
-      // --- Ensure NEW leader exists in project_members and is marked as team_leader ---
-      // Insert if missing, otherwise update role
+      // Ensure new leader exists in project_members with correct role
       $pmUpsert = $db->prepare("
         INSERT INTO project_members (project_id, user_id, project_role)
         VALUES (:pid, :uid, 'team_leader')
@@ -172,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
       ");
       $pmUpsert->execute([':pid' => $projectId, ':uid' => $leaderId]);
 
-      // --- Demote OLD leader to member (but only if old leader exists and is different) ---
+      // Downgrade old leader to member (only if changed)
       if ($oldLeaderId > 0 && $oldLeaderId !== $leaderId) {
         $demote = $db->prepare("
           UPDATE project_members
@@ -183,7 +167,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
         $demote->execute([':pid' => $projectId, ':uid' => $oldLeaderId]);
       }
 
-      // --- Promote globally ONLY if the person is a team_member ---
       $promote = $db->prepare("
           UPDATE users
           SET role = 'team_leader'
@@ -192,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'  && isset($_POST['action'])) {
       ");
       $promote->execute([':uid' => $leaderId]);
 
-      // Return leader info for UI update
+      // Return leader data so UI can update card instantly
       $u = $db->prepare("SELECT first_name, last_name, profile_picture, role FROM users WHERE user_id = :uid LIMIT 1");
       $u->execute([':uid' => $leaderId]);
       $leader = $u->fetch(PDO::FETCH_ASSOC);
@@ -237,10 +220,10 @@ function daysLeft(?string $estimated, ?string $deadline): ?int
   $targetDate = new DateTime($target);
   $diff = $today->diff($targetDate);
 
-  // signed integer days: negative = overdue
   return (int)$diff->format('%r%a');
 }
-//gets active projects with sql statement
+
+// Active projects query
 $activeSql = "
   SELECT DISTINCT
     p.project_id,
@@ -289,8 +272,7 @@ $activeStmt = $db->prepare($activeSql);
 $activeStmt->execute([':uid' => $currentUserId]);
 $activeProjects = $activeStmt->fetchAll(PDO::FETCH_ASSOC);
 
-
-
+// Archived projects visible only to managers
 $archivedProjects = [];
 if ($isManager) {
   $archivedSql = "
@@ -352,8 +334,6 @@ if ($isManager) {
   <link rel="icon" type="image/png" href="/favicon.png">
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="../app.js" defer></script>
-
-
 </head>
 
 <body id="projects-overview-page">
@@ -386,7 +366,7 @@ if ($isManager) {
         <h1>Projects</h1>
         <div class="projects-controls">
 
-          <!-- If it's a manager they should be able to see this button-->
+          <!-- manager able to see this button-->
           <?php if ($isManager): ?>
             <div>
 
@@ -406,8 +386,6 @@ if ($isManager) {
 
       </header>
 
-      <!-- ACTIVE -->
-      <!-- ACTIVE -->
       <section class="projects-section" id="active-section">
         <div class="section-top">
           <h2 class="active-projects-title">Active Projects</h2>
@@ -439,7 +417,6 @@ if ($isManager) {
                 <?php
                 // todo
                 $progress = (float)($p['completion_percentage'] ?? 0);
-                //just in case
                 if ($progress < 0) $progress = 0;
                 if ($progress > 100) $progress = 100;
 
@@ -583,12 +560,11 @@ if ($isManager) {
                     if ($leaderName === '') $leaderName = 'Unassigned';
 
                     $avatar = $p['leader_picture'] ?? '';
-                    $priority = strtolower($p['priority'] ?? 'medium'); // ✅ Get priority
+                    $priority = strtolower($p['priority'] ?? 'medium'); 
 
                     $dateText = 'Archived';
                     $dateClass = 'days-pill';
 
-                    // ✅ Calculate the REAL deadline text for when it's reinstated
                     $days = daysLeft($p['estimated_completion_date'] ?? null, $p['deadline'] ?? null);
                     $realDeadlineText = 'No date set';
                     $realDeadlineClass = 'days-pill';

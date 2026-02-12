@@ -244,6 +244,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    /*INITIALIZE */
     loadPreselectedEmployees();
 });

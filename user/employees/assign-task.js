@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Check on load
     if (!validateEmployees()) {
-        return; // Stop execution if validation fails
+        return; 
     }
     
     /* ========================================
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update count
         employeeCountSpan.textContent = preselectedEmployees.length;
         
-        // Fetch employee details from server (with colors!)
+        // Fetch employee details from server (with colors)
         try {
             const response = await fetch(`assign-task.php?ajax=get_employees&ids=${preselectedEmployees.join(',')}`);
             const employees = await response.json();
@@ -190,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Prepare form data
             const formData = new FormData(form);
             
-            // Show confirmation modal
             await showConfirmationModal(formData);
         });
     }
@@ -199,7 +198,6 @@ document.addEventListener('DOMContentLoaded', () => {
        CONFIRM SUBMISSION
     ======================================== */
     confirmSubmitBtn.addEventListener('click', async () => {
-        // Prepare form data
         const formData = new FormData(form);
         
         // Add employee IDs
@@ -246,6 +244,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    /* INITIALIZE */
     loadPreselectedEmployees();
 });

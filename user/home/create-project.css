@@ -1,6 +1,4 @@
-/* =========================================
-   Assignees / Autocomplete
-========================================= */
+/* === ASSIGNEES CHECKLIST === */
 
 .assignee-checklist {
   max-height: 200px;
@@ -22,6 +20,8 @@
   color: #333;
 }
 
+/* === AUTOCOMPLETE DROPDOWN (BASE) === */
+
 .autocomplete-results {
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -42,9 +42,7 @@
   background: #f2f2f2;
 }
 
-/* =========================================
-   Create Project Page — Layout Reset
-========================================= */
+/* === CREATE PROJECT PAGE: LAYOUT RESET === */
 
 /* Prevent horizontal scroll */
 #create-project-page,
@@ -54,7 +52,6 @@
   overflow-x: hidden;
 }
 
-/* Main content padding (matches dashboard style) */
 #create-project-page .main-content {
   padding: 30px 40px;
 }
@@ -71,9 +68,7 @@
   }
 }
 
-/* =========================================
-   Header (NO CENTERING)
-========================================= */
+/* === PAGE HEADER (LEFT ALIGNED) === */
 
 #create-project-page .kb-header {
   text-align: left;
@@ -94,9 +89,7 @@
   color: #888;
 }
 
-/* =========================================
-   Two-column layout (form + tips)
-========================================= */
+/* === TWO COLUMN LAYOUT (FORM + TIPS) === */
 
 #create-project-page .kb-layout-wrapper {
   display: grid;
@@ -105,19 +98,19 @@
   align-items: start;
 }
 
-/* Form column */
 #create-project-page .kb-main-content {
   max-width: 720px;
   width: 100%;
   min-width: 0;
 }
 
-/* Sidebar */
 #create-project-page .kb-sidebar {
   width: 320px;
   position: sticky;
   top: 20px;
 }
+
+/* === RESPONSIVE: STACK COLUMNS === */
 
 /* Stack on tablet & mobile */
 @media (max-width: 900px) {
@@ -131,9 +124,7 @@
   }
 }
 
-/* =========================================
-   Form controls
-========================================= */
+/* === FORM CONTROLS (FULL WIDTH SAFETY) === */
 
 #create-project-page .create-post-form {
   width: 100%;
@@ -151,16 +142,13 @@
   box-sizing: border-box;
 }
 
-/* Submit button */
 @media (max-width: 600px) {
   #create-project-page .create-post-btn {
     width: 100%;
   }
 }
 
-/* =========================================
-   Autocomplete positioning
-========================================= */
+/* === AUTOCOMPLETE POSITIONING (SCOPED TO THIS PAGE) === */
 
 #create-project-page .autocomplete-results {
   position: absolute;
