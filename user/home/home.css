@@ -2,6 +2,8 @@
 
 #home-page .main-content {
     padding: 30px 40px;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* === HEADER === */
@@ -420,18 +422,21 @@ select:hover {
 
 .employee-table {
     padding-top: 30px;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .table-wrapper {
     border-radius: 12px;
-    overflow: visible;
+    overflow: hidden;
     position: relative;
+    max-width: 100%;
 }
 
 .employee-table-content {
     max-height: 450px;
     overflow-y: auto;
-    overflow-x: visible;
+    overflow-x: auto;
     border-radius: 12px;
     position: relative;
 }
@@ -457,9 +462,11 @@ select:hover {
 table {
     background: white;
     width: 100%;
+    max-width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     border-radius: 12px;
+    table-layout: fixed;
 }
 
 thead {
@@ -482,6 +489,8 @@ thead th {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     background: linear-gradient(135deg, #FFB84D 0%, #F5A623 100%);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 thead th:first-child {
@@ -535,7 +544,7 @@ thead th:last-child {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
-    z-index: 100000; /* Much higher z-index */
+    z-index: 100000;
     text-transform: none;
     letter-spacing: normal;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -585,6 +594,8 @@ tbody td {
     color: #555;
     font-size: 14px;
     border-bottom: 1px solid #e0e0e0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 tbody tr:last-child td {
@@ -643,11 +654,11 @@ tbody td:first-child {
     table {
         font-size: 13px;
         background: white;
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    border-radius: 12px;
-    overflow: visible;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 12px;
+        overflow: visible;
     }
 
     thead th,
