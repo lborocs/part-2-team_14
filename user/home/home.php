@@ -148,26 +148,28 @@ if ($role === 'team_member') {
                             <option value ="">All Projects</option>
                         </select>
                     </div>
-                    <div class="employee-table-content" id="employee-table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Employee Name</th>
-                                    <th>Project</th>
-                                    <th>Tasks Assigned</th>
-                                    <th>Tasks Completed</th>
-                                    <th>Overdue Tasks</th>
-                                    <th>
-                                        <span class="tooltip-header">
-                                            On-Time
-                                            <span class="info-icon" data-tooltip="Tasks completed on/before deadline out of total completed">ⓘ</span>
-                                        </span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody id="employee-table">
-                            </tbody>
-                        </table>
+                    <div class="table-wrapper">
+                        <div class="employee-table-content" id="employee-table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Employee Name</th>
+                                        <th>Project</th>
+                                        <th>Tasks Assigned</th>
+                                        <th>Tasks Completed</th>
+                                        <th>Overdue Tasks</th>
+                                        <th>
+                                            <span class="tooltip-header">
+                                                On-Time
+                                                <span class="info-icon" data-tooltip="Tasks completed on/before deadline out of total completed">ⓘ</span>
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employee-table">
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
                 <p id="no-employees-message" style="display: none; text-align: center; margin-top: 10px;">

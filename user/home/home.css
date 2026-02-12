@@ -422,9 +422,16 @@ select:hover {
     padding-top: 30px;
 }
 
+.table-wrapper {
+    border-radius: 12px;
+    overflow: visible;
+    position: relative;
+}
+
 .employee-table-content {
     max-height: 450px;
     overflow-y: auto;
+    overflow-x: visible;
     border-radius: 12px;
     position: relative;
 }
@@ -453,14 +460,13 @@ table {
     border-collapse: separate;
     border-spacing: 0;
     border-radius: 12px;
-    overflow: hidden;
-    position: relative;
 }
 
 thead {
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 thead tr {
@@ -476,6 +482,14 @@ thead th {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     background: linear-gradient(135deg, #FFB84D 0%, #F5A623 100%);
+}
+
+thead th:first-child {
+    border-top-left-radius: 12px;
+}
+
+thead th:last-child {
+    border-top-right-radius: 12px;
 }
 
 .tooltip-header {
@@ -507,10 +521,9 @@ thead th {
 .info-icon::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: 100%;
+    bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
-    margin-bottom: 8px;
     padding: 8px 12px;
     background-color: #333;
     color: white;
@@ -521,24 +534,24 @@ thead th {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
-    z-index: 1000;
+    z-index: 10000;
     text-transform: none;
     letter-spacing: normal;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .info-icon::before {
     content: '';
     position: absolute;
-    bottom: 100%;
+    bottom: calc(100% + 2px);
     left: 50%;
     transform: translateX(-50%);
-    margin-bottom: 2px;
     border: 6px solid transparent;
     border-top-color: #333;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
-    z-index: 1000;
+    z-index: 10000;
 }
 
 .info-icon:hover::after,
