@@ -512,6 +512,7 @@ thead th:last-child {
     border-radius: 50%;
     background-color: rgba(255, 255, 255, 0.3);
     position: relative;
+    z-index: 1;
 }
 
 .info-icon:hover {
@@ -534,7 +535,7 @@ thead th:last-child {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s;
-    z-index: 10000;
+    z-index: 100000; /* Much higher z-index */
     text-transform: none;
     letter-spacing: normal;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
@@ -633,7 +634,7 @@ tbody td:first-child {
 
 /* === RESPONSIVE TABLE BREAKPOINT === */
 
-@media (max-width: 768px) {
+@media (max-width: 750px) {
     .table-container {
         padding: 15px;
         overflow-x: auto;
@@ -641,6 +642,12 @@ tbody td:first-child {
 
     table {
         font-size: 13px;
+        background: white;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: visible;
     }
 
     thead th,

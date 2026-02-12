@@ -161,7 +161,7 @@ if ($role === 'team_member') {
                                         <th>
                                             <span class="tooltip-header">
                                                 On-Time
-                                                <span class="info-icon" data-tooltip="Tasks completed on/before deadline out of total completed">ⓘ</span>
+                                                <span class="info-icon" data-tooltip="Tasks completed on/before deadline.">ⓘ</span>
                                             </span>
                                         </th>
                                     </tr>
@@ -920,6 +920,48 @@ if ($role === 'team_member') {
             }
             feather.replace();
         });
+
+        // Add this JavaScript to your page
+document.addEventListener('DOMContentLoaded', function() {
+    // Create tooltip container if it doesn't exist
+    let tooltipContainer = document.getElementById('global-tooltip');
+    if (!tooltipContainer) {
+        tooltipContainer = document.createElement('div');
+        tooltipContainer.id = 'global-tooltip';
+        tooltipContainer.style.cssText = `
+            position: fixed;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000000;
+            display: none;
+            pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        `;
+        document.body.appendChild(tooltipContainer);
+    }
+
+    // Add hover events to all info icons
+    document.querySelectorAll('.info-icon').forEach(icon => {
+        icon.addEventListener('mouseenter', function(e) {
+            const tooltip = this.dataset.tooltip;
+            tooltipContainer.textContent = tooltip;
+            tooltipContainer.style.display = 'block';
+            
+            // Position tooltip
+            const rect = this.getBoundingClientRect();
+            tooltipContainer.style.left = rect.left + (rect.width / 2) - (tooltipContainer.offsetWidth / 2) + 'px';
+            tooltipContainer.style.top = rect.top - tooltipContainer.offsetHeight - 8 + 'px';
+        });
+
+        icon.addEventListener('mouseleave', function() {
+            tooltipContainer.style.display = 'none';
+        });
+    });
+});
     </script>
 </body>
 </html>
