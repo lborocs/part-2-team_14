@@ -468,15 +468,15 @@ SET @pw = '$2y$10$vWt.dbYkKKmjY/h90tXYLe.J5QNdsYeWNultz8IXltfOwZ7ilARRW';
 
 INSERT INTO users (email, password_hash, is_registered, first_name, last_name, role, specialties, profile_picture) VALUES
 ('alice.manager@make-it-all.co.uk',    @pw,  TRUE,  'Alice', 'Johnson',  'manager',              '["Project Management","Strategy","Leadership","Budgeting"]',                   '/default-avatar.png'),
-('bob.lead@make-it-all.co.uk',         @pw,  TRUE,  'Bob',   'Smith',    'team_leader',          '["Backend","Python","SQL","API Design","Django"]',                             '/default-avatar.png'),
-('carol.dev@make-it-all.co.uk',        @pw,  TRUE,  'Carol', 'Williams', 'team_member',          '["Frontend","React","CSS","JavaScript","TypeScript"]',                         '/default-avatar.png'),
+('bob.lead@make-it-all.co.uk',         @pw,  TRUE,  'Bob',   'Smith',    'team_leader',          '["Backend","Python","SQL","API Design","Django"]',                             '/bob.png'),
+('carol.dev@make-it-all.co.uk',        @pw,  TRUE,  'Carol', 'Williams', 'team_member',          '["Frontend","React","CSS","JavaScript","TypeScript"]',                         '/carol.jpg'),
 ('dave.dev@make-it-all.co.uk',         NULL, FALSE,  'Dave',  'Brown',   'team_member',          '["Backend","Node.js","MongoDB","Express"]',                                    '/default-avatar.png'),
-('emma.specialist@make-it-all.co.uk',  @pw,  TRUE,  'Emma',  'Davis',   'technical_specialist',  '["DevOps","AWS","Docker","CI/CD","Kubernetes"]',                               '/default-avatar.png'),
-('frank.designer@make-it-all.co.uk',   @pw,  TRUE,  'Frank', 'Miller',  'team_member',          '["UI Design","Figma","Prototyping","CSS","Adobe XD"]',                         '/default-avatar.png'),
-('grace.tester@make-it-all.co.uk',     @pw,  TRUE,  'Grace', 'Taylor',  'team_member',          '["Frontend","JavaScript","React","Node.js","Testing"]',                        '/default-avatar.png'),
-('henry.analyst@make-it-all.co.uk',    @pw,  TRUE,  'Henry', 'Anderson','team_member',          '["SQL","Python","Backend","API Design","Data Analysis"]',                      '/default-avatar.png'),
-('iris.pm@make-it-all.co.uk',          @pw,  TRUE,  'Iris',  'Chen',    'team_leader',          '["Project Management","Agile","Scrum","API Design","Documentation"]',          '/default-avatar.png'),
-('jack.security@make-it-all.co.uk',    @pw,  TRUE,  'Jack',  'Wilson',  'technical_specialist',  '["Security","Penetration Testing","OAuth","Encryption","Compliance"]',         '/default-avatar.png');
+('emma.specialist@make-it-all.co.uk',  @pw,  TRUE,  'Emma',  'Davis',   'technical_specialist',  '["DevOps","AWS","Docker","CI/CD","Kubernetes"]',                               '/emma.png'),
+('frank.designer@make-it-all.co.uk',   @pw,  TRUE,  'Frank', 'Miller',  'team_member',          '["UI Design","Figma","Prototyping","CSS","Adobe XD"]',                         '/frank.png'),
+('grace.tester@make-it-all.co.uk',     @pw,  TRUE,  'Grace', 'Taylor',  'team_member',          '["Frontend","JavaScript","React","Node.js","Testing"]',                        '/grace.png'),
+('henry.analyst@make-it-all.co.uk',    @pw,  TRUE,  'Henry', 'Anderson','team_member',          '["SQL","Python","Backend","API Design","Data Analysis"]',                      '/henry.png'),
+('iris.pm@make-it-all.co.uk',          @pw,  TRUE,  'Iris',  'Chen',    'team_leader',          '["Project Management","Agile","Scrum","API Design","Documentation"]',          '/iris.png'),
+('jack.security@make-it-all.co.uk',    @pw,  TRUE,  'Jack',  'Wilson',  'technical_specialist',  '["Security","Penetration Testing","OAuth","Encryption","Compliance"]',         '/jack.png');
 
 UPDATE users SET manager_id = 1 WHERE user_id IN (2, 3, 4, 5, 6, 7, 8, 9, 10);
 
