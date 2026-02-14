@@ -467,7 +467,7 @@ SET @pw = '$2y$10$vWt.dbYkKKmjY/h90tXYLe.J5QNdsYeWNultz8IXltfOwZ7ilARRW';
 -- =============================================
 
 INSERT INTO users (email, password_hash, is_registered, first_name, last_name, role, specialties, profile_picture) VALUES
-('alice.manager@make-it-all.co.uk',    @pw,  TRUE,  'Alice', 'Johnson',  'manager',              '["Project Management","Strategy","Leadership","Budgeting"]',                   '/default-avatar.png'),
+('alice.manager@make-it-all.co.uk',    @pw,  TRUE,  'Alice', 'Johnson',  'manager',              '["Project Management","Strategy","Leadership","Budgeting"]',                   '/alice.png'),
 ('bob.lead@make-it-all.co.uk',         @pw,  TRUE,  'Bob',   'Smith',    'team_leader',          '["Backend","Python","SQL","API Design","Django"]',                             '/bob.png'),
 ('carol.dev@make-it-all.co.uk',        @pw,  TRUE,  'Carol', 'Williams', 'team_member',          '["Frontend","React","CSS","JavaScript","TypeScript"]',                         '/carol.jpg'),
 ('dave.dev@make-it-all.co.uk',         NULL, FALSE,  'Dave',  'Brown',   'team_member',          '["Backend","Node.js","MongoDB","Express"]',                                    '/default-avatar.png'),
