@@ -747,6 +747,56 @@ INSERT INTO task_assignments (task_id, user_id, assigned_by, user_status) VALUES
 (63, 10, 1, 'not_started');
 
 -- =============================================
+-- SET started_date / completed_date FOR TASKS
+-- =============================================
+-- Completed tasks: completed_date set ~2 days before deadline
+-- In-progress tasks: started_date set to a realistic mid-point
+
+-- Website Redesign (Project 1)
+UPDATE tasks SET completed_date = '2026-01-28' WHERE task_id = 1;
+UPDATE tasks SET completed_date = '2026-01-23' WHERE task_id = 2;
+UPDATE tasks SET completed_date = '2026-01-18' WHERE task_id = 3;
+UPDATE tasks SET completed_date = '2026-01-26' WHERE task_id = 4;
+UPDATE tasks SET started_date = '2026-01-15' WHERE task_id = 5;
+UPDATE tasks SET started_date = '2026-01-20' WHERE task_id = 6;
+UPDATE tasks SET started_date = '2026-01-28' WHERE task_id = 7;
+UPDATE tasks SET started_date = '2026-01-30' WHERE task_id = 8;
+
+-- Mobile App Development (Project 2)
+UPDATE tasks SET completed_date = '2026-01-13' WHERE task_id = 14;
+UPDATE tasks SET completed_date = '2026-01-20' WHERE task_id = 15;
+UPDATE tasks SET completed_date = '2026-01-26' WHERE task_id = 16;
+UPDATE tasks SET started_date = '2026-01-15' WHERE task_id = 17;
+UPDATE tasks SET started_date = '2026-01-20' WHERE task_id = 18;
+UPDATE tasks SET started_date = '2026-01-22' WHERE task_id = 19;
+
+-- Internal Tools Upgrade (Project 3)
+UPDATE tasks SET completed_date = '2026-01-23' WHERE task_id = 26;
+UPDATE tasks SET completed_date = '2026-01-28' WHERE task_id = 27;
+UPDATE tasks SET started_date = '2026-01-20' WHERE task_id = 28;
+UPDATE tasks SET started_date = '2026-01-25' WHERE task_id = 29;
+
+-- REST API V2 (Project 4)
+UPDATE tasks SET completed_date = '2026-02-03' WHERE task_id = 35;
+UPDATE tasks SET completed_date = '2026-02-06' WHERE task_id = 36;
+UPDATE tasks SET started_date = '2026-01-20' WHERE task_id = 37;
+UPDATE tasks SET started_date = '2026-01-22' WHERE task_id = 38;
+UPDATE tasks SET started_date = '2026-01-25' WHERE task_id = 39;
+
+-- Cloud Migration (Project 5)
+UPDATE tasks SET completed_date = '2026-01-18' WHERE task_id = 45;
+UPDATE tasks SET completed_date = '2026-01-26' WHERE task_id = 46;
+UPDATE tasks SET started_date = '2026-01-20' WHERE task_id = 47;
+UPDATE tasks SET started_date = '2026-01-22' WHERE task_id = 48;
+UPDATE tasks SET started_date = '2026-01-28' WHERE task_id = 49;
+
+-- Security Audit (Project 6)
+UPDATE tasks SET completed_date = '2026-01-23' WHERE task_id = 55;
+UPDATE tasks SET completed_date = '2026-01-28' WHERE task_id = 56;
+UPDATE tasks SET started_date = '2026-01-20' WHERE task_id = 57;
+UPDATE tasks SET started_date = '2026-01-22' WHERE task_id = 58;
+
+-- =============================================
 -- KNOWLEDGE BASE TOPICS (IDs 1-8)
 -- =============================================
 
