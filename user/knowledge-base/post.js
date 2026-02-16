@@ -682,183 +682,186 @@
     });
   }
 
-})();
+  async function wireSinglePostLike() {
+    const btn = document.querySelector(".kb-like-btn");
+    if (!btn) return;
 
-async function wireSinglePostLike() {
-  const btn = document.querySelector(".kb-like-btn");
-  if (!btn) return;
-
-  const countEl = btn.querySelector(".kb-like-count");
-  const postId = parseInt(btn.dataset.postId || "0", 10);
-  if (!postId) return;
-
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    btn.disabled = true;
-
-    try {
-      const fd = new FormData();
-      fd.append("post_id", String(postId));
-
-      const res = await fetch(`${KB_ACTIONS_BASE}/like_post.php`, {
-        method: "POST",
-        body: fd,
-        credentials: "include"
-      });
-
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Like failed");
-
-      if (countEl) countEl.textContent = String(data.like_count);
-
-      // Toggle liked state
-      if (data.liked) {
-        btn.classList.add("liked");
-      } else {
-        btn.classList.remove("liked");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Could not like post. Please try again.");
-    } finally {
-      btn.disabled = false;
-      feather.replace();
-    }
-  });
-}
-
-function wireMarkSolved() {
-  const btn = document.getElementById("kb-mark-solved");
-  if (!btn) return;
-
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    const postId = btn.dataset.postId;
+    const countEl = btn.querySelector(".kb-like-count");
+    const postId = parseInt(btn.dataset.postId || "0", 10);
     if (!postId) return;
 
-    btn.disabled = true;
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
 
-    try {
-      const fd = new FormData();
-      fd.append("post_id", String(postId));
+      btn.disabled = true;
 
-      const res = await fetch("actions/mark_solved.php", {
-        method: "POST",
-        body: fd,
-        credentials: "include"
-      });
-
-      if (!res.ok) throw new Error("HTTP " + res.status);
-
-      const text = await res.text();
-      let data;
       try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("mark_solved.php returned non-JSON:", text);
-        throw new Error("Bad JSON response");
+        const fd = new FormData();
+        fd.append("post_id", String(postId));
+
+        const res = await fetch(`${KB_ACTIONS_BASE}/like_post.php`, {
+          method: "POST",
+          body: fd,
+          credentials: "include"
+        });
+
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || "Like failed");
+
+        if (countEl) countEl.textContent = String(data.like_count);
+
+        // Toggle liked state
+        if (data.liked) {
+          btn.classList.add("liked");
+        } else {
+          btn.classList.remove("liked");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Could not like post. Please try again.");
+      } finally {
+        btn.disabled = false;
+        feather.replace();
       }
+    });
+  }
 
-      if (!data.success) throw new Error(data.message || "Failed");
+  function wireMarkSolved() {
+    const btn = document.getElementById("kb-mark-solved");
+    if (!btn) return;
 
+    const isManager = String(currentUser?.role || "").toLowerCase() === "manager";
 
-      // Add solved badge
-      const footer = contentEl.querySelector(".post-card-footer");
-      if (footer && !footer.querySelector(".kb-solved-badge")) {
-        const badge = document.createElement("span");
-        badge.className = "kb-solved-badge";
-        badge.textContent = "Solved";
-        footer.appendChild(badge);
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const postId = btn.dataset.postId;
+      if (!postId) return;
+
+      btn.disabled = true;
+
+      try {
+        const fd = new FormData();
+        fd.append("post_id", String(postId));
+
+        const res = await fetch("actions/mark_solved.php", {
+          method: "POST",
+          body: fd,
+          credentials: "include"
+        });
+
+        if (!res.ok) throw new Error("HTTP " + res.status);
+
+        const text = await res.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error("mark_solved.php returned non-JSON:", text);
+          throw new Error("Bad JSON response");
+        }
+
+        if (!data.success) throw new Error(data.message || "Failed");
+
+        // Add solved badge
+        const footer = contentEl.querySelector(".post-card-footer");
+        if (footer && !footer.querySelector(".kb-solved-badge")) {
+          const badge = document.createElement("span");
+          badge.className = "kb-solved-badge";
+          badge.textContent = "Solved";
+          footer.appendChild(badge);
+        }
+
+        btn.remove();
+
+        post.is_solved = 1;
+
+        // Hide reply form since post is now solved
+        const replyForm = document.getElementById("reply-form");
+        if (replyForm) replyForm.style.display = "none";
+
+        // add unsolve button for manager
+        if (isManager && footer && !footer.querySelector("#kb-unsolve")) {
+          const unsolveBtn = document.createElement("button");
+          unsolveBtn.type = "button";
+          unsolveBtn.className = "kb-solve-btn kb-unsolve-btn";
+          unsolveBtn.id = "kb-unsolve";
+          unsolveBtn.dataset.postId = postId;
+          unsolveBtn.textContent = "Unsolve";
+          footer.appendChild(unsolveBtn);
+          wireUnsolve();
+        }
+
+        feather.replace();
+      } catch (err) {
+        console.error(err);
+        alert("Could not mark as solved. Please try again.");
+        btn.disabled = false;
       }
+    });
+  }
 
-      btn.remove();
+  function wireUnsolve() {
+    const btn = document.getElementById("kb-unsolve");
+    if (!btn) return;
 
-      post.is_solved = 1;
+    const isManager = String(currentUser?.role || "").toLowerCase() === "manager";
 
-      // Hide reply form since post is now solved
-      const replyForm = document.getElementById("reply-form");
-      if (replyForm) replyForm.style.display = "none";
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
 
-      // add unsolve button for manager
-      if (isManager && footer && !footer.querySelector("#kb-unsolve")) {
-        const unsolveBtn = document.createElement("button");
-        unsolveBtn.type = "button";
-        unsolveBtn.className = "kb-solve-btn kb-unsolve-btn";
-        unsolveBtn.id = "kb-unsolve";
-        unsolveBtn.dataset.postId = postId;
-        unsolveBtn.textContent = "Unsolve";
-        footer.appendChild(unsolveBtn);
-        wireUnsolve();
+      const postId = btn.dataset.postId;
+      if (!postId) return;
+
+      btn.disabled = true;
+
+      try {
+        const fd = new FormData();
+        fd.append("post_id", String(postId));
+
+        const res = await fetch("actions/unmark_solved.php", {
+          method: "POST",
+          body: fd,
+          credentials: "include"
+        });
+
+        if (!res.ok) throw new Error("HTTP " + res.status);
+
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || "Failed");
+
+        // remove solved badge
+        const footer = contentEl.querySelector(".post-card-footer");
+        const badge = footer?.querySelector(".kb-solved-badge");
+        if (badge) badge.remove();
+
+        btn.remove();
+
+        post.is_solved = 0;
+
+        // show reply form again
+        const replyForm = document.getElementById("reply-form");
+        if (replyForm) replyForm.style.display = "block";
+
+        // add mark as solved button back
+        if (isManager && footer && !footer.querySelector("#kb-mark-solved")) {
+          const solveBtn = document.createElement("button");
+          solveBtn.type = "button";
+          solveBtn.className = "kb-solve-btn";
+          solveBtn.id = "kb-mark-solved";
+          solveBtn.dataset.postId = postId;
+          solveBtn.textContent = "Mark as solved";
+          footer.appendChild(solveBtn);
+          wireMarkSolved();
+        }
+
+        feather.replace();
+      } catch (err) {
+        console.error(err);
+        alert("Could not unsolve post. Please try again.");
+        btn.disabled = false;
       }
+    });
+  }
 
-      feather.replace();
-    } catch (err) {
-      console.error(err);
-      alert("Marked as solved.");
-      btn.disabled = false;
-    }
-  });
-}
-
-function wireUnsolve() {
-  const btn = document.getElementById("kb-unsolve");
-  if (!btn) return;
-
-  btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-
-    const postId = btn.dataset.postId;
-    if (!postId) return;
-
-    btn.disabled = true;
-
-    try {
-      const fd = new FormData();
-      fd.append("post_id", String(postId));
-
-      const res = await fetch("actions/unmark_solved.php", {
-        method: "POST",
-        body: fd,
-        credentials: "include"
-      });
-
-      if (!res.ok) throw new Error("HTTP " + res.status);
-
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || "Failed");
-
-      // remove solved badge
-      const footer = contentEl.querySelector(".post-card-footer");
-      const badge = footer?.querySelector(".kb-solved-badge");
-      if (badge) badge.remove();
-
-      btn.remove();
-
-      post.is_solved = 0;
-
-      // show reply form again
-      const replyForm = document.getElementById("reply-form");
-      if (replyForm) replyForm.style.display = "block";
-
-      // add mark as solved button back
-      if (isManager && footer && !footer.querySelector("#kb-mark-solved")) {
-        const solveBtn = document.createElement("button");
-        solveBtn.type = "button";
-        solveBtn.className = "kb-solve-btn";
-        solveBtn.id = "kb-mark-solved";
-        solveBtn.dataset.postId = postId;
-        solveBtn.textContent = "Mark as solved";
-        footer.appendChild(solveBtn);
-        wireMarkSolved();
-      }
-
-      feather.replace();
-    } catch (err) {
-      console.error(err);
-      alert("Could not unsolve post. Please try again.");
-      btn.disabled = false;
-    }
-  });
-}
+})();
